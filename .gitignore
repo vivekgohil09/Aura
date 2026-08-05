@@ -1,0 +1,29 @@
+# Compiled class files
+backend/target/
+*.class
+*.jar
+*.war
+
+# Logs
+*.log
+hs_err_pid*.log
+replay_pid*.log
+
+# Node
+frontend/node_modules/
+node_modules/
+frontend/.env
+.env
+
+# Build
+frontend/dist/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

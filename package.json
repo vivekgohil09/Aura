@@ -1,0 +1,11 @@
+{
+  "name": "chit_chat_app",
+  "version": "1.0.0",
+  "description": "A Real-Time Chat Application",
+  "scripts": {
+    "start": "cd backend && mvn spring-boot:run"
+  },
+  "keywords": [
+    "chatapp"
+  ]
+}

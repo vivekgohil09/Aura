@@ -1,0 +1,955 @@
+import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion';
+import { Box, Text, VStack } from "@chakra-ui/layout"
+import { Tooltip } from "@chakra-ui/tooltip";
+import { Button } from "@chakra-ui/button";
+import { BellIcon, ChevronDownIcon, EditIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import { Avatar } from '@chakra-ui/react'
+import { useSelector } from 'react-redux';
+import { useDisclosure } from "@chakra-ui/hooks";
+import { MDBTypography } from 'mdb-react-ui-kit';
+import EmailIcon from '@mui/icons-material/Email';
+import { MDBBtn } from 'mdb-react-ui-kit';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import { useHistory } from 'react-router-dom';
+import { getJwtToken, handleAuthError } from '../config/getJwt';
+import { logout, setSelectedChat, setChats, delSelectedChat, delChats, setNotification } from '../redux/actions';
+import { useDispatch } from 'react-redux';
+import { Input } from "@chakra-ui/input";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+import { Search } from 'lucide-react';
+import UserListItem from "./UserListItem"
+import ChatLoading from "./ChatLoading"
+import Stack from '@mui/material/Stack';
+import LinearProgress from '@mui/material/LinearProgress';
+import { Progress } from '@chakra-ui/react'
+import { Badge } from '@chakra-ui/react';
+
+import {
+    Drawer,
+    DrawerBody,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerOverlay,
+    DrawerContent,
+    DrawerCloseButton,
+} from '@chakra-ui/react';
+import AvatarCameraModal from './AvatarCameraModal';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import { setUserDetails } from '../redux/actions';
+
+import {
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalFooter,
+    ModalBody,
+    ModalCloseButton,
+    Image,
+} from '@chakra-ui/react'
+
+import {
+    Menu,
+    MenuButton,
+    MenuDivider,
+    MenuItem,
+    MenuList,
+} from "@chakra-ui/menu";
+
+const url = "http://localhost:8000";
+
+const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
+
+    const { isOpen, onOpen, onClose } = useDisclosure()
+    const {
+        isOpen: isOpenDrawer,
+        onOpen: internalOnOpenDrawer,
+        onClose: onCloseDrawer
+    } = useDisclosure()
+
+    const onOpenDrawer = externalOnOpenDrawer || internalOnOpenDrawer;
+    const user = useSelector(state => state.user);
+    const notification = useSelector(state => state.notification);
+    const chats = useSelector(state => state.chats);
+    const [search, setSearch] = useState("");
+    const [searchResult, setSearchResult] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [loadingChat, setLoadingChat] = useState(false);
+    const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const dispatch = useDispatch();
+
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [isEditingEmail, setIsEditingEmail] = useState(false);
+    const [editEmail, setEditEmail] = useState('');
+
+    const handleSaveName = async () => {
+        if (!editName || editName.trim() === '') {
+            toast.error('Name cannot be empty!');
+            return;
+        }
+
+        const updatedUser = {
+            ...user,
+            name: editName.trim()
+        };
+
+        localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+        dispatch(setUserDetails(updatedUser));
+        setIsEditingName(false);
+
+        toast.success('Name updated successfully!', {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: true
+        });
+    };
+
+    const handleSaveEmail = async () => {
+        if (!editEmail || editEmail.trim() === '') {
+            toast.error('Email cannot be empty!');
+            return;
+        }
+
+        const updatedUser = {
+            ...user,
+            email: editEmail.trim()
+        };
+
+        localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+        dispatch(setUserDetails(updatedUser));
+        setIsEditingEmail(false);
+
+        toast.success('Email updated successfully!', {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: true
+        });
+    };
+
+    const handleUpdatePic = async (newPic) => {
+        try {
+            const token = getJwtToken();
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            };
+            const { data } = await axios.put('/api/user/update-pic', {
+                userId: user?._id || user?.id,
+                pic: newPic
+            }, config);
+
+            const updatedUser = {
+                ...user,
+                pic: data.pic || newPic
+            };
+
+            localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+            dispatch(setUserDetails(updatedUser));
+
+            toast.success('Profile picture updated successfully!', {
+                position: 'top-center',
+                autoClose: 2000,
+                hideProgressBar: true,
+                theme: 'colored'
+            });
+        } catch (err) {
+            console.error('Failed to update profile pic:', err);
+            toast.error('Failed to save profile picture. Saved locally.', {
+                position: 'top-center',
+                autoClose: 2000,
+                hideProgressBar: true
+            });
+            const updatedUser = { ...user, pic: newPic };
+            localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+            dispatch(setUserDetails(updatedUser));
+        }
+    };
+    useEffect(() => {
+        if (isOpenDrawer) {
+            handleSearch("");
+        }
+    }, [isOpenDrawer]);
+
+    const handleSearch = async (query = "") => {
+        setSearch(query);
+
+        try {
+            setLoading(true);
+
+            const config = {
+                headers: {
+                    Authorization: "Bearer " + getJwtToken(),
+                },
+            };
+            const url = query ? `/api/user/all-users?search=${query}` : `/api/user/all-users`;
+            const { data } = await axios.get(url, config);
+            setLoading(false);
+            setSearchResult(data);
+
+        } catch (error) {
+            if (handleAuthError(error, history)) return;
+            if (!toast.isActive("failed-to-load-search-result-toast")) {
+                toast.error('Failed to load search result!', {
+                    toastId: "failed-to-load-search-result-toast",
+                    position: "top-center",
+                    autoClose: 2000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: false,
+                    draggable: true,
+                    progress: undefined,
+                    theme: 'colored'
+                });
+            }
+            setLoading(false);
+        }
+
+    }
+
+    const accessChat = async (userId) => {
+
+        console.log(userId);
+
+        try {
+            setLoadingChat(true);
+            const config = {
+                headers: {
+                    "Content-type": "application/json",
+                    Authorization: "Bearer " + getJwtToken(),
+                },
+            };
+            const { data } = await axios.post(`/api/chat`, { userId }, config);
+
+            const dataChatId = data.id || data._id;
+            const existingChats = chats || [];
+            if (!existingChats.find((c) => (c.id || c._id) === dataChatId)) {
+                dispatch(setChats([data, ...existingChats]));
+            }
+            dispatch(setSelectedChat(data));
+            console.log(data);
+            setLoadingChat(false);
+            onClose();
+        } catch (error) {
+            if (handleAuthError(error, history)) return;
+            if (!toast.isActive("failed-to-create-chat-toast")) {
+                toast.error('Failed to create chat!', {
+                    toastId: "failed-to-create-chat-toast",
+                    position: "top-center",
+                    autoClose: 2000,
+                    hideProgressBar: true,
+                    closeOnClick: false,
+                    pauseOnHover: false,
+                    draggable: true,
+                    progress: undefined,
+                    theme: 'colored'
+                });
+            }
+            setLoadingChat(false);
+        }
+
+
+    }
+
+    return (
+        <>
+            <Box
+                d="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                bg="rgba(255, 255, 255, 0.85)"
+                position="relative"
+                zIndex={100}
+                style={{
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  borderBottom: "1px solid rgba(236, 233, 225, 0.8)",
+                  flexShrink: 0,
+                  boxShadow: "0 8px 32px rgba(57, 115, 107, 0.05)"
+                }}
+                w="100%"
+                h="70px"
+                px={{ base: 3, sm: 4, md: 6 }}
+            >
+                {/* Brand Logo & Interactive Search Bar */}
+                <div className='d-flex justify-content-start align-items-center gap-3 gap-md-4' style={{ flex: 1 }}>
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }} 
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                      onClick={() => history.push('/')}
+                    >
+                        <Box sx={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 6px 16px rgba(230, 57, 70, 0.3)',
+                          position: 'relative'
+                        }}>
+                          <span style={{ fontSize: '1.3rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
+                        </Box>
+                        <div>
+                          <h2 className="gradient-text m-0" style={{ fontSize: "1.45rem", fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>AURA</h2>
+                          <span style={{ fontSize: '0.68rem', color: '#806C65', fontWeight: 600, letterSpacing: '0.02em', display: 'block' }}>Boutique Messaging</span>
+                        </div>
+                    </motion.div>
+ 
+                    {/* Modern Light Grey Pill Search Bar */}
+                    <Tooltip label="Type user name or email to search" hasArrow placement="bottom-start">
+                        <Box style={{ flex: 1, maxWidth: '340px', position: 'relative' }}>
+                            <Box 
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  background: '#F4F4F5',
+                                  border: '1px solid #E4E4E7',
+                                  borderRadius: '99px',
+                                  px: 3,
+                                  height: '42px',
+                                  transition: 'all 0.25s ease',
+                                  '&:focus-within': {
+                                    background: '#FFFFFF',
+                                    borderColor: '#E63946',
+                                    boxShadow: '0 6px 20px rgba(230, 57, 70, 0.15)',
+                                  }
+                                }}
+                            >
+                                <Search size={16} color="#A1A1AA" style={{ transition: 'all 0.2s' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Search messages..."
+                                    value={search}
+                                    onFocus={() => {
+                                        onOpenDrawer();
+                                    }}
+                                    onChange={(e) => {
+                                        onOpenDrawer();
+                                        handleSearch(e.target.value);
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      minWidth: 0,
+                                      border: 'none',
+                                      outline: 'none',
+                                      background: 'transparent',
+                                      fontSize: '0.875rem',
+                                      color: '#18181B',
+                                      fontWeight: 500,
+                                    }}
+                                />
+                                <span style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 800,
+                                  color: '#FFFFFF',
+                                  background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                                  padding: '3px 8px',
+                                  borderRadius: '20px',
+                                  pointerEvents: 'none',
+                                  flexShrink: 0,
+                                  boxShadow: '0 2px 8px rgba(230, 57, 70, 0.3)'
+                                }}>⌘K</span>
+                            </Box>
+
+                            {/* Dropdown search results directly under top search bar */}
+                            {search && searchResult && searchResult.length > 0 && (
+                                <Box
+                                    position="absolute"
+                                    top="52px"
+                                    left="0"
+                                    w="340px"
+                                    minW="320px"
+                                    bg="#FFFFFF"
+                                    borderRadius="18px"
+                                    border="1.5px solid rgba(230, 57, 70, 0.15)"
+                                    boxShadow="0 20px 45px rgba(61, 43, 38, 0.18)"
+                                    zIndex="9999"
+                                    p={2.5}
+                                    maxH="340px"
+                                    overflowY="auto"
+                                >
+                                    {searchResult.map((u) => (
+                                        <Box 
+                                            key={u.id || u._id}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                accessChat(u.id || u._id);
+                                                setSearch("");
+                                                setSearchResult([]);
+                                            }}
+                                        >
+                                            <UserListItem user={u} />
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+                    </Tooltip>
+                </div>
+
+
+                <div className="d-flex align-items-center gap-2">
+                    <Menu>
+                        <MenuButton p={1} position="relative">
+                            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                                {notification.length > 0 && (
+                                    <motion.div
+                                      animate={{ scale: [1, 1.25, 1] }}
+                                      transition={{ duration: 1.5, repeat: Infinity }}
+                                      style={{ position: 'absolute', top: '-4px', right: '-4px', zIndex: 10 }}
+                                    >
+                                        <Badge
+                                          style={{
+                                            background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
+                                            color: "#FFFFFF",
+                                            borderRadius: "99px",
+                                            padding: "2px 7px",
+                                            fontSize: "0.72rem",
+                                            fontWeight: 800,
+                                            boxShadow: "0 0 12px rgba(230, 57, 70, 0.75)"
+                                          }}
+                                        >
+                                            {notification.length}
+                                        </Badge>
+                                    </motion.div>
+                                )}
+                                <Box sx={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '12px',
+                                  background: notification.length > 0 ? '#FFF0F2' : '#F4F4F5',
+                                  border: notification.length > 0 ? '1.5px solid #E63946' : '1px solid #E4E4E7',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: notification.length > 0 ? '#E63946' : '#18181B',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: notification.length > 0 ? '0 4px 14px rgba(230, 57, 70, 0.2)' : 'none',
+                                  '&:hover': {
+                                    background: '#EAEAEA',
+                                  }
+                                }}>
+                                    <BellIcon fontSize="20px" w={5} h={5} color={notification.length > 0 ? "#E63946" : "#18181B"} />
+                                </Box>
+                            </motion.div>
+                        </MenuButton>
+                        <MenuList 
+                            bg="#FFFFFF" 
+                            borderColor="#F1F1F4" 
+                            color="#18181B" 
+                            borderRadius="18px"
+                            p={2}
+                            style={{ boxShadow: "0 15px 40px rgba(0, 0, 0, 0.12)", border: "1px solid #F1F1F4" }}
+                        >
+                            {!notification.length && (
+                                <Box p={3} textAlign="center" color="#71717A" fontSize="0.85rem">
+                                    🔔 No new notifications
+                                </Box>
+                            )}
+                            {notification.map((notif, idx) => (
+                                <MenuItem
+                                    key={notif._id || idx}
+                                    bg="#FFFFFF"
+                                    color="#18181B"
+                                    borderRadius="12px"
+                                    mb={1}
+                                    _hover={{ bg: "#FFF0F2" }}
+                                    onClick={() => {
+                                        dispatch(setSelectedChat(notif.chat));
+                                        dispatch(setNotification(notification.filter((n) => n !== notif)));
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#E63946', flexShrink: 0 }} />
+                                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                                            <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: '#18181B' }}>
+                                                {notif.chat.isGroupChat
+                                                    ? `Group: ${notif.chat.chatName}`
+                                                    : getSender(user, notif.chat.users)}
+                                            </p>
+                                            <p style={{ margin: 0, fontSize: '0.78rem', color: '#71717A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {notif.content || "Sent a message"}
+                                            </p>
+                                        </div>
+                                        <span style={{ fontSize: '0.65rem', color: '#E63946', fontWeight: 800, background: '#FFE3E6', padding: '2px 6px', borderRadius: '6px' }}>
+                                            NEW
+                                        </span>
+                                    </div>
+                                </MenuItem>
+                            ))}
+                        </MenuList>
+                    </Menu>
+                    <Menu>
+                        <MenuButton 
+                            as={Button} 
+                            rightIcon={<ChevronDownIcon color="#111827" />} 
+                            bg="#FFFFFF" 
+                            border="1px solid #E5E7EB"
+                            borderRadius="12px"
+                            px={2}
+                            py={1}
+                            h="40px"
+                            _hover={{ bg: "#F3F4F6", borderColor: "#9CA3AF" }}
+                            _active={{ bg: "#E5E7EB" }}
+                            style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}
+                        >
+                            <Avatar size="sm" cursor="pointer" name={user && user.name} src={(!user?.pic || user?.pic.includes("icon-library.com")) ? "https://cdn-icons-png.flaticon.com/512/149/149071.png" : user.pic} bg="#111827" color="#FFFFFF" />
+                        </MenuButton>
+                        <MenuList 
+                            bg="#FFFFFF" 
+                            borderColor="#FFDAC8" 
+                            color="#1E1B18" 
+                            borderRadius="18px"
+                            p={1.5}
+                            style={{ boxShadow: "0 12px 36px rgba(224, 122, 95, 0.12)", border: "1px solid #FFDAC8" }}
+                        >
+                            <MenuItem 
+                                bg="#FFFFFF" 
+                                color="#1E1B18"
+                                borderRadius="12px"
+                                _hover={{ bg: "#FDF3F0", color: "#E07A5F" }} 
+                                onClick={onOpen}
+                                style={{ transition: "all 0.15s ease" }}
+                            >
+                                <i className="fa fa-user me-3" style={{ color: "#E07A5F" }} aria-hidden="true"></i> Profile
+                            </MenuItem>
+                            <MenuItem 
+                                bg="#FFFFFF" 
+                                color="#1E1B18"
+                                borderRadius="12px"
+                                _hover={{ bg: "#FFF0EE", color: "#DC2626" }} 
+                                onClick={() => setIsLogoutConfirmOpen(true)}
+                                style={{ transition: "all 0.15s ease" }}
+                            >
+                                <i className="fas fa-sign-out-alt me-3" style={{ color: "#DC2626" }}></i> Logout
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
+                </div>
+            </Box>
+            <Drawer
+                isOpen={isOpenDrawer}
+                placement='left'
+                onClose={onCloseDrawer}
+            >
+                <DrawerOverlay style={{ backdropFilter: "blur(10px)", background: "rgba(48, 54, 51, 0.25)" }} />
+                <DrawerContent style={{ background: "#FFFFFF", color: "#303633", borderRight: "1px solid #ECE9E1", boxShadow: "0 20px 50px rgba(57, 115, 107, 0.12)" }}>
+                    {loadingChat && (<Progress size='xs' height='3px' colorScheme='teal' isIndeterminate />)}
+                    <DrawerHeader style={{ borderBottom: "1px solid #ECE9E1", padding: "18px 24px" }}>
+                        <div className='d-flex justify-content-between align-items-center'>
+                            <div className="d-flex align-items-center gap-2">
+                                <Box sx={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '10px',
+                                  background: 'linear-gradient(135deg, #E7F1EE 0%, #F7F0DF 100%)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  border: '1px solid #E5E1D8'
+                                }}>
+                                  <span style={{ fontSize: '1rem', color: '#4F8A82' }}>✦</span>
+                                </Box>
+                                <h3 className="m-0" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#303633" }}>Search Contacts</h3>
+                            </div>
+                        </div>
+                    </DrawerHeader>
+
+                    <DrawerBody px={4} py={3}>
+                        <Box d="flex" py={2}>
+                            <div style={{ position: 'relative', width: '100%' }}>
+                                <Search size={18} color="#4F8A82" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
+                                <Input
+                                    placeholder="Search name or email..."
+                                    value={search}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    bg="#FCFBF8"
+                                    color="#303633"
+                                    pl="42px"
+                                    h="46px"
+                                    _focus={{ borderColor: "#4F8A82", bg: "#FFFFFF", boxShadow: "0 4px 15px rgba(79, 138, 130, 0.1)" }}
+                                    borderRadius="14px"
+                                    style={{ border: "1px solid #E5E1D8", fontSize: "0.95rem" }}
+                                />
+                            </div>
+                        </Box>
+                        {loading ? <ChatLoading /> :
+                            (
+                                searchResult?.map((user) => (
+                                    <UserListItem
+                                        key={user.id || user._id}
+                                        user={user}
+                                        handleFunction={() => accessChat(user.id || user._id)}
+                                    />
+                                ))
+                            )
+                        }
+                    </DrawerBody>
+                </DrawerContent>
+            </Drawer>
+            <Modal size="md" isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay style={{ backdropFilter: "blur(8px)" }} />
+                <ModalContent style={{
+                    background: "#FFFFFF",
+                    color: "#303633",
+                    border: "1px solid #ECE9E1",
+                    borderRadius: "28px",
+                    boxShadow: "0 25px 60px rgba(70, 65, 55, 0.15)",
+                    overflow: "hidden"
+                }}>
+                    <ModalHeader className='d-flex justify-content-between align-items-center' style={{ borderBottom: "1px solid #ECE9E1", padding: "18px 24px", paddingRight: "48px" }}>
+                        <div className="d-flex align-items-center gap-2">
+                            <Box sx={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #FFF0F2 0%, #FFF9FA 100%)',
+                                border: '1px solid #FFE3E6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <span style={{ fontSize: '1.2rem', color: '#E63946' }}>✦</span>
+                            </Box>
+                            <h3 className="m-0" style={{ fontSize: "1.4rem", fontWeight: 800, color: "#303633" }}>My Profile</h3>
+                        </div>
+                    </ModalHeader>
+                    <ModalCloseButton style={{ top: "18px", right: "18px" }} />
+                    <ModalBody className="text-center py-4">
+                        <motion.div
+                            whileHover={{ scale: 1.05, rotate: 1 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                            style={{ position: 'relative', display: 'inline-block', marginBottom: '24px', cursor: 'pointer' }}
+                        >
+                            <Avatar
+                                size="2xl"
+                                name={user && user.name}
+                                src={user && user.pic}
+                                bg="#E63946"
+                                color="#FFFFFF"
+                                style={{
+                                    width: '128px',
+                                    height: '128px',
+                                    border: "4px solid #FFFFFF",
+                                    boxShadow: "0 12px 28px rgba(230, 57, 70, 0.2)"
+                                }}
+                            />
+                            <Tooltip label="Change Photo / Create Avatar" hasArrow placement="top">
+                                <Box
+                                    onClick={() => setIsAvatarStudioOpen(true)}
+                                    sx={{
+                                        position: 'absolute',
+                                        bottom: '2px',
+                                        right: '2px',
+                                        bg: '#E63946',
+                                        color: '#FFFFFF',
+                                        borderRadius: '50%',
+                                        width: '36px',
+                                        height: '36px',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        border: '3px solid #FFFFFF',
+                                        '&:hover': {
+                                            bg: '#d62839'
+                                        }
+                                    }}
+                                >
+                                    <CameraAltIcon style={{ fontSize: 16 }} />
+                                </Box>
+                            </Tooltip>
+                        </motion.div>
+
+                        <VStack spacing={4} width="100%" mb={6}>
+                            {/* 1. NAME FIELD */}
+                            <motion.div
+                                whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(230, 57, 70, 0.08)" }}
+                                transition={{ duration: 0.2 }}
+                                style={{ width: '100%' }}
+                            >
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 3.5,
+                                    px: 4,
+                                    borderRadius: '16px',
+                                    background: 'linear-gradient(to right, #FFFFFF, #FCFBF9)',
+                                    border: '1px solid #EAE8E3',
+                                    borderLeft: '4px solid #E63946',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    fontSize: '0.95rem',
+                                    color: '#303633',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
+                                }}>
+                                    <PersonOutlineIcon style={{ color: '#E63946', fontSize: 22 }} />
+                                    <span style={{ flexGrow: 1, textAlign: 'left' }}>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '2px' }}>Name</strong>
+                                        {isEditingName ? (
+                                            <Input
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                autoFocus
+                                                size="sm"
+                                                mt={1}
+                                                borderRadius="8px"
+                                                border="1.5px solid #E63946"
+                                                focusBorderColor="#E63946"
+                                                bg="#FFFFFF"
+                                                fontWeight="600"
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: 700, color: '#303633', fontSize: '1.05rem' }}>{user && user.name}</span>
+                                        )}
+                                    </span>
+                                    {isEditingName ? (
+                                        <Box display="flex" gap={1}>
+                                            <Button
+                                                size="xs"
+                                                onClick={handleSaveName}
+                                                style={{ background: '#E63946', color: '#FFF', borderRadius: '8px', minW: '28px', padding: '0 8px' }}
+                                            >
+                                                <CheckIcon fontSize="12px" />
+                                            </Button>
+                                            <Button
+                                                size="xs"
+                                                onClick={() => setIsEditingName(false)}
+                                                style={{ background: '#EAEBE9', color: '#707772', borderRadius: '8px', minW: '28px', padding: '0 8px' }}
+                                            >
+                                                <CloseIcon fontSize="10px" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Tooltip label="Edit Name" hasArrow placement="top">
+                                            <Button
+                                                size="xs"
+                                                onClick={() => { setEditName(user?.name || ''); setIsEditingName(true); }}
+                                                style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 8px' }}
+                                            >
+                                                <EditIcon fontSize="13px" />
+                                            </Button>
+                                        </Tooltip>
+                                    )}
+                                </Box>
+                            </motion.div>
+
+                            {/* 2. EMAIL FIELD */}
+                            <motion.div
+                                whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(201, 173, 115, 0.08)" }}
+                                transition={{ duration: 0.2 }}
+                                style={{ width: '100%' }}
+                            >
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 3.5,
+                                    px: 4,
+                                    borderRadius: '16px',
+                                    background: 'linear-gradient(to right, #FFFFFF, #FCFBF9)',
+                                    border: '1px solid #EAE8E3',
+                                    borderLeft: '4px solid #C9AD73',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    fontSize: '0.95rem',
+                                    color: '#303633',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
+                                }}>
+                                    <EmailIcon style={{ color: '#C9AD73', fontSize: 22 }} />
+                                    <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '2px' }}>Email Address</strong>
+                                        {isEditingEmail ? (
+                                            <Input
+                                                value={editEmail}
+                                                onChange={(e) => setEditEmail(e.target.value)}
+                                                autoFocus
+                                                size="sm"
+                                                mt={1}
+                                                borderRadius="8px"
+                                                border="1.5px solid #C9AD73"
+                                                focusBorderColor="#C9AD73"
+                                                bg="#FFFFFF"
+                                                fontWeight="600"
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: 600, color: '#4A504E', fontSize: '0.95rem' }}>{user && user.email}</span>
+                                        )}
+                                    </span>
+                                    {isEditingEmail ? (
+                                        <Box display="flex" gap={1}>
+                                            <Button
+                                                size="xs"
+                                                onClick={handleSaveEmail}
+                                                style={{ background: '#C9AD73', color: '#FFF', borderRadius: '8px', minW: '28px', padding: '0 8px' }}
+                                            >
+                                                <CheckIcon fontSize="12px" />
+                                            </Button>
+                                            <Button
+                                                size="xs"
+                                                onClick={() => setIsEditingEmail(false)}
+                                                style={{ background: '#EAEBE9', color: '#707772', borderRadius: '8px', minW: '28px', padding: '0 8px' }}
+                                            >
+                                                <CloseIcon fontSize="10px" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Tooltip label="Edit Email" hasArrow placement="top">
+                                            <Button
+                                                size="xs"
+                                                onClick={() => { setEditEmail(user?.email || ''); setIsEditingEmail(true); }}
+                                                style={{ background: '#FFFDF5', color: '#C9AD73', borderRadius: '8px', border: '1px solid #F3E9D2', padding: '0 8px' }}
+                                            >
+                                                <EditIcon fontSize="13px" />
+                                            </Button>
+                                        </Tooltip>
+                                    )}
+                                </Box>
+                            </motion.div>
+                        </VStack>
+
+                        <Box display="flex" gap={3} justifyContent="center" width="100%">
+                            <MDBBtn
+                                onClick={() => setIsAvatarStudioOpen(true)}
+                                style={{
+                                    flex: 1,
+                                    background: '#FFF0F2',
+                                    color: '#E63946',
+                                    fontWeight: 600,
+                                    height: '46px',
+                                    borderRadius: '12px',
+                                    border: '1px solid #FFE3E6',
+                                    textTransform: 'none',
+                                    boxShadow: 'none'
+                                }}
+                            >
+                                📷 Change Avatar
+                            </MDBBtn>
+                            <MDBBtn
+                                onClick={onClose}
+                                style={{
+                                    flex: 1,
+                                    background: '#E63946',
+                                    color: '#FFFFFF',
+                                    fontWeight: 600,
+                                    height: '46px',
+                                    borderRadius: '12px',
+                                    textTransform: 'none',
+                                    boxShadow: '0 4px 12px rgba(230, 57, 70, 0.2)'
+                                }}
+                            >
+                                Close
+                            </MDBBtn>
+                        </Box>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+
+            <AvatarCameraModal
+                isOpen={isAvatarStudioOpen}
+                onClose={() => setIsAvatarStudioOpen(false)}
+                onSelectMedia={handleUpdatePic}
+                currentPic={user?.pic}
+            />
+
+            {/* Premium Logout Confirmation Centered Dialog */}
+            <Modal
+                isOpen={isLogoutConfirmOpen}
+                onClose={() => setIsLogoutConfirmOpen(false)}
+                isCentered
+            >
+                <ModalOverlay backdropFilter="blur(8px)" bg="rgba(0, 0, 0, 0.4)" />
+                <ModalContent
+                    borderRadius="28px"
+                    border="1px solid #ECE9E1"
+                    bg="#FAF8F5"
+                    p={4}
+                    style={{
+                        boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
+                        maxWidth: "420px",
+                        margin: "12px"
+                    }}
+                >
+                    <ModalBody className="text-center py-4">
+                        <Box
+                            mx="auto"
+                            w="50px"
+                            h="50px"
+                            borderRadius="50%"
+                            bg="#FFF0EE"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            color="#DC2626"
+                            mb={4}
+                            style={{ boxShadow: "0 4px 12px rgba(220, 38, 38, 0.15)" }}
+                        >
+                            <i className="fas fa-sign-out-alt" style={{ fontSize: "20px" }}></i>
+                        </Box>
+                        <Text fontSize="1.35rem" fontWeight="800" color="#303633" mb={2}>
+                            Confirm Log Out
+                        </Text>
+                        <Text fontSize="0.9rem" color="#707772" mb={6}>
+                            Are you sure you want to end your current session? You will need to log in again to access your conversations.
+                        </Text>
+                        <Box display="flex" gap={3} justifyContent="center" width="100%">
+                            <MDBBtn
+                                onClick={() => setIsLogoutConfirmOpen(false)}
+                                style={{
+                                    flex: 1,
+                                    background: '#EAEBE9',
+                                    color: '#707772',
+                                    fontWeight: 600,
+                                    height: '46px',
+                                    borderRadius: '12px',
+                                    textTransform: 'none',
+                                    boxShadow: 'none'
+                                }}
+                            >
+                                Cancel
+                            </MDBBtn>
+                            <MDBBtn
+                                onClick={() => {
+                                    dispatch(logout());
+                                    localStorage.removeItem("userInfo");
+                                    localStorage.removeItem("jwt");
+                                    localStorage.removeItem("chats");
+                                    dispatch(delSelectedChat());
+                                    dispatch(delChats());
+                                    history.push("/login");
+                                }}
+                                style={{
+                                    flex: 1,
+                                    background: '#DC2626',
+                                    color: '#FFFFFF',
+                                    fontWeight: 600,
+                                    height: '46px',
+                                    borderRadius: '12px',
+                                    textTransform: 'none',
+                                    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)'
+                                }}
+                            >
+                                Yes, Logout
+                            </MDBBtn>
+                        </Box>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+        </>
+    )
+}
+
+export default SideBar
