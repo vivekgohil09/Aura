@@ -38,8 +38,11 @@ import io from "socket.io-client"
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
 import { compressData } from '../config/dataCompressor';
+import { stompService } from '../config/stompService';
 const url = window.location.origin;
 const ENDPOINT = window.location.protocol + "//" + window.location.hostname + ":9092";
+// Use the global socket initialized in ChatPage so call listeners work app-wide
+const getSocket = () => window.__auraSocket || null;
 var socket, selectedChatCompare;
 
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -549,16 +552,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             const chatId = selectedChat.id || selectedChat._id;
             if (socket) { socket.emit("stop typing", chatId); }
             const rawContent = viewOnceMode ? `[view-once] ${newMessage}` : newMessage;
+            setNewMessage("");
+            setViewOnceMode(false);
             try {
-                const config = {
-                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + getJwtToken() },
-                };
-                setNewMessage("");
-                setViewOnceMode(false);
                 const content = await compressData(rawContent);
-                const { data } = await axios.post(`/api/message`, { content, chatId }, config);
-                if (socket) { socket.emit("new message", data); }
-                setMessages([...messages, data]);
+                const clientMsgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                if (stompService.connected) {
+                    stompService.sendMessage(chatId, content, clientMsgId);
+                } else {
+                    const config = {
+                        headers: { "Content-Type": "application/json", Authorization: "Bearer " + getJwtToken() },
+                    };
+                    const { data } = await axios.post(`/api/message`, { content, chatId, clientMessageId: clientMsgId }, config);
+                    if (socket) { socket.emit("new message", data); }
+                    setMessages(prev => {
+                        if (prev.some(m => (m.clientMessageId && m.clientMessageId === clientMsgId) || m._id === data._id || m.id === data.id)) return prev;
+                        return [...prev, data];
+                    });
+                }
             } catch (error) {
                 if (handleAuthError(error, history)) return;
                 toast.error("Error Occured!", { position: "top-center", autoClose: 2000, hideProgressBar: true, theme: 'colored' });
@@ -628,55 +640,82 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         }
     }
 
+    // ── STOMP Connection & Call Signaling Mount ──────────────
     useEffect(() => {
         const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-        if (userInfo) {
-            if (!socket) {
-                socket = io(ENDPOINT);
-                socket.emit("setup", userInfo);
-                socket.on("connected", () => setSocketConnected(true));
+        if (!userInfo) return;
+
+        stompService.connect(
+            () => setSocketConnected(true),
+            (err) => setSocketConnected(false)
+        );
+
+        const tryConnect = () => {
+            const globalSocket = getSocket();
+            if (globalSocket) {
+                socket = globalSocket;
+                socket.off("connected").on("connected", () => setSocketConnected(true));
+                socket.off("end-call").on("end-call", () => {
+                    if (localVideoRef.current && localVideoRef.current.srcObject) {
+                        localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
+                    }
+                    setIsVideoCallActive(false);
+                    setIsCallAccepted(false);
+                    setIncomingCall(null);
+                });
+                socket.off("accept-call").on("accept-call", () => setIsCallAccepted(true));
+            } else if (!socket) {
+                try {
+                    socket = io(ENDPOINT, { transports: ["websocket", "polling"] });
+                    socket.emit("setup", userInfo);
+                    socket.on("connected", () => setSocketConnected(true));
+                    window.__auraSocket = socket;
+                } catch (e) {}
             }
+        };
+        setTimeout(tryConnect, 100);
+    }, []);
 
-            socket.off("call-user").on("call-user", (data) => {
-                setIncomingCall(data);
-            });
-
-            socket.off("end-call").on("end-call", () => {
-                if (localVideoRef.current && localVideoRef.current.srcObject) {
-                    localVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
-                }
-                setIsVideoCallActive(false);
-                setIsCallAccepted(false);
-                setIncomingCall(null);
-            });
-
-            socket.off("accept-call").on("accept-call", () => {
-                setIsCallAccepted(true);
-            });
-
-        }
+    // ── PER-CHAT: Fetch messages and STOMP subscription ──────────────────────────────
+    useEffect(() => {
         fetchMessages();
         selectedChatCompare = selectedChat;
         selectedChatRef.current = selectedChat;
-    }, [selectedChat]);
 
-    // Separate effect: always keep message received listener fresh with latest selectedChat
-    useEffect(() => {
-        if (!socket) return;
-        socket.off("message received").on("message received", (newMessageReceived) => {
-            const currentChat = selectedChatRef.current;
-            const currentChatId = currentChat ? (currentChat.id || currentChat._id) : null;
-            const incomingChatId = newMessageReceived?.chat
-                ? (newMessageReceived.chat.id || newMessageReceived.chat._id)
-                : newMessageReceived?.chatId;
-
-            if (!currentChatId || String(currentChatId) !== String(incomingChatId)) {
-                dispatch(setNotification([newMessageReceived, ...(notification || [])]));
-                setFetchAgain(prev => !prev);
-            } else {
-                setMessages(prev => [...prev, newMessageReceived]);
+        if (selectedChat) {
+            const chatId = selectedChat.id || selectedChat._id;
+            if (socket) {
+                socket.emit("join chat", chatId);
             }
-        });
+
+            const unsubscribe = stompService.subscribeToConversation(chatId, (newMessageReceived) => {
+                const currentChat = selectedChatRef.current;
+                const currentChatId = currentChat ? (currentChat.id || currentChat._id) : null;
+                const incomingChatId = newMessageReceived?.chat
+                    ? (newMessageReceived.chat.id || newMessageReceived.chat._id)
+                    : newMessageReceived?.chatId;
+
+                if (!currentChatId || String(currentChatId) !== String(incomingChatId)) {
+                    dispatch(setNotification([newMessageReceived, ...(notification || [])]));
+                    setFetchAgain(prev => !prev);
+                } else {
+                    setMessages(prev => {
+                        const msgId = newMessageReceived._id || newMessageReceived.id;
+                        const clientMsgId = newMessageReceived.clientMessageId;
+                        const exists = prev.some(m =>
+                            (msgId && (m._id === msgId || m.id === msgId)) ||
+                            (clientMsgId && m.clientMessageId === clientMsgId)
+                        );
+                        if (exists) return prev;
+                        return [...prev, newMessageReceived];
+                    });
+                }
+            });
+
+            return () => {
+                if (unsubscribe) unsubscribe();
+            };
+        }
     }, [selectedChat]);
 
 
@@ -888,23 +927,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                         flexDir="column"
                         justifyContent="flex-end"
                         p={3.5}
-                        bg="#FAF8F5"
+                        bg="linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)"
                         style={{
-                            border: "1px solid #ECE9E1",
-                            boxShadow: "inset 0 2px 10px rgba(70, 65, 55, 0.03)",
-                            borderRadius: "20px"
+                            border: "1px solid #E2E8F0",
+                            boxShadow: "inset 0 2px 12px rgba(15, 23, 42, 0.03)",
+                            borderRadius: "24px"
                         }}
                         w="100%"
                         h="100%"
                         overflowY="hidden"
                     >
-                        {/* {Messagese Here}  */}
+                        {/* Messages Here */} 
                         {messageLoading ? (
                             <Spinner
                                 thickness='3px'
                                 speed='0.65s'
-                                emptyColor='#F4F4F5'
-                                color='#E63946'
+                                emptyColor='#E2E8F0'
+                                color='#FF2A54'
                                 w={10}
                                 h={10}
                                 alignSelf="center"
@@ -915,7 +954,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             <ScrollableChat messages={messages} setMessages={setMessages} />
                             </div>
                         )}
-                        {/* Video & Voice Call Modal Overlay - UI/UX Masterpiece Fullscreen Design */}
+                        {/* Video & Voice Call Modal Overlay */}
                         {isVideoCallActive && (
                             <Portal>
                             <motion.div
@@ -945,22 +984,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         display="inline-flex"
                                         alignItems="center"
                                         gap="8px"
-                                        bg="rgba(230, 57, 70, 0.08)"
+                                        bg="rgba(255, 42, 84, 0.08)"
                                         px={4}
                                         py={1.5}
                                         borderRadius="99px"
-                                        border="1px solid rgba(230, 57, 70, 0.15)"
+                                        border="1px solid rgba(255, 42, 84, 0.15)"
                                         mb={3}
                                     >
-                                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E63946", boxShadow: "0 0 12px #E63946" }}></span>
-                                        <Text fontSize="0.75rem" fontWeight="800" color="#E63946" letterSpacing="0.08em">
+                                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FF2A54", boxShadow: "0 0 12px #FF2A54" }}></span>
+                                        <Text fontSize="0.75rem" fontWeight="800" color="#FF2A54" letterSpacing="0.08em">
                                             {callType === "video" ? "4K HD VIDEO ENCRYPTED" : "HD VOICE ENCRYPTED"}
                                         </Text>
                                     </Box>
                                     <Text fontSize="1.8rem" fontWeight="800" color="#1E1B18" fontFamily="'Outfit', sans-serif" letterSpacing="-0.02em" mt={1}>
                                         {getSender(user, selectedChat.users)}
                                     </Text>
-                                    <Text fontSize="0.9rem" fontWeight="600" color="#D0303E" mt={1}>
+                                    <Text fontSize="0.9rem" fontWeight="600" color="#FF2A54" mt={1}>
                                         {isCallAccepted ? formatCallDuration(callDuration) : "🔔 Calling..."}
                                     </Text>
                                 </Box>
@@ -973,7 +1012,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             autoPlay 
                                             playsInline 
                                             muted 
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '32px', border: '4px solid #FFFFFF', boxShadow: "0 25px 60px rgba(230, 57, 70, 0.18)" }} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '32px', border: '4px solid #FFFFFF', boxShadow: "0 25px 60px rgba(255, 42, 84, 0.18)" }} 
                                         />
                                         <Box position="absolute" bottom="20px" right="20px" bg="rgba(255, 255, 255, 0.95)" backdropFilter="blur(16px)" px={4} py={1.5} borderRadius="16px" color="#1E1B18" border="1px solid #FFE3E6" boxShadow="0 8px 24px rgba(0,0,0,0.08)">
                                             <Text fontSize="xs" fontWeight="800">You (Self View)</Text>
@@ -981,7 +1020,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     </Box>
                                 ) : (
                                     <Box display="flex" flexDirection="column" alignItems="center" my="auto" position="relative">
-                                        {/* Dynamic Pulsing Halo Waves */}
                                         <motion.div
                                             animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0.05, 0.35] }}
                                             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
@@ -991,7 +1029,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 width: "170px",
                                                 height: "170px",
                                                 borderRadius: "50%",
-                                                background: "rgba(230, 57, 70, 0.18)"
+                                                background: "rgba(255, 42, 84, 0.18)"
                                             }}
                                         />
                                         <motion.div
@@ -1003,7 +1041,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 width: "170px",
                                                 height: "170px",
                                                 borderRadius: "50%",
-                                                background: "rgba(230, 57, 70, 0.1)"
+                                                background: "rgba(255, 42, 84, 0.1)"
                                             }}
                                         />
 
@@ -1012,20 +1050,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             name={getSender(user, selectedChat.users)}
                                             src={getPicture(user, selectedChat.users)}
                                             bg="#FFE3E6"
-                                            color="#E63946"
+                                            color="#FF2A54"
                                             fontWeight="800"
                                             fontSize="2.8rem"
                                             style={{
                                                 width: "130px",
                                                 height: "130px",
                                                 border: "5px solid #FFFFFF",
-                                                boxShadow: "0 15px 45px rgba(230, 57, 70, 0.28)",
+                                                boxShadow: "0 15px 45px rgba(255, 42, 84, 0.28)",
                                                 position: "relative",
                                                 zIndex: 2
                                             }}
                                         />
 
-                                        {/* Soundbars Equalizer */}
                                         <Box display="flex" alignItems="center" gap="5px" mt={7} mb={2}>
                                             {[0, 1, 2, 3, 4].map((i) => (
                                                 <motion.div
@@ -1034,7 +1071,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
                                                     style={{
                                                         width: "4px",
-                                                        background: "#E63946",
+                                                        background: "#FF2A54",
                                                         borderRadius: "4px"
                                                     }}
                                                 />
@@ -1057,13 +1094,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     px={7}
                                     py={3.5}
                                     borderRadius="99px"
-                                    border="1px solid rgba(230, 57, 70, 0.15)"
-                                    boxShadow="0 20px 50px rgba(230, 57, 70, 0.18)"
+                                    border="1px solid rgba(255, 42, 84, 0.15)"
+                                    boxShadow="0 20px 50px rgba(255, 42, 84, 0.18)"
                                 >
                                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                                         <IconButton
                                             aria-label="Toggle Audio"
-                                            icon={isMuted ? <MicOffIcon style={{ color: "#E63946", fontSize: 24 }} /> : <MicIcon style={{ color: "#1E1B18", fontSize: 24 }} />}
+                                            icon={isMuted ? <MicOffIcon style={{ color: "#FF2A54", fontSize: 24 }} /> : <MicIcon style={{ color: "#1E1B18", fontSize: 24 }} />}
                                             isRound
                                             size="lg"
                                             style={{
@@ -1083,14 +1120,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             leftIcon={callType === "video" ? <VideocamOffIcon style={{ fontSize: 22 }} /> : <CallEndIcon style={{ fontSize: 22 }} />}
                                             size="lg"
                                             style={{
-                                                background: "linear-gradient(135deg, #E63946 0%, #D62839 100%)",
+                                                background: "linear-gradient(135deg, #FF2A54 0%, #D62839 100%)",
                                                 color: "#FFFFFF",
                                                 borderRadius: "99px",
                                                 padding: "0 32px",
                                                 height: "52px",
                                                 fontWeight: 800,
                                                 fontSize: "1rem",
-                                                boxShadow: "0 8px 25px rgba(230, 57, 70, 0.45)",
+                                                boxShadow: "0 8px 25px rgba(255, 42, 84, 0.45)",
                                                 border: "none"
                                             }}
                                         >
@@ -1102,7 +1139,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                                             <IconButton
                                                 aria-label="Toggle Camera"
-                                                icon={isCameraOff ? <VideocamOffIcon style={{ color: "#E63946", fontSize: 24 }} /> : <VideocamIcon style={{ color: "#1E1B18", fontSize: 24 }} />}
+                                                icon={isCameraOff ? <VideocamOffIcon style={{ color: "#FF2A54", fontSize: 24 }} /> : <VideocamIcon style={{ color: "#1E1B18", fontSize: 24 }} />}
                                                 isRound
                                                 size="lg"
                                                 style={{
@@ -1121,6 +1158,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             </Portal>
                         )}
 
+                        {/* Hidden file input for attachment upload */}
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            style={{ display: "none" }}
+                            accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip"
+                        />
+
+                        {/* Premium Floating Input Bar */}
                         <FormControl
                             onKeyDown={sendMessage}
                             id="first-name"
@@ -1139,76 +1186,166 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             )}
 
                             {showPicker && (
-                                <Box position="absolute" bottom="60px" left="10px" zIndex="1000">
+                                <Box position="absolute" bottom="75px" left="10px" zIndex="1000">
                                     <Picker onEmojiClick={onEmojiClick} />
                                 </Box>
                             )}
 
-                            <div className='d-flex justify-content-start align-items-center gap-3'>
-                                <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
-                                    <EmojiEmotionsIcon 
-                                        onClick={toggleEmojiPicker} 
-                                        style={{ fontSize: "28px", color: "#F59E0B", cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    />
-                                </motion.div>
+                            <div 
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    background: 'rgba(255, 255, 255, 0.95)',
+                                    backdropFilter: 'blur(20px)',
+                                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                                    borderRadius: '24px',
+                                    padding: '8px 12px',
+                                    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)'
+                                }}
+                            >
+                                {/* Emoji Button */}
+                                <Tooltip label="Emoji Picker" hasArrow placement="top">
+                                    <motion.button
+                                        type="button"
+                                        whileHover={{ scale: 1.12, translateY: -2 }}
+                                        whileTap={{ scale: 0.92 }}
+                                        onClick={toggleEmojiPicker}
+                                        style={{
+                                            background: '#FFFBEB',
+                                            border: '1px solid #FDE68A',
+                                            borderRadius: '16px',
+                                            width: '42px',
+                                            height: '42px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 8px rgba(217, 119, 6, 0.1)'
+                                        }}
+                                    >
+                                        <EmojiEmotionsIcon style={{ fontSize: '22px', color: '#D97706' }} />
+                                    </motion.button>
+                                </Tooltip>
+
+                                {/* File Attachment Button */}
+                                <Tooltip label="Attach File / Photo" hasArrow placement="top">
+                                    <motion.button
+                                        type="button"
+                                        whileHover={{ scale: 1.12, translateY: -2 }}
+                                        whileTap={{ scale: 0.92 }}
+                                        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                                        style={{
+                                            background: '#F0FDF4',
+                                            border: '1px solid #BBF7D0',
+                                            borderRadius: '16px',
+                                            width: '42px',
+                                            height: '42px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 8px rgba(22, 163, 74, 0.1)'
+                                        }}
+                                    >
+                                        <AttachFileIcon style={{ fontSize: '20px', color: '#16A34A' }} />
+                                    </motion.button>
+                                </Tooltip>
 
                                 {/* View-once toggle */}
-                                <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
-                                    <button
+                                <Tooltip label={viewOnceMode ? "View-Once ACTIVE (click to cancel)" : "Send as View-Once"} hasArrow placement="top">
+                                    <motion.button
+                                        type="button"
+                                        whileHover={{ scale: 1.12, translateY: -2 }}
+                                        whileTap={{ scale: 0.92 }}
                                         onClick={() => setViewOnceMode(!viewOnceMode)}
-                                        title={viewOnceMode ? 'View-once ON (click to off)' : 'Send as view-once'}
                                         style={{
-                                            background: viewOnceMode ? 'linear-gradient(135deg,#E63946,#d62839)' : 'rgba(230,57,70,0.08)',
-                                            border: viewOnceMode ? 'none' : '1.5px solid rgba(230,57,70,0.25)',
-                                            borderRadius: 10, padding: '6px 10px', cursor: 'pointer',
-                                            fontSize: 17, lineHeight: 1, transition: 'all 0.2s',
+                                            background: viewOnceMode ? 'linear-gradient(135deg, #FF2A54 0%, #E60044 100%)' : '#FFF0F2',
+                                            border: viewOnceMode ? 'none' : '1px solid #FFE3E6',
+                                            borderRadius: '16px',
+                                            width: '42px',
+                                            height: '42px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            color: viewOnceMode ? '#FFFFFF' : '#FF2A54',
+                                            fontSize: '18px',
+                                            boxShadow: viewOnceMode ? '0 4px 14px rgba(255, 42, 84, 0.35)' : '0 2px 8px rgba(255, 42, 84, 0.1)',
+                                            transition: 'all 0.2s'
                                         }}
-                                    >👁</button>
-                                </motion.div>
+                                    >
+                                        👁
+                                    </motion.button>
+                                </Tooltip>
 
                                 {/* Schedule button */}
-                                <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
-                                    <button
+                                <Tooltip label="Schedule Message" hasArrow placement="top">
+                                    <motion.button
+                                        type="button"
+                                        whileHover={{ scale: 1.12, translateY: -2 }}
+                                        whileTap={{ scale: 0.92 }}
                                         onClick={() => setScheduleModal(true)}
-                                        title="Schedule message"
                                         style={{
-                                            background: 'rgba(99,102,241,0.08)', border: '1.5px solid rgba(99,102,241,0.22)',
-                                            borderRadius: 10, padding: '6px 10px', cursor: 'pointer',
-                                            fontSize: 17, lineHeight: 1,
+                                            background: '#EEF2FF',
+                                            border: '1px solid #C7D2FE',
+                                            borderRadius: '16px',
+                                            width: '42px',
+                                            height: '42px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            fontSize: '18px',
+                                            boxShadow: '0 2px 8px rgba(79, 70, 229, 0.1)'
                                         }}
-                                    >🕐</button>
-                                </motion.div>
+                                    >
+                                        ⏱
+                                    </motion.button>
+                                </Tooltip>
 
+                                {/* Input text field */}
                                 <Input
-                                    variant="filled"
-                                    bg="#F4F4F5"
-                                    color="#18181B"
-                                    _hover={{ bg: "#EAEAEA" }}
-                                    _focus={{ bg: "#FFFFFF", borderColor: "#E63946", boxShadow: "0 4px 16px rgba(230, 57, 70, 0.15)" }}
+                                    variant="unstyled"
                                     placeholder={viewOnceMode ? "👁 View-once message..." : "Type a message..."}
                                     value={newMessage}
                                     onChange={typingHandler}
                                     onKeyDown={sendMessage}
-                                    borderRadius="99px"
-                                    h="48px"
-                                    px={5}
-                                    style={{ border: viewOnceMode ? '2px solid #E63946' : 'none', fontSize: "0.95rem", transition: 'all 0.2s' }}
+                                    px={3}
+                                    h="44px"
+                                    style={{
+                                        border: 'none',
+                                        outline: 'none',
+                                        fontSize: '0.96rem',
+                                        fontFamily: "'Outfit', 'Inter', sans-serif",
+                                        fontWeight: 500,
+                                        color: '#0F172A',
+                                    }}
                                 />
-                                <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
-                                    <IconButton
-                                        onClick={() => sendMessage({ key: "Enter" })}
-                                        icon={<SendIcon style={{ fontSize: "20px", color: "#FFFFFF" }} />}
-                                        aria-label="Send Message"
-                                        style={{
-                                            background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
-                                            borderRadius: "50%",
-                                            width: "48px",
-                                            height: "48px",
-                                            boxShadow: "0 6px 18px rgba(230, 57, 70, 0.35)",
-                                            border: "none"
-                                        }}
-                                    />
-                                </motion.div>
+
+                                {/* Glowing Send Button */}
+                                <motion.button
+                                    type="button"
+                                    whileHover={{ scale: 1.08, translateY: -2 }}
+                                    whileTap={{ scale: 0.92 }}
+                                    onClick={() => sendMessage({ key: "Enter" })}
+                                    aria-label="Send Message"
+                                    style={{
+                                        background: "linear-gradient(135deg, #FF2A54 0%, #E60044 100%)",
+                                        borderRadius: "18px",
+                                        width: "44px",
+                                        height: "44px",
+                                        minWidth: "44px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        boxShadow: "0 6px 20px rgba(255, 42, 84, 0.38)",
+                                        border: "none",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    <SendIcon style={{ fontSize: "20px", color: "#FFFFFF", marginLeft: "2px" }} />
+                                </motion.button>
                             </div>
 
                             {/* Scheduled messages pending badge */}

@@ -36,6 +36,8 @@ public class MessageService {
                 .sender(currentUser)
                 .content(request.getContent())
                 .chat(chat)
+                .clientMessageId(request.getClientMessageId())
+                .createdAt(java.time.LocalDateTime.now())
                 .build();
 
         Message savedMessage = messageRepository.save(message);
@@ -44,6 +46,7 @@ public class MessageService {
         chatRepository.save(chat);
 
         // Broadcast to STOMP channel for real-time update
+        messagingTemplate.convertAndSend("/topic/conversations/" + chat.getId(), savedMessage);
         messagingTemplate.convertAndSend("/topic/chat/" + chat.getId(), savedMessage);
 
         return savedMessage;

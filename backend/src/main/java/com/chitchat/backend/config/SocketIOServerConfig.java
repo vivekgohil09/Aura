@@ -1,16 +1,33 @@
 package com.chitchat.backend.config;
 
+import com.chitchat.backend.security.JwtProvider;
+import com.chitchat.backend.service.WebSocketMessageBuffer;
 import com.corundumstudio.socketio.SocketIOServer;
 import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.net.ServerSocket;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
+@EnableScheduling
 public class SocketIOServerConfig {
 
     private SocketIOServer server;
+
+    @Autowired
+    private JwtProvider jwtProvider;
+
+    @Autowired
+    private WebSocketMessageBuffer messageBuffer;
+
+    // Maps Socket.IO client session ID → app user ID (from JWT)
+    private final Map<String, String> sessionToUserId = new ConcurrentHashMap<>();
 
     @Bean
     public SocketIOServer socketIOServer() {
@@ -21,18 +38,77 @@ public class SocketIOServerConfig {
 
         server = new SocketIOServer(config);
 
+        // ── User setup: join personal room and map session → userId ─────────
         server.addEventListener("setup", Object.class, (client, data, ackSender) -> {
-            if (data != null) {
-                client.joinRoom("user_" + data.toString());
+            if (data instanceof Map<?, ?> map) {
+                Object tokenObj = map.get("token");
+                Object idObj    = map.get("_id");
+                String userId   = idObj != null ? idObj.toString() : null;
+
+                // Prefer JWT extraction if token present
+                if (tokenObj != null) {
+                    try {
+                        String extracted = jwtProvider.getUserIdFromJwt(tokenObj.toString());
+                        if (extracted != null) userId = extracted;
+                    } catch (Exception ignored) {}
+                }
+
+                if (userId != null) {
+                    sessionToUserId.put(client.getSessionId().toString(), userId);
+                    client.joinRoom("user_" + userId);
+                    System.out.println("✅ User " + userId + " connected via socket");
+                }
             }
         });
 
+        // ── Join a chat room ────────────────────────────────────────────────
         server.addEventListener("join chat", Object.class, (client, room, ackSender) -> {
             if (room != null) {
                 client.joinRoom(room.toString());
             }
         });
 
+        // ── SEND MESSAGE via WebSocket (write-behind to DB) ─────────────────
+        server.addEventListener("send-message", Object.class, (client, data, ackSender) -> {
+            if (!(data instanceof Map<?, ?> map)) return;
+
+            String token   = map.containsKey("token")   ? map.get("token").toString()   : null;
+            String chatId  = map.containsKey("chatId")  ? map.get("chatId").toString()  : null;
+            String content = map.containsKey("content") ? map.get("content").toString() : null;
+
+            if (chatId == null || content == null || content.isBlank()) return;
+
+            // Resolve sender from JWT token
+            String senderId = sessionToUserId.get(client.getSessionId().toString());
+            if (senderId == null && token != null) {
+                try { senderId = jwtProvider.getUserIdFromJwt(token); } catch (Exception ignored) {}
+            }
+            if (senderId == null) return;
+
+            try {
+                // 1. Buffer message in memory (persist lazily)
+                var message = messageBuffer.bufferAndBroadcast(senderId, chatId, content);
+
+                // 2. Broadcast to all clients in the chat room INSTANTLY
+                server.getRoomOperations(chatId).sendEvent("message received", Map.of(
+                    "_id",      "tmp-" + System.currentTimeMillis(),
+                    "content",  message.getContent(),
+                    "sender",   Map.of("_id", senderId),
+                    "chat",     Map.of("_id", chatId, "id", chatId),
+                    "chatId",   chatId,
+                    "createdAt", java.time.LocalDateTime.now().toString()
+                ));
+            } catch (Exception e) {
+                System.err.println("⚠️ Error buffering message: " + e.getMessage());
+            }
+        });
+
+        // ── Legacy: "new message" event still supported (REST path) ────────
+        server.addEventListener("new message", Object.class, (client, data, ackSender) -> {
+            server.getBroadcastOperations().sendEvent("message received", data);
+        });
+
+        // ── Typing indicators ───────────────────────────────────────────────
         server.addEventListener("typing", Object.class, (client, data, ackSender) -> {
             server.getBroadcastOperations().sendEvent("typing", data);
         });
@@ -41,6 +117,7 @@ public class SocketIOServerConfig {
             server.getBroadcastOperations().sendEvent("stop typing", data);
         });
 
+        // ── Call signalling ─────────────────────────────────────────────────
         server.addEventListener("call-user", Object.class, (client, data, ackSender) -> {
             server.getBroadcastOperations().sendEvent("call-user", data);
         });
@@ -53,22 +130,34 @@ public class SocketIOServerConfig {
             server.getBroadcastOperations().sendEvent("end-call", data);
         });
 
-        server.addEventListener("new message", Object.class, (client, data, ackSender) -> {
-            server.getBroadcastOperations().sendEvent("message received", data);
+        // ── On disconnect: flush all pending messages for this user ─────────
+        server.addDisconnectListener(client -> {
+            String sessionId = client.getSessionId().toString();
+            String userId    = sessionToUserId.remove(sessionId);
+            if (userId != null && messageBuffer.hasPending(userId)) {
+                System.out.println("👋 User " + userId + " disconnected — flushing buffered messages…");
+                messageBuffer.flushForClient(userId);
+            }
         });
 
         if (isPortAvailable(9092)) {
             try {
                 server.start();
-                System.out.println("🚀 Native Netty Socket.IO Server successfully started on port 9092");
+                System.out.println("🚀 Native Netty Socket.IO Server started on port 9092 (WebSocket-first messaging)");
             } catch (Exception e) {
                 System.err.println("⚠️ Could not start Netty Socket.IO server: " + e.getMessage());
             }
         } else {
-            System.out.println("ℹ️ Netty Socket.IO Server port 9092 is already active.");
+            System.out.println("ℹ️ Netty Socket.IO Server port 9092 already active.");
         }
 
         return server;
+    }
+
+    // ── Scheduled flush every 5 seconds (safety net for lost disconnects) ───
+    @Scheduled(fixedDelay = 5000)
+    public void scheduledFlush() {
+        messageBuffer.flushAll();
     }
 
     private boolean isPortAvailable(int port) {
@@ -82,10 +171,10 @@ public class SocketIOServerConfig {
 
     @PreDestroy
     public void stopSocketIOServer() {
+        System.out.println("🛑 Shutting down — flushing all buffered messages to DB…");
+        messageBuffer.flushAll();
         if (server != null) {
-            try {
-                server.stop();
-            } catch (Exception ignored) {}
+            try { server.stop(); } catch (Exception ignored) {}
         }
     }
 }

@@ -63,6 +63,23 @@ const TAG_COLORS = {
   follow_up: { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
 };
 
+const formatTime = (dateInput) => {
+  if (!dateInput) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  try {
+    let d;
+    if (typeof dateInput === 'string' || typeof dateInput === 'number') {
+      d = new Date(dateInput);
+    } else if (Array.isArray(dateInput)) {
+      const [year, month, day, hour, minute] = dateInput;
+      d = new Date(year, month - 1, day, hour, minute);
+    }
+    if (d && !isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+  } catch (e) {}
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+};
+
 const ScrollableChat = ({ messages, setMessages }) => {
   const user = useSelector(state => state.user)
 
@@ -205,12 +222,15 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 marginBottom: 2,
               }}
             >
-              <div
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                 onContextMenu={(e) => openCtx(e, m)}
                 style={{
                   display: 'flex',
                   justifyContent: isMe ? 'flex-end' : 'flex-start',
-                  maxWidth: '70%',
+                  maxWidth: '78%',
                   position: 'relative'
                 }}
               >
@@ -222,11 +242,11 @@ const ScrollableChat = ({ messages, setMessages }) => {
                       onChange={e => setEditText(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') saveEdit(m); if (e.key === 'Escape') setEditingId(null); }}
                       style={{
-                        flex: 1, border: '1.5px solid #E63946', borderRadius: 12, padding: '8px 14px',
+                        flex: 1, border: '1.5px solid #FF2A54', borderRadius: 14, padding: '8px 14px',
                         fontSize: 14, outline: 'none', fontFamily: "'Inter', sans-serif"
                       }}
                     />
-                    <button onClick={() => saveEdit(m)} style={{ background: '#E63946', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Save</button>
+                    <button onClick={() => saveEdit(m)} style={{ background: '#FF2A54', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Save</button>
                     <button onClick={() => setEditingId(null)} style={{ background: 'transparent', border: '1px solid #ddd', borderRadius: 10, padding: '6px 10px', cursor: 'pointer', fontSize: 13 }}>✕</button>
                   </div>
                 ) : (
@@ -235,69 +255,98 @@ const ScrollableChat = ({ messages, setMessages }) => {
                     style={{
                       display: 'inline-block',
                       width: 'auto',
-                      background: isMe ? 'linear-gradient(135deg, #E63946 0%, #d62839 100%)' : '#F4F4F5',
-                      color: isMe ? '#FFFFFF' : '#18181B',
-                      borderRadius: isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
-                      padding: '12px 20px',
-                      fontSize: '15px',
+                      background: isMe
+                        ? 'linear-gradient(135deg, #FF2A54 0%, #E60044 100%)'
+                        : 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
+                      color: isMe ? '#FFFFFF' : '#0F172A',
+                      borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
+                      padding: '12px 18px',
+                      fontSize: '0.94rem',
                       lineHeight: '1.5',
                       fontWeight: 500,
                       wordBreak: 'normal',
                       overflowWrap: 'anywhere',
                       whiteSpace: 'pre-wrap',
-                      boxShadow: isMe ? '0 6px 20px rgba(230, 57, 70, 0.28)' : '0 2px 6px rgba(0, 0, 0, 0.02)',
-                      border: 'none',
+                      boxShadow: isMe
+                        ? '0 8px 24px rgba(255, 0, 68, 0.32), 0 2px 6px rgba(0, 0, 0, 0.08)'
+                        : '0 4px 16px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(0, 0, 0, 0.04)',
+                      border: isMe ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
                       cursor: 'context-menu',
                       position: 'relative',
+                      fontFamily: "'Outfit', 'Inter', -apple-system, sans-serif",
+                      letterSpacing: '-0.01em'
                     }}
                   >
-                    {/* View-once message */}
-                    {viewOnce ? (
-                      expiredOnce.has(msgId) ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.825rem', opacity: 0.8, fontStyle: 'italic' }}>
-                          🚫 Opened • View-once expired
-                        </span>
-                      ) : (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          {revealed ? (
-                            <>
-                              <span>{getViewOnceText(m)}</span>
-                              <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '6px' }}>
-                                ⏱ {viewCountdown[msgId] ?? 5}s
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
+                        <div style={{ flex: 1 }}>
+                          {/* View-once message */}
+                          {viewOnce ? (
+                            expiredOnce.has(msgId) ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.825rem', opacity: 0.85, fontStyle: 'italic' }}>
+                                🚫 Opened • View-once expired
                               </span>
-                            </>
+                            ) : (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {revealed ? (
+                                  <>
+                                    <span>{getViewOnceText(m)}</span>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '6px' }}>
+                                      ⏱ {viewCountdown[msgId] ?? 5}s
+                                    </span>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() => revealViewOnce(msgId)}
+                                    style={{
+                                      background: isMe ? 'rgba(255,255,255,0.22)' : 'rgba(255,42,84,0.08)',
+                                      border: 'none', borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
+                                      fontSize: 12, fontWeight: 700, color: isMe ? '#fff' : '#FF2A54',
+                                      display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0
+                                    }}
+                                  >
+                                    👁 Click to View (Once)
+                                  </button>
+                                )}
+                              </span>
+                            )
                           ) : (
-                            <button
-                              onClick={() => revealViewOnce(msgId)}
-                              style={{
-                                background: isMe ? 'rgba(255,255,255,0.2)' : 'rgba(230,57,70,0.1)',
-                                border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
-                                fontSize: 12, fontWeight: 700, color: isMe ? '#fff' : '#E63946',
-                                display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0
-                              }}
-                            >
-                              👁 Click to View (Once)
-                            </button>
+                            <DecompressedContent content={m.content} isMe={isMe} />
                           )}
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '0.66rem',
+                            opacity: isMe ? 0.9 : 0.7,
+                            alignSelf: 'flex-end',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: isMe ? 'rgba(255, 255, 255, 0.92)' : '#64748B',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            paddingLeft: '6px'
+                          }}
+                        >
+                          {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
+                          {isMe && <span style={{ fontSize: '0.72rem', letterSpacing: '-2px', marginLeft: '2px', color: '#FFFFFF' }}>✓✓</span>}
                         </span>
-                      )
-                    ) : (
-                      <DecompressedContent content={m.content} isMe={isMe} />
-                    )}
+                      </div>
 
-                    {/* Bookmark tag badge */}
-                    {bmked && tag && (
-                      <span style={{
-                        display: 'block', fontSize: 10, fontWeight: 700, marginTop: 4,
-                        color: TAG_COLORS[tag]?.color || '#E63946',
-                        opacity: 0.85,
-                      }}>
-                        📌 {tag.replace('_', ' ')}
-                      </span>
-                    )}
+                      {/* Bookmark tag badge */}
+                      {bmked && tag && (
+                        <span style={{
+                          display: 'block', fontSize: 10, fontWeight: 700, marginTop: 2,
+                          color: TAG_COLORS[tag]?.color || '#FF2A54',
+                          opacity: 0.9,
+                        }}>
+                          📌 {tag.replace('_', ' ')}
+                        </span>
+                      )}
+                    </div>
                   </span>
                 )}
-              </div>
+              </motion.div>
             </div>
           );
         })}

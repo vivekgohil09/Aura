@@ -10,4 +10,6 @@ import java.util.List;
 public interface MessageRepository extends JpaRepository<Message, String> {
 
     List<Message> findByChatIdOrderByCreatedAtAsc(String chatId);
+
+    java.util.Optional<Message> findByClientMessageId(String clientMessageId);
 }

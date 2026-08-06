@@ -12,5 +12,6 @@ public class MessageDto {
     public static class SendMessageRequest {
         private String content;
         private String chatId;
+        private String clientMessageId;
     }
 }

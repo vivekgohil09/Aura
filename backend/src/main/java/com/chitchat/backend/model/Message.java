@@ -33,6 +33,8 @@ public class Message {
     @JsonIgnoreProperties("latestMessage")
     private Chat chat;
 
+    private String clientMessageId;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
