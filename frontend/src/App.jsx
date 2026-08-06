@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Route, Switch, BrowserRouter as Router, useLocation } from "react-router-dom"
+import { Route, Switch, useLocation } from "react-router-dom"
 import LoginPage from "./pages/LoginPage.jsx"
 import ChatPage from "./pages/ChatPage"
 import ForgotPass from "./pages/ForgotPass"
@@ -63,7 +63,7 @@ export default function App() {
   }, []);
 
   return (
-    <Router>
+    <>
       <LayoutWrapper />
       <ToastContainer
         position="bottom-right"
@@ -72,6 +72,6 @@ export default function App() {
         closeOnClick={true}
         draggable={true}
       />
-    </Router>
+    </>
   );
 }
