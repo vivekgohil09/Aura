@@ -15,8 +15,15 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache nginx
+
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 5000
+COPY nginx.conf /etc/nginx/http.d/default.conf
+COPY start.sh /start.sh
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+RUN chmod +x /start.sh
+
+EXPOSE 10000
+
+ENTRYPOINT ["/start.sh"]
