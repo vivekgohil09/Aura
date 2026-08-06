@@ -267,11 +267,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 position="relative"
                 zIndex={100}
                 style={{
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  borderBottom: "1px solid rgba(236, 233, 225, 0.8)",
-                  flexShrink: 0,
-                  boxShadow: "0 8px 32px rgba(57, 115, 107, 0.05)"
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    borderBottom: "1px solid rgba(236, 233, 225, 0.8)",
+                    flexShrink: 0,
+                    boxShadow: "0 8px 32px rgba(57, 115, 107, 0.05)"
                 }}
                 w="100%"
                 h="70px"
@@ -279,51 +279,51 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             >
                 {/* Brand Logo & Interactive Search Bar */}
                 <div className='d-flex justify-content-start align-items-center gap-3 gap-md-4' style={{ flex: 1 }}>
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }} 
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-                      onClick={() => history.push('/')}
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                        onClick={() => history.push('/')}
                     >
                         <Box sx={{
-                          width: '38px',
-                          height: '38px',
-                          borderRadius: '12px',
-                          background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 6px 16px rgba(230, 57, 70, 0.3)',
-                          position: 'relative'
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 6px 16px rgba(230, 57, 70, 0.3)',
+                            position: 'relative'
                         }}>
-                          <span style={{ fontSize: '1.3rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
+                            <span style={{ fontSize: '1.3rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
                         </Box>
                         <div>
-                          <h2 className="gradient-text m-0" style={{ fontSize: "1.45rem", fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>AURA</h2>
-                          <span style={{ fontSize: '0.68rem', color: '#806C65', fontWeight: 600, letterSpacing: '0.02em', display: 'block' }}>Boutique Messaging</span>
+                            <h2 className="gradient-text m-0" style={{ fontSize: "1.45rem", fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>AURA</h2>
+
                         </div>
                     </motion.div>
- 
+
                     {/* Modern Light Grey Pill Search Bar */}
                     <Tooltip label="Type user name or email to search" hasArrow placement="bottom-start">
                         <Box style={{ flex: 1, maxWidth: '340px', position: 'relative' }}>
-                            <Box 
+                            <Box
                                 sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '10px',
-                                  background: '#F4F4F5',
-                                  border: '1px solid #E4E4E7',
-                                  borderRadius: '99px',
-                                  px: 3,
-                                  height: '42px',
-                                  transition: 'all 0.25s ease',
-                                  '&:focus-within': {
-                                    background: '#FFFFFF',
-                                    borderColor: '#E63946',
-                                    boxShadow: '0 6px 20px rgba(230, 57, 70, 0.15)',
-                                  }
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    background: '#F4F4F5',
+                                    border: '1px solid #E4E4E7',
+                                    borderRadius: '99px',
+                                    px: 3,
+                                    height: '42px',
+                                    transition: 'all 0.25s ease',
+                                    '&:focus-within': {
+                                        background: '#FFFFFF',
+                                        borderColor: '#E63946',
+                                        boxShadow: '0 6px 20px rgba(230, 57, 70, 0.15)',
+                                    }
                                 }}
                             >
                                 <Search size={16} color="#A1A1AA" style={{ transition: 'all 0.2s' }} />
@@ -339,26 +339,26 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         handleSearch(e.target.value);
                                     }}
                                     style={{
-                                      width: '100%',
-                                      minWidth: 0,
-                                      border: 'none',
-                                      outline: 'none',
-                                      background: 'transparent',
-                                      fontSize: '0.875rem',
-                                      color: '#18181B',
-                                      fontWeight: 500,
+                                        width: '100%',
+                                        minWidth: 0,
+                                        border: 'none',
+                                        outline: 'none',
+                                        background: 'transparent',
+                                        fontSize: '0.875rem',
+                                        color: '#18181B',
+                                        fontWeight: 500,
                                     }}
                                 />
                                 <span style={{
-                                  fontSize: '0.7rem',
-                                  fontWeight: 800,
-                                  color: '#FFFFFF',
-                                  background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
-                                  padding: '3px 8px',
-                                  borderRadius: '20px',
-                                  pointerEvents: 'none',
-                                  flexShrink: 0,
-                                  boxShadow: '0 2px 8px rgba(230, 57, 70, 0.3)'
+                                    fontSize: '0.7rem',
+                                    fontWeight: 800,
+                                    color: '#FFFFFF',
+                                    background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                                    padding: '3px 8px',
+                                    borderRadius: '20px',
+                                    pointerEvents: 'none',
+                                    flexShrink: 0,
+                                    boxShadow: '0 2px 8px rgba(230, 57, 70, 0.3)'
                                 }}>⌘K</span>
                             </Box>
 
@@ -380,7 +380,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     overflowY="auto"
                                 >
                                     {searchResult.map((u) => (
-                                        <Box 
+                                        <Box
                                             key={u.id || u._id}
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -405,49 +405,49 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
                                 {notification.length > 0 && (
                                     <motion.div
-                                      animate={{ scale: [1, 1.25, 1] }}
-                                      transition={{ duration: 1.5, repeat: Infinity }}
-                                      style={{ position: 'absolute', top: '-4px', right: '-4px', zIndex: 10 }}
+                                        animate={{ scale: [1, 1.25, 1] }}
+                                        transition={{ duration: 1.5, repeat: Infinity }}
+                                        style={{ position: 'absolute', top: '-4px', right: '-4px', zIndex: 10 }}
                                     >
                                         <Badge
-                                          style={{
-                                            background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
-                                            color: "#FFFFFF",
-                                            borderRadius: "99px",
-                                            padding: "2px 7px",
-                                            fontSize: "0.72rem",
-                                            fontWeight: 800,
-                                            boxShadow: "0 0 12px rgba(230, 57, 70, 0.75)"
-                                          }}
+                                            style={{
+                                                background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
+                                                color: "#FFFFFF",
+                                                borderRadius: "99px",
+                                                padding: "2px 7px",
+                                                fontSize: "0.72rem",
+                                                fontWeight: 800,
+                                                boxShadow: "0 0 12px rgba(230, 57, 70, 0.75)"
+                                            }}
                                         >
                                             {notification.length}
                                         </Badge>
                                     </motion.div>
                                 )}
                                 <Box sx={{
-                                  width: '40px',
-                                  height: '40px',
-                                  borderRadius: '12px',
-                                  background: notification.length > 0 ? '#FFF0F2' : '#F4F4F5',
-                                  border: notification.length > 0 ? '1.5px solid #E63946' : '1px solid #E4E4E7',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: notification.length > 0 ? '#E63946' : '#18181B',
-                                  transition: 'all 0.2s ease',
-                                  boxShadow: notification.length > 0 ? '0 4px 14px rgba(230, 57, 70, 0.2)' : 'none',
-                                  '&:hover': {
-                                    background: '#EAEAEA',
-                                  }
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '12px',
+                                    background: notification.length > 0 ? '#FFF0F2' : '#F4F4F5',
+                                    border: notification.length > 0 ? '1.5px solid #E63946' : '1px solid #E4E4E7',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: notification.length > 0 ? '#E63946' : '#18181B',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: notification.length > 0 ? '0 4px 14px rgba(230, 57, 70, 0.2)' : 'none',
+                                    '&:hover': {
+                                        background: '#EAEAEA',
+                                    }
                                 }}>
                                     <BellIcon fontSize="20px" w={5} h={5} color={notification.length > 0 ? "#E63946" : "#18181B"} />
                                 </Box>
                             </motion.div>
                         </MenuButton>
-                        <MenuList 
-                            bg="#FFFFFF" 
-                            borderColor="#F1F1F4" 
-                            color="#18181B" 
+                        <MenuList
+                            bg="#FFFFFF"
+                            borderColor="#F1F1F4"
+                            color="#18181B"
                             borderRadius="18px"
                             p={2}
                             style={{ boxShadow: "0 15px 40px rgba(0, 0, 0, 0.12)", border: "1px solid #F1F1F4" }}
@@ -491,10 +491,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         </MenuList>
                     </Menu>
                     <Menu>
-                        <MenuButton 
-                            as={Button} 
-                            rightIcon={<ChevronDownIcon color="#111827" />} 
-                            bg="#FFFFFF" 
+                        <MenuButton
+                            as={Button}
+                            rightIcon={<ChevronDownIcon color="#111827" />}
+                            bg="#FFFFFF"
                             border="1px solid #E5E7EB"
                             borderRadius="12px"
                             px={2}
@@ -506,29 +506,29 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         >
                             <Avatar size="sm" cursor="pointer" name={user && user.name} src={(!user?.pic || user?.pic.includes("icon-library.com")) ? "https://cdn-icons-png.flaticon.com/512/149/149071.png" : user.pic} bg="#111827" color="#FFFFFF" />
                         </MenuButton>
-                        <MenuList 
-                            bg="#FFFFFF" 
-                            borderColor="#FFDAC8" 
-                            color="#1E1B18" 
+                        <MenuList
+                            bg="#FFFFFF"
+                            borderColor="#FFDAC8"
+                            color="#1E1B18"
                             borderRadius="18px"
                             p={1.5}
                             style={{ boxShadow: "0 12px 36px rgba(224, 122, 95, 0.12)", border: "1px solid #FFDAC8" }}
                         >
-                            <MenuItem 
-                                bg="#FFFFFF" 
+                            <MenuItem
+                                bg="#FFFFFF"
                                 color="#1E1B18"
                                 borderRadius="12px"
-                                _hover={{ bg: "#FDF3F0", color: "#E07A5F" }} 
+                                _hover={{ bg: "#FDF3F0", color: "#E07A5F" }}
                                 onClick={onOpen}
                                 style={{ transition: "all 0.15s ease" }}
                             >
                                 <i className="fa fa-user me-3" style={{ color: "#E07A5F" }} aria-hidden="true"></i> Profile
                             </MenuItem>
-                            <MenuItem 
-                                bg="#FFFFFF" 
+                            <MenuItem
+                                bg="#FFFFFF"
                                 color="#1E1B18"
                                 borderRadius="12px"
-                                _hover={{ bg: "#FFF0EE", color: "#DC2626" }} 
+                                _hover={{ bg: "#FFF0EE", color: "#DC2626" }}
                                 onClick={() => setIsLogoutConfirmOpen(true)}
                                 style={{ transition: "all 0.15s ease" }}
                             >
@@ -550,16 +550,16 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         <div className='d-flex justify-content-between align-items-center'>
                             <div className="d-flex align-items-center gap-2">
                                 <Box sx={{
-                                  width: '32px',
-                                  height: '32px',
-                                  borderRadius: '10px',
-                                  background: 'linear-gradient(135deg, #E7F1EE 0%, #F7F0DF 100%)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  border: '1px solid #E5E1D8'
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, #E7F1EE 0%, #F7F0DF 100%)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '1px solid #E5E1D8'
                                 }}>
-                                  <span style={{ fontSize: '1rem', color: '#4F8A82' }}>✦</span>
+                                    <span style={{ fontSize: '1rem', color: '#4F8A82' }}>✦</span>
                                 </Box>
                                 <h3 className="m-0" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#303633" }}>Search Contacts</h3>
                             </div>
