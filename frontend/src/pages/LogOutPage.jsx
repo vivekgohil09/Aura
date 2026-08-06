@@ -31,7 +31,7 @@ import { setUserDetails } from "../redux/actions/index";
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
+      {'Copyright © Aura {new Date().getFullYear()} · Created by Vivek Gohil. All rights reserved.'}
       Aura{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -49,8 +49,8 @@ export default function LoginPage() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Grid container component="main" sx={{ 
-        minHeight: '100vh', 
+      <Grid container component="main" sx={{
+        minHeight: '100vh',
         background: '#000e08',
         backgroundImage: 'radial-gradient(at 50% 50%, rgba(36, 120, 109, 0.35) 0px, transparent 60%)',
         display: 'flex',

@@ -3,28 +3,34 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+
   server: {
     port: 3000,
     open: true,
+
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://aura-vdcq.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
+
       '/socket.io': {
-        target: 'http://localhost:5000',
+        target: 'https://aura-vdcq.onrender.com',
         ws: true,
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
+
       '/ws': {
-        target: 'http://localhost:5000',
+        target: 'https://aura-vdcq.onrender.com',
         ws: true,
         changeOrigin: true,
+        secure: true,
       },
     },
   },
+
   define: {
     global: 'window',
   },

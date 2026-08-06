@@ -98,7 +98,7 @@ export default function Footer() {
             }}
           >
             <Typography variant="caption" sx={{ color: '#707873', fontSize: '0.8rem' }}>
-              Copyright © Aura {new Date().getFullYear()}. All rights reserved.
+              Copyright © Aura {new Date().getFullYear()} · Created by Vivek Gohil. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="caption" sx={{ color: '#707873', fontSize: '0.8rem' }}>
