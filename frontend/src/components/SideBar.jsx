@@ -19,7 +19,7 @@ import { Input } from "@chakra-ui/input";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
-import { Search, QrCode } from 'lucide-react';
+import { Search } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
 import Stack from '@mui/material/Stack';
@@ -38,6 +38,7 @@ import {
 } from '@chakra-ui/react';
 import AvatarCameraModal from './AvatarCameraModal';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { setUserDetails } from '../redux/actions';
 
 import {
@@ -697,14 +698,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     boxShadow: "0 12px 28px rgba(230, 57, 70, 0.2)"
                                 }}
                             />
-                            <Tooltip label="Scan QR / Barcode to Add Friend" hasArrow placement="top">
+                            <Tooltip label="My QR / Barcode Card" hasArrow placement="top">
                                 <Box
                                     onClick={() => setIsQrScannerOpen(true)}
                                     sx={{
                                         position: 'absolute',
                                         top: '2px',
                                         right: '2px',
-                                        bg: '#E63946',
+                                        bg: '#18181B',
                                         color: '#FFFFFF',
                                         borderRadius: '50%',
                                         width: '36px',
@@ -717,14 +718,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         transition: 'all 0.2s ease',
                                         border: '3px solid #FFFFFF',
                                         '&:hover': {
-                                            bg: '#d62839'
+                                            bg: '#E63946',
+                                            transform: 'scale(1.08)'
                                         }
                                     }}
                                 >
-                                    <QrCode size={18} color="#FFFFFF" />
+                                    <QrCodeScannerIcon style={{ fontSize: 18 }} />
                                 </Box>
                             </Tooltip>
-                            <Tooltip label="Change Photo / Create Avatar" hasArrow placement="top">
+                            <Tooltip label="Change Photo / Create Avatar" hasArrow placement="bottom">
                                 <Box
                                     onClick={() => setIsAvatarStudioOpen(true)}
                                     sx={{
@@ -744,7 +746,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         transition: 'all 0.2s ease',
                                         border: '3px solid #FFFFFF',
                                         '&:hover': {
-                                            bg: '#d62839'
+                                            bg: '#d62839',
+                                            transform: 'scale(1.08)'
                                         }
                                     }}
                                 >
@@ -938,39 +941,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         </Tooltip>
                                     )}
                                 </Box>
-                            </motion.div>
-
-                            {/* 4. MY QR CODE & BARCODE DISPLAY CARD */}
-                            <Box sx={{
-                                width: '100%',
-                                p: 3,
-                                borderRadius: '18px',
-                                background: '#FFF0F2',
-                                border: '1.5px solid #FFE3E6',
-                                textAlign: 'center'
-                            }}>
-                                <h5 style={{ margin: '0 0 10px', fontSize: '0.9rem', fontWeight: 800, color: '#E63946' }}>📱 SCAN PROFILE QR CODE / BARCODE</h5>
-                                <div style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '12px', borderRadius: '14px', border: '1px solid #FFE3E6', marginBottom: '10px' }}>
-                                    <img
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=@${user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}`}
-                                        alt="User QR Code"
-                                        style={{ width: '130px', height: '130px' }}
-                                    />
-                                </div>
-                                <Button
-                                    size="sm"
-                                    width="100%"
-                                    bg="#E63946"
-                                    color="#FFFFFF"
-                                    borderRadius="10px"
-                                    fontWeight="700"
-                                    _hover={{ bg: "#d62839" }}
-                                    onClick={() => setIsQrScannerOpen(true)}
-                                >
-                                    📷 Scan QR / Barcode to Add Friend
-                                </Button>
-                            </Box>
-                        </VStack>
+                                        </VStack>
 
                         <Box display="flex" gap={3} justifyContent="center" width="100%">
                             <MDBBtn
@@ -1002,7 +973,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     boxShadow: '0 4px 12px rgba(230, 57, 70, 0.2)'
                                 }}
                             >
-                                Done
+                                Close
                             </MDBBtn>
                         </Box>
                     </ModalBody>
@@ -1013,38 +984,62 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             <Modal isOpen={isQrScannerOpen} onClose={() => setIsQrScannerOpen(false)} size="md">
                 <ModalOverlay style={{ backdropFilter: "blur(8px)" }} />
                 <ModalContent style={{ borderRadius: '24px', p: 2 }}>
-                    <ModalHeader style={{ textAlign: 'center', fontWeight: 800, color: '#303633' }}>
-                        📷 Scan QR Code / Barcode
+                    <ModalHeader style={{ textAlign: 'center', fontWeight: 800, color: '#303633', borderBottom: '1px solid #ECE9E1', pb: 3 }}>
+                        📱 Profile QR Code & Barcode Card
                     </ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody className="text-center pb-4">
-                        <p style={{ fontSize: '0.85rem', color: '#806C65', marginBottom: '16px' }}>
-                            Scan or enter the target user's username QR payload:
-                        </p>
-                        <Input
-                            placeholder="e.g. @vicky123"
-                            value={qrScanInput}
-                            onChange={(e) => setQrScanInput(e.target.value)}
-                            mb={3}
-                            borderRadius="12px"
-                            focusBorderColor="#E63946"
-                        />
-                        <Button
-                            width="100%"
-                            bg="#E63946"
-                            color="#FFFFFF"
-                            fontWeight="700"
-                            borderRadius="12px"
-                            _hover={{ bg: "#d62839" }}
-                            onClick={() => {
-                                setIsQrScannerOpen(false);
-                                onOpenDrawer();
-                                handleSearch({ preventDefault: () => {} }, qrScanInput);
-                                setSearch(qrScanInput);
-                            }}
-                        >
-                            🔍 Search Scanned Username
-                        </Button>
+                    <ModalBody className="text-center py-4">
+                        <Box sx={{
+                            p: 3,
+                            borderRadius: '18px',
+                            background: '#FFF0F2',
+                            border: '1.5px solid #FFE3E6',
+                            mb: 4
+                        }}>
+                            <h5 style={{ margin: '0 0 10px', fontSize: '1rem', fontWeight: 800, color: '#E63946' }}>
+                                @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
+                            </h5>
+                            <div style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '14px', borderRadius: '16px', border: '1px solid #FFE3E6', marginBottom: '10px' }}>
+                                <img
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=@${user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}`}
+                                    alt="User QR Code"
+                                    style={{ width: '150px', height: '150px' }}
+                                />
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.78rem', color: '#806C65', fontWeight: 600 }}>
+                                Scan this QR code or Barcode payload to find profile
+                            </p>
+                        </Box>
+
+                        <Box sx={{ borderTop: '1px solid #ECE9E1', pt: 3 }}>
+                            <p style={{ fontSize: '0.85rem', color: '#303633', fontWeight: 700, marginBottom: '10px' }}>
+                                📷 Scan or Enter Target Username:
+                            </p>
+                            <Input
+                                placeholder="e.g. @vicky123"
+                                value={qrScanInput}
+                                onChange={(e) => setQrScanInput(e.target.value)}
+                                mb={3}
+                                borderRadius="12px"
+                                focusBorderColor="#E63946"
+                            />
+                            <Button
+                                width="100%"
+                                bg="#E63946"
+                                color="#FFFFFF"
+                                fontWeight="700"
+                                borderRadius="12px"
+                                _hover={{ bg: "#d62839" }}
+                                onClick={() => {
+                                    setIsQrScannerOpen(false);
+                                    onOpenDrawer();
+                                    handleSearch({ preventDefault: () => {} }, qrScanInput);
+                                    setSearch(qrScanInput);
+                                }}
+                            >
+                                🔍 Search Scanned Username
+                            </Button>
+                        </Box>
                     </ModalBody>
                 </ModalContent>
             </Modal>
