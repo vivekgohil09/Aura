@@ -87,6 +87,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
     const [editName, setEditName] = useState('');
     const [isEditingEmail, setIsEditingEmail] = useState(false);
     const [editEmail, setEditEmail] = useState('');
+    const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [editUsername, setEditUsername] = useState('');
+    const [isPreviewPicOpen, setIsPreviewPicOpen] = useState(false);
 
     const handleSaveName = async () => {
         if (!editName || editName.trim() === '') {
@@ -108,6 +111,50 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             autoClose: 2000,
             hideProgressBar: true
         });
+    };
+
+    const handleSaveUsername = async () => {
+        if (!editUsername || !editUsername.trim()) {
+            toast.error('Username cannot be empty!');
+            return;
+        }
+
+        try {
+            const token = getJwtToken();
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            const { data } = await axios.put('/api/user/update-username', {
+                userId: user._id || user.id,
+                username: editUsername.trim()
+            }, config);
+
+            const updatedUser = {
+                ...user,
+                username: data.username
+            };
+
+            localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+            dispatch(setUserDetails(updatedUser));
+            setIsEditingUsername(false);
+
+            toast.success(`Username updated to @${data.username}!`, {
+                position: 'top-center',
+                autoClose: 2000,
+                hideProgressBar: true
+            });
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || 'Username is already taken or invalid!';
+            toast.error(errorMsg, {
+                position: 'top-center',
+                autoClose: 3000,
+                hideProgressBar: true
+            });
+        }
     };
 
     const handleSaveEmail = async () => {
@@ -680,38 +727,42 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     <ModalCloseButton style={{ top: "18px", right: "18px" }} />
                     <ModalBody className="text-center py-4">
                         <motion.div
-                            whileHover={{ scale: 1.05, rotate: 1 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.03 }}
                             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                            style={{ position: 'relative', display: 'inline-block', marginBottom: '24px', cursor: 'pointer' }}
+                            style={{ position: 'relative', display: 'inline-block', marginBottom: '24px' }}
                         >
-                            <Avatar
-                                size="2xl"
-                                name={user && user.name}
-                                src={user && user.pic}
-                                bg="#E63946"
-                                color="#FFFFFF"
-                                style={{
-                                    width: '128px',
-                                    height: '128px',
-                                    border: "4px solid #FFFFFF",
-                                    boxShadow: "0 12px 28px rgba(230, 57, 70, 0.2)"
-                                }}
-                            />
-                            <Tooltip label="My QR / Barcode Card" hasArrow placement="top">
+                            <Tooltip label="Click to preview picture" hasArrow placement="top">
+                                <Avatar
+                                    size="2xl"
+                                    name={user && user.name}
+                                    src={user && user.pic}
+                                    bg="#E63946"
+                                    color="#FFFFFF"
+                                    onClick={() => setIsPreviewPicOpen(true)}
+                                    style={{
+                                        width: '128px',
+                                        height: '128px',
+                                        border: "4px solid #FFFFFF",
+                                        boxShadow: "0 12px 28px rgba(230, 57, 70, 0.2)",
+                                        cursor: 'pointer'
+                                    }}
+                                />
+                            </Tooltip>
+                            {/* Bottom Left: QR/Barcode Card Button */}
+                            <Tooltip label="My QR / Barcode Card" hasArrow placement="bottom-start">
                                 <Box
                                     onClick={() => setIsQrScannerOpen(true)}
                                     sx={{
                                         position: 'absolute',
-                                        top: '2px',
-                                        right: '2px',
+                                        bottom: '0px',
+                                        left: '0px',
                                         bg: '#18181B',
                                         color: '#FFFFFF',
                                         borderRadius: '50%',
                                         width: '36px',
                                         height: '36px',
                                         cursor: 'pointer',
-                                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -719,27 +770,28 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         border: '3px solid #FFFFFF',
                                         '&:hover': {
                                             bg: '#E63946',
-                                            transform: 'scale(1.08)'
+                                            transform: 'scale(1.1)'
                                         }
                                     }}
                                 >
                                     <QrCodeScannerIcon style={{ fontSize: 18 }} />
                                 </Box>
                             </Tooltip>
-                            <Tooltip label="Change Photo / Create Avatar" hasArrow placement="bottom">
+                            {/* Bottom Right: Change Photo Button */}
+                            <Tooltip label="Change Photo / Create Avatar" hasArrow placement="bottom-end">
                                 <Box
                                     onClick={() => setIsAvatarStudioOpen(true)}
                                     sx={{
                                         position: 'absolute',
-                                        bottom: '2px',
-                                        right: '2px',
+                                        bottom: '0px',
+                                        right: '0px',
                                         bg: '#E63946',
                                         color: '#FFFFFF',
                                         borderRadius: '50%',
                                         width: '36px',
                                         height: '36px',
                                         cursor: 'pointer',
-                                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -747,7 +799,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         border: '3px solid #FFFFFF',
                                         '&:hover': {
                                             bg: '#d62839',
-                                            transform: 'scale(1.08)'
+                                            transform: 'scale(1.1)'
                                         }
                                     }}
                                 >
@@ -853,21 +905,68 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     <span style={{ fontSize: '1.3rem', color: '#E63946' }}>🏷️</span>
                                     <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
                                         <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '2px' }}>Username</strong>
-                                        <span style={{ fontWeight: 800, color: '#E63946', fontSize: '1.05rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                        {isEditingUsername ? (
+                                            <Input
+                                                value={editUsername}
+                                                onChange={(e) => setEditUsername(e.target.value)}
+                                                autoFocus
+                                                size="sm"
+                                                mt={1}
+                                                borderRadius="8px"
+                                                border="1.5px solid #E63946"
+                                                focusBorderColor="#E63946"
+                                                bg="#FFFFFF"
+                                                fontWeight="700"
+                                                color="#E63946"
+                                                placeholder="e.g. vicky123"
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: 800, color: '#E63946', fontSize: '1.05rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                        )}
                                     </span>
-                                    <Tooltip label="Copy Username" hasArrow placement="top">
-                                        <Button
-                                            size="xs"
-                                            onClick={() => {
-                                                const uName = user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user');
-                                                navigator.clipboard.writeText(`@${uName}`);
-                                                toast.success('Username copied!', { autoClose: 1500, hideProgressBar: true });
-                                            }}
-                                            style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 8px' }}
-                                        >
-                                            📋 Copy
-                                        </Button>
-                                    </Tooltip>
+                                    {isEditingUsername ? (
+                                        <Box display="flex" gap={1}>
+                                            <Button
+                                                size="xs"
+                                                onClick={handleSaveUsername}
+                                                style={{ background: '#E63946', color: '#FFF', borderRadius: '8px', minW: '28px', padding: '0 8px' }}
+                                            >
+                                                <CheckIcon fontSize="12px" />
+                                            </Button>
+                                            <Button
+                                                size="xs"
+                                                onClick={() => setIsEditingUsername(false)}
+                                                style={{ background: '#EAEBE9', color: '#707772', borderRadius: '8px', minW: '28px', padding: '0 8px' }}
+                                            >
+                                                <CloseIcon fontSize="10px" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Box display="flex" gap={1.5}>
+                                            <Tooltip label="Edit Username" hasArrow placement="top">
+                                                <Button
+                                                    size="xs"
+                                                    onClick={() => { setEditUsername(user?.username || ''); setIsEditingUsername(true); }}
+                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 8px' }}
+                                                >
+                                                    <EditIcon fontSize="13px" />
+                                                </Button>
+                                            </Tooltip>
+                                            <Tooltip label="Copy Username" hasArrow placement="top">
+                                                <Button
+                                                    size="xs"
+                                                    onClick={() => {
+                                                        const uName = user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user');
+                                                        navigator.clipboard.writeText(`@${uName}`);
+                                                        toast.success('Username copied!', { autoClose: 1500, hideProgressBar: true });
+                                                    }}
+                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 8px' }}
+                                                >
+                                                    📋 Copy
+                                                </Button>
+                                            </Tooltip>
+                                        </Box>
+                                    )}
                                 </Box>
                             </motion.div>
 
@@ -1021,6 +1120,32 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 onSelectMedia={handleUpdatePic}
                 currentPic={user?.pic}
             />
+
+            {/* ── HIGH-RES PROFILE PICTURE PREVIEW LIGHTBOX MODAL ── */}
+            <Modal isOpen={isPreviewPicOpen} onClose={() => setIsPreviewPicOpen(false)} size="lg" isCentered>
+                <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(0, 0, 0, 0.75)" }} />
+                <ModalContent style={{ borderRadius: '24px', background: 'transparent', boxShadow: 'none', textAlign: 'center', border: 'none' }}>
+                    <ModalCloseButton color="#FFFFFF" style={{ top: "10px", right: "10px", zIndex: 10, background: "rgba(0,0,0,0.5)", borderRadius: "50%" }} />
+                    <ModalBody display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={4}>
+                        <Box
+                            component="img"
+                            src={user?.pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                            alt={user?.name || "Profile Picture"}
+                            sx={{
+                                maxWidth: "90vw",
+                                maxHeight: "75vh",
+                                borderRadius: "24px",
+                                objectFit: "contain",
+                                boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+                                border: "3px solid rgba(255, 255, 255, 0.4)"
+                            }}
+                        />
+                        <Text color="#FFFFFF" fontSize="1.15rem" fontWeight="700" mt={3} style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                            {user?.name} <span style={{ color: "#FFE3E6", fontWeight: 600 }}>(@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')})</span>
+                        </Text>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
 
             {/* Premium Logout Confirmation Centered Dialog */}
             <Modal

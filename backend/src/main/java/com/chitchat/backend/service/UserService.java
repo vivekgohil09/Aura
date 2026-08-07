@@ -245,6 +245,27 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User updateUsername(String userId, String newUsername) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (newUsername == null || newUsername.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+
+        String normalized = normalizeUsername(newUsername);
+        if (normalized.equalsIgnoreCase(user.getUsername())) {
+            return user;
+        }
+
+        if (userRepository.existsByUsername(normalized)) {
+            throw new IllegalArgumentException("USERNAME_EXISTS: Username @" + normalized + " is already taken by another user.");
+        }
+
+        user.setUsername(normalized);
+        return userRepository.save(user);
+    }
+
     public User updateOnlineStatus(String userId, boolean isOnline) {
         if (userId == null) return null;
         return userRepository.findById(userId).map(user -> {

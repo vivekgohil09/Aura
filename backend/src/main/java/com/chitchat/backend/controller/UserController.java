@@ -90,4 +90,24 @@ public class UserController {
         }
         return ResponseEntity.ok(userService.updatePic(userId, pic));
     }
+
+    @PutMapping("/update-username")
+    public ResponseEntity<?> updateUsername(
+            @RequestBody java.util.Map<String, String> request,
+            @AuthenticationPrincipal User currentUser) {
+        String newUsername = request.get("username");
+        String userId = currentUser != null ? currentUser.getId() : request.get("userId");
+        if (userId == null) {
+            return ResponseEntity.status(400).body(java.util.Map.of("message", "User ID is required"));
+        }
+        try {
+            User updated = userService.updateUsername(userId, newUsername);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(java.util.Map.of(
+                    "code", "USERNAME_EXISTS",
+                    "message", e.getMessage()
+            ));
+        }
+    }
 }

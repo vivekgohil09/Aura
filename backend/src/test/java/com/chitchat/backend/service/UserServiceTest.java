@@ -98,4 +98,29 @@ public class UserServiceTest {
         assertTrue(exception.getMessage().contains("USER_NOT_FOUND"));
         verify(userRepository, times(1)).findByUsername("unknown_user");
     }
+
+    @Test
+    void testUpdateUsername_Success() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(currentUser));
+        when(userRepository.existsByUsername("new_vicky")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        User updated = userService.updateUsername("user-1", "@New_Vicky");
+
+        assertEquals("new_vicky", updated.getUsername());
+        verify(userRepository, times(1)).save(currentUser);
+    }
+
+    @Test
+    void testUpdateUsername_AlreadyTaken() {
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(currentUser));
+        when(userRepository.existsByUsername("taken_username")).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateUsername("user-1", "taken_username");
+        });
+
+        assertTrue(exception.getMessage().contains("USERNAME_EXISTS"));
+        verify(userRepository, never()).save(currentUser);
+    }
 }
