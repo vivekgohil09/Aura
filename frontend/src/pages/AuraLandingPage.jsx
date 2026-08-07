@@ -328,14 +328,14 @@ export default function AuraLandingPage() {
       <section
         ref={heroRef}
         style={{
-          minHeight: '100vh',
+          minHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
           overflow: 'hidden',
-          padding: '80px 24px 60px',
+          padding: '60px 20px 30px',
         }}
       >
         {/* Mesh gradient background */}
@@ -422,7 +422,7 @@ export default function AuraLandingPage() {
         >
           <motion.div
             animate={{
-              y: [0, -18, 0],
+              y: [0, -14, 0],
               rotate: [-6, 6, -6],
               scale: [1, 1.04, 1],
             }}
@@ -430,13 +430,13 @@ export default function AuraLandingPage() {
             whileHover={{ scale: 1.12, rotate: 15 }}
             style={{
               display: 'inline-flex',
-              marginBottom: '28px',
+              marginBottom: '16px',
               filter: 'drop-shadow(0 20px 40px rgba(255, 107, 107, 0.5)) drop-shadow(0 6px 12px rgba(255, 142, 83, 0.35))',
               transformStyle: 'preserve-3d',
               cursor: 'default',
             }}
           >
-            <Feather size={96} color="#E63946" strokeWidth={1.2} />
+            <Feather size={76} color="#E63946" strokeWidth={1.2} />
           </motion.div>
         </motion.div>
 
@@ -448,7 +448,7 @@ export default function AuraLandingPage() {
           style={{
             fontFamily: "'Outfit', sans-serif",
             fontWeight: 900,
-            fontSize: 'clamp(3.5rem, 9vw, 7rem)',
+            fontSize: 'clamp(3rem, 7.5vw, 5.5rem)',
             lineHeight: 0.95,
             letterSpacing: '-0.05em',
             textAlign: 'center',
@@ -458,7 +458,7 @@ export default function AuraLandingPage() {
             WebkitTextFillColor: 'transparent',
             color: 'transparent',
             display: 'inline-block',
-            marginBottom: '20px',
+            marginBottom: '14px',
             maxWidth: 800,
             position: 'relative', zIndex: 1,
           }}
@@ -472,12 +472,12 @@ export default function AuraLandingPage() {
           transition={{ duration: 0.7, delay: 0.4 }}
           style={{
             fontFamily: "'Inter', sans-serif",
-            fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
+            fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
             color: '#806C65',
             textAlign: 'center',
-            maxWidth: 560,
-            lineHeight: 1.65,
-            marginBottom: '40px',
+            maxWidth: 520,
+            lineHeight: 1.6,
+            marginBottom: '28px',
             position: 'relative', zIndex: 1,
           }}
         >
