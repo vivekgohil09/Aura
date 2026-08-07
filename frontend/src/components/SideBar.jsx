@@ -697,52 +697,108 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     </DrawerBody>
                 </DrawerContent>
             </Drawer>
-            {/* ── MY PROFILE MODAL (PREMIUM UI/UX DESIGN) ── */}
+            {/* ── MY PROFILE MODAL (ULTRA-PREMIUM HERO COVER DESIGN) ── */}
             <Modal size="md" isOpen={isOpen} onClose={onClose} isCentered>
-                <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(0, 0, 0, 0.45)" }} />
+                <ModalOverlay style={{ backdropFilter: "blur(14px)", background: "rgba(15, 12, 10, 0.55)" }} />
                 <ModalContent style={{
-                    background: "linear-gradient(180deg, #FFFFFF 0%, #FAF8F5 100%)",
+                    background: "#FAF8F5",
                     color: "#303633",
-                    border: "1px solid #EAE6DF",
-                    borderRadius: "28px",
-                    boxShadow: "0 30px 70px rgba(0, 0, 0, 0.18)",
+                    border: "1px solid rgba(230, 57, 70, 0.12)",
+                    borderRadius: "32px",
+                    boxShadow: "0 35px 80px rgba(30, 20, 15, 0.25)",
                     overflow: "hidden"
                 }}>
-                    <ModalHeader className='d-flex justify-content-between align-items-center' style={{ borderBottom: "1px solid #ECE9E1", padding: "20px 24px" }}>
-                        <div className="d-flex align-items-center gap-3">
-                            <Box sx={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '14px',
-                                background: 'linear-gradient(135deg, #FFF0F2 0%, #FFE3E6 100%)',
-                                border: '1px solid #FFD0D6',
+                    {/* ── HERO GRADIENT COVER BANNER ── */}
+                    <Box sx={{
+                        height: '110px',
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #FF7B54 0%, #FF6B6B 40%, #E63946 100%)',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        p: 3,
+                        px: 4
+                    }}>
+                        <Badge
+                            sx={{
+                                bg: 'rgba(255, 255, 255, 0.25)',
+                                backdropFilter: 'blur(10px)',
+                                color: '#FFFFFF',
+                                borderRadius: '12px',
+                                px: 3,
+                                py: 1,
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                border: '1px solid rgba(255, 255, 255, 0.35)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 4px 12px rgba(230, 57, 70, 0.12)'
-                            }}>
-                                <span style={{ fontSize: '1.25rem', color: '#E63946' }}>✦</span>
+                                gap: 1
+                            }}
+                        >
+                            ✦ AURA PROFILE
+                        </Badge>
+
+                        <Box display="flex" gap={2} alignItems="center">
+                            <Tooltip label="My QR / Barcode Card" hasArrow placement="bottom">
+                                <Button
+                                    size="xs"
+                                    onClick={() => setIsQrScannerOpen(true)}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.28)',
+                                        backdropFilter: 'blur(10px)',
+                                        color: '#FFFFFF',
+                                        borderRadius: '20px',
+                                        padding: '4px 12px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '5px'
+                                    }}
+                                >
+                                    <QrCodeScannerIcon style={{ fontSize: 14 }} />
+                                    QR Card
+                                </Button>
+                            </Tooltip>
+                            
+                            <Box
+                                onClick={onClose}
+                                sx={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    bg: 'rgba(255, 255, 255, 0.25)',
+                                    backdropFilter: 'blur(10px)',
+                                    color: '#FFFFFF',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        bg: 'rgba(255, 255, 255, 0.4)',
+                                        transform: 'scale(1.08)'
+                                    }
+                                }}
+                            >
+                                <CloseIcon style={{ fontSize: 11 }} />
                             </Box>
-                            <div>
-                                <h3 className="m-0" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#18181B", fontFamily: "'Outfit', sans-serif" }}>My Profile</h3>
-                                <p className="m-0" style={{ fontSize: "0.78rem", color: "#806C65", fontWeight: 500 }}>Personal Details & Settings</p>
-                            </div>
-                        </div>
-                    </ModalHeader>
-                    <ModalCloseButton style={{ top: "20px", right: "20px", borderRadius: "50%", background: "#F4F0EA" }} />
-                    
-                    <ModalBody className="text-center py-4 px-6">
-                        {/* ── HERO AVATAR SECTION ── */}
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 6, position: 'relative' }}>
+                        </Box>
+                    </Box>
+
+                    <ModalBody className="text-center pb-6 pt-0 px-6">
+                        {/* ── OVERLAY AVATAR HERO ── */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3, position: 'relative', marginTop: '-55px' }}>
                             <Box sx={{
                                 position: 'relative',
-                                p: '6px',
-                                borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #FFE3E6 0%, #FFF0F2 100%)',
-                                boxShadow: '0 12px 32px rgba(230, 57, 70, 0.18)',
                                 display: 'inline-block'
                             }}>
-                                <Tooltip label="Click to preview photo" hasArrow placement="top">
+                                <Tooltip label="Click to preview picture" hasArrow placement="top">
                                     <Avatar
                                         size="2xl"
                                         name={user && user.name}
@@ -751,105 +807,97 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         color="#FFFFFF"
                                         onClick={() => setIsPreviewPicOpen(true)}
                                         style={{
-                                            width: '124px',
-                                            height: '124px',
-                                            border: "3.5px solid #FFFFFF",
-                                            cursor: 'pointer',
-                                            transition: 'transform 0.25s ease'
+                                            width: '118px',
+                                            height: '118px',
+                                            border: "4px solid #FFFFFF",
+                                            boxShadow: "0 14px 35px rgba(230, 57, 70, 0.25)",
+                                            cursor: 'pointer'
                                         }}
                                     />
                                 </Tooltip>
                                 
-                                {/* Floating Badges Symmetrically Anchored at Bottom */}
-                                <Box sx={{
-                                    position: 'absolute',
-                                    bottom: '-8px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    display: 'flex',
-                                    gap: '10px',
-                                    zIndex: 2
-                                }}>
-                                    <Tooltip label="My QR / Barcode Card" hasArrow placement="bottom">
-                                        <Button
-                                            size="xs"
-                                            onClick={() => setIsQrScannerOpen(true)}
-                                            style={{
-                                                background: '#18181B',
-                                                color: '#FFFFFF',
-                                                borderRadius: '20px',
-                                                padding: '4px 10px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 700,
-                                                border: '2px solid #FFFFFF',
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px'
-                                            }}
-                                        >
-                                            <QrCodeScannerIcon style={{ fontSize: 14 }} />
-                                            QR Card
-                                        </Button>
-                                    </Tooltip>
-
-                                    <Tooltip label="Change Avatar Photo" hasArrow placement="bottom">
-                                        <Button
-                                            size="xs"
-                                            onClick={() => setIsAvatarStudioOpen(true)}
-                                            style={{
-                                                background: '#E63946',
-                                                color: '#FFFFFF',
-                                                borderRadius: '20px',
-                                                padding: '4px 10px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 700,
-                                                border: '2px solid #FFFFFF',
-                                                boxShadow: '0 4px 12px rgba(230, 57, 70, 0.3)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px'
-                                            }}
-                                        >
-                                            <CameraAltIcon style={{ fontSize: 14 }} />
-                                            Edit
-                                        </Button>
-                                    </Tooltip>
-                                </Box>
+                                {/* Floating Camera Change Badge */}
+                                <Tooltip label="Change Avatar Photo" hasArrow placement="bottom">
+                                    <Box
+                                        onClick={() => setIsAvatarStudioOpen(true)}
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: '2px',
+                                            right: '2px',
+                                            bg: '#E63946',
+                                            color: '#FFFFFF',
+                                            borderRadius: '50%',
+                                            width: '34px',
+                                            height: '34px',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.2s ease',
+                                            border: '3px solid #FFFFFF',
+                                            '&:hover': {
+                                                bg: '#d62839',
+                                                transform: 'scale(1.12)'
+                                            }
+                                        }}
+                                    >
+                                        <CameraAltIcon style={{ fontSize: 15 }} />
+                                    </Box>
+                                </Tooltip>
                             </Box>
+
+                            {/* User Hero Titles */}
+                            <h3 style={{ margin: '12px 0 2px', fontSize: "1.4rem", fontWeight: 800, color: "#18181B", fontFamily: "'Outfit', sans-serif" }}>
+                                {user?.name || "Aura User"}
+                            </h3>
+                            <Badge
+                                sx={{
+                                    bg: '#FFF0F2',
+                                    color: '#E63946',
+                                    borderRadius: '20px',
+                                    px: 3,
+                                    py: 0.8,
+                                    fontSize: '0.82rem',
+                                    fontWeight: 800,
+                                    border: '1px solid #FFE3E6',
+                                    letterSpacing: '0.02em'
+                                }}
+                            >
+                                @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
+                            </Badge>
                         </Box>
 
-                        {/* ── PROFILE INFORMATION CARDS ── */}
-                        <VStack spacing={3.5} width="100%" mb={6}>
-                            {/* 1. NAME FIELD */}
+                        {/* ── PROFILE DETAILS EDITABLE CARDS ── */}
+                        <VStack spacing={3} width="100%" mb={5}>
+                            {/* 1. DISPLAY NAME CARD */}
                             <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }} style={{ width: '100%' }}>
                                 <Box sx={{
                                     width: '100%',
-                                    p: 3,
+                                    p: 2.8,
                                     px: 3.5,
-                                    borderRadius: '18px',
+                                    borderRadius: '20px',
                                     background: '#FFFFFF',
-                                    border: '1px solid #EAE8E3',
-                                    borderLeft: '4px solid #E63946',
+                                    border: '1px solid #ECE9E3',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
-                                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.03)'
+                                    boxShadow: '0 4px 16px rgba(61, 43, 38, 0.03)'
                                 }}>
                                     <Box sx={{
-                                        width: '38px',
-                                        height: '38px',
-                                        borderRadius: '12px',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '14px',
                                         background: '#FFF0F2',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0
                                     }}>
-                                        <PersonOutlineIcon style={{ color: '#E63946', fontSize: 20 }} />
+                                        <PersonOutlineIcon style={{ color: '#E63946', fontSize: 21 }} />
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left' }}>
-                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '2px' }}>Display Name</strong>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '1px' }}>Display Name</strong>
                                         {isEditingName ? (
                                             <Input
                                                 value={editName}
@@ -864,7 +912,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 fontWeight="600"
                                             />
                                         ) : (
-                                            <span style={{ fontWeight: 700, color: '#18181B', fontSize: '1rem' }}>{user && user.name}</span>
+                                            <span style={{ fontWeight: 700, color: '#18181B', fontSize: '0.98rem' }}>{user && user.name}</span>
                                         )}
                                     </span>
                                     {isEditingName ? (
@@ -889,44 +937,43 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="xs"
                                                 onClick={() => { setEditName(user?.name || ''); setIsEditingName(true); }}
-                                                style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 10px', fontWeight: 600 }}
+                                                style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 12px', fontWeight: 700, fontSize: '0.75rem' }}
                                             >
-                                                <EditIcon fontSize="12px" style={{ marginRight: '4px' }} /> Edit
+                                                <EditIcon fontSize="11px" style={{ marginRight: '4px' }} /> Edit
                                             </Button>
                                         </Tooltip>
                                     )}
                                 </Box>
                             </motion.div>
 
-                            {/* 2. USERNAME FIELD */}
+                            {/* 2. UNIQUE USERNAME CARD */}
                             <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }} style={{ width: '100%' }}>
                                 <Box sx={{
                                     width: '100%',
-                                    p: 3,
+                                    p: 2.8,
                                     px: 3.5,
-                                    borderRadius: '18px',
+                                    borderRadius: '20px',
                                     background: '#FFFFFF',
-                                    border: '1px solid #EAE8E3',
-                                    borderLeft: '4px solid #E63946',
+                                    border: '1px solid #ECE9E3',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
-                                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.03)'
+                                    boxShadow: '0 4px 16px rgba(61, 43, 38, 0.03)'
                                 }}>
                                     <Box sx={{
-                                        width: '38px',
-                                        height: '38px',
-                                        borderRadius: '12px',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '14px',
                                         background: '#FFF0F2',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0
                                     }}>
-                                        <span style={{ fontSize: '1.15rem' }}>🏷️</span>
+                                        <span style={{ fontSize: '1.2rem' }}>🏷️</span>
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '2px' }}>Unique Username</strong>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '1px' }}>Unique Username</strong>
                                         {isEditingUsername ? (
                                             <Input
                                                 value={editUsername}
@@ -943,7 +990,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 placeholder="e.g. vicky123"
                                             />
                                         ) : (
-                                            <span style={{ fontWeight: 800, color: '#E63946', fontSize: '1rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                            <span style={{ fontWeight: 800, color: '#E63946', fontSize: '0.98rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
                                         )}
                                     </span>
                                     {isEditingUsername ? (
@@ -969,9 +1016,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 <Button
                                                     size="xs"
                                                     onClick={() => { setEditUsername(user?.username || ''); setIsEditingUsername(true); }}
-                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 10px', fontWeight: 600 }}
+                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 10px', fontWeight: 700, fontSize: '0.75rem' }}
                                                 >
-                                                    <EditIcon fontSize="12px" style={{ marginRight: '4px' }} /> Edit
+                                                    <EditIcon fontSize="11px" style={{ marginRight: '4px' }} /> Edit
                                                 </Button>
                                             </Tooltip>
                                             <Tooltip label="Copy Username" hasArrow placement="top">
@@ -982,7 +1029,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         navigator.clipboard.writeText(`@${uName}`);
                                                         toast.success('Username copied!', { autoClose: 1500, hideProgressBar: true });
                                                     }}
-                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 8px', fontWeight: 600 }}
+                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 10px', fontWeight: 700, fontSize: '0.75rem' }}
                                                 >
                                                     📋 Copy
                                                 </Button>
@@ -992,35 +1039,34 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 </Box>
                             </motion.div>
 
-                            {/* 3. EMAIL FIELD */}
+                            {/* 3. EMAIL ADDRESS CARD */}
                             <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }} style={{ width: '100%' }}>
                                 <Box sx={{
                                     width: '100%',
-                                    p: 3,
+                                    p: 2.8,
                                     px: 3.5,
-                                    borderRadius: '18px',
+                                    borderRadius: '20px',
                                     background: '#FFFFFF',
-                                    border: '1px solid #EAE8E3',
-                                    borderLeft: '4px solid #E63946',
+                                    border: '1px solid #ECE9E3',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
-                                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.03)'
+                                    boxShadow: '0 4px 16px rgba(61, 43, 38, 0.03)'
                                 }}>
                                     <Box sx={{
-                                        width: '38px',
-                                        height: '38px',
-                                        borderRadius: '12px',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '14px',
                                         background: '#FFF0F2',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0
                                     }}>
-                                        <EmailIcon style={{ color: '#E63946', fontSize: 20 }} />
+                                        <EmailIcon style={{ color: '#E63946', fontSize: 21 }} />
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '2px' }}>Email Address</strong>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '1px' }}>Email Address</strong>
                                         {isEditingEmail ? (
                                             <Input
                                                 value={editEmail}
@@ -1060,9 +1106,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="xs"
                                                 onClick={() => { setEditEmail(user?.email || ''); setIsEditingEmail(true); }}
-                                                style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 10px', fontWeight: 600 }}
+                                                style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 12px', fontWeight: 700, fontSize: '0.75rem' }}
                                             >
-                                                <EditIcon fontSize="12px" style={{ marginRight: '4px' }} /> Edit
+                                                <EditIcon fontSize="11px" style={{ marginRight: '4px' }} /> Edit
                                             </Button>
                                         </Tooltip>
                                     )}
@@ -1070,7 +1116,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             </motion.div>
                         </VStack>
 
-                        {/* ── MODAL FOOTER DUAL ACTION BUTTONS ── */}
+                        {/* ── MODAL FOOTER DUAL ACTION PILL BUTTONS ── */}
                         <Box display="flex" gap={3} justifyContent="center" width="100%">
                             <MDBBtn
                                 onClick={() => setIsAvatarStudioOpen(true)}
@@ -1080,7 +1126,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     color: '#E63946',
                                     fontWeight: 700,
                                     height: '46px',
-                                    borderRadius: '14px',
+                                    borderRadius: '30px',
                                     border: '1px solid #FFE3E6',
                                     textTransform: 'none',
                                     boxShadow: 'none',
@@ -1097,9 +1143,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     color: '#FFFFFF',
                                     fontWeight: 700,
                                     height: '46px',
-                                    borderRadius: '14px',
+                                    borderRadius: '30px',
                                     textTransform: 'none',
-                                    boxShadow: '0 6px 18px rgba(230, 57, 70, 0.25)',
+                                    boxShadow: '0 8px 24px rgba(230, 57, 70, 0.35)',
                                     fontSize: '0.9rem'
                                 }}
                             >
