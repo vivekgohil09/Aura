@@ -5,6 +5,14 @@
       "destination": "https://aura-vdcq.onrender.com/api/:path*"
     },
     {
+      "source": "/ws/:path*",
+      "destination": "https://aura-vdcq.onrender.com/ws/:path*"
+    },
+    {
+      "source": "/socket.io/:path*",
+      "destination": "https://aura-vdcq.onrender.com/socket.io/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
