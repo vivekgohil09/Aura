@@ -799,7 +799,49 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 </Box>
                             </motion.div>
 
-                            {/* 2. EMAIL FIELD */}
+                            {/* 2. USERNAME FIELD */}
+                            <motion.div
+                                whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(230, 57, 70, 0.08)" }}
+                                transition={{ duration: 0.2 }}
+                                style={{ width: '100%' }}
+                            >
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 3.5,
+                                    px: 4,
+                                    borderRadius: '16px',
+                                    background: 'linear-gradient(to right, #FFFFFF, #FCFBF9)',
+                                    border: '1px solid #EAE8E3',
+                                    borderLeft: '4px solid #E63946',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    fontSize: '0.95rem',
+                                    color: '#303633',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
+                                }}>
+                                    <span style={{ fontSize: '1.3rem', color: '#E63946' }}>🏷️</span>
+                                    <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '2px' }}>Username</strong>
+                                        <span style={{ fontWeight: 800, color: '#E63946', fontSize: '1.05rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                    </span>
+                                    <Tooltip label="Copy Username" hasArrow placement="top">
+                                        <Button
+                                            size="xs"
+                                            onClick={() => {
+                                                const uName = user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user');
+                                                navigator.clipboard.writeText(`@${uName}`);
+                                                toast.success('Username copied!', { autoClose: 1500, hideProgressBar: true });
+                                            }}
+                                            style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '8px', border: '1px solid #FFE3E6', padding: '0 8px' }}
+                                        >
+                                            📋 Copy
+                                        </Button>
+                                    </Tooltip>
+                                </Box>
+                            </motion.div>
+
+                            {/* 3. EMAIL FIELD */}
                             <motion.div
                                 whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(201, 173, 115, 0.08)" }}
                                 transition={{ duration: 0.2 }}
@@ -868,35 +910,6 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             </Button>
                                         </Tooltip>
                                     )}
-                                </Box>
-                            </motion.div>
-
-                            {/* 3. USERNAME FIELD & QR CARD */}
-                            <motion.div
-                                whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(230, 57, 70, 0.08)" }}
-                                transition={{ duration: 0.2 }}
-                                style={{ width: '100%' }}
-                            >
-                                <Box sx={{
-                                    width: '100%',
-                                    p: 3.5,
-                                    px: 4,
-                                    borderRadius: '16px',
-                                    background: 'linear-gradient(to right, #FFFFFF, #FCFBF9)',
-                                    border: '1px solid #EAE8E3',
-                                    borderLeft: '4px solid #E63946',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 3,
-                                    fontSize: '0.95rem',
-                                    color: '#303633',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
-                                }}>
-                                    <span style={{ fontSize: '1.3rem', color: '#E63946' }}>🏷️</span>
-                                    <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '2px' }}>Unique Username</strong>
-                                        <span style={{ fontWeight: 800, color: '#E63946', fontSize: '1.05rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
-                                    </span>
                                 </Box>
                             </motion.div>
 
