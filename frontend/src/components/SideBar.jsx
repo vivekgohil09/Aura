@@ -941,7 +941,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         </Tooltip>
                                     )}
                                 </Box>
-                                        </VStack>
+                            </motion.div>
+                        </VStack>
 
                         <Box display="flex" gap={3} justifyContent="center" width="100%">
                             <MDBBtn
