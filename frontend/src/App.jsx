@@ -25,10 +25,11 @@ function LayoutWrapper() {
     <>
       {!isChatRoute && <Header />}
       <Switch>
-        <Route exact path="/" component={ChatPage} />
+        <Route exact path="/" component={AuraLandingPage} />
         <Route path="/chats" component={ChatPage} />
         <Route path="/sunset" component={SunsetLandingPage} />
         <Route path="/aura" component={AuraLandingPage} />
+        <Route path="/landing" component={AuraLandingPage} />
         <Route path="/classic" component={WhiteCreamLandingPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/signup" component={SignUpPage} />
