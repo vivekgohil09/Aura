@@ -48,6 +48,31 @@ export const getSender = (loggedUser, users) => {
     return users[0]?.name || "User";
 };
 
+export const getSenderUser = (loggedUser, users) => {
+    if (!users || users.length === 0) return null;
+    let x = {};
+    try {
+        x = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    } catch (e) {}
+    const currentUser = x.userLogin || x.data || x || loggedUser?.userLogin || loggedUser || {};
+    const loggedId = currentUser._id || currentUser.id || currentUser.userId;
+    const loggedEmail = currentUser.email ? currentUser.email.toLowerCase() : "";
+
+    const otherUser = users.find(u => {
+        const uId = u._id || u.id || u.userId;
+        const uEmail = u.email ? u.email.toLowerCase() : "";
+        if (loggedId && uId) {
+            return String(uId) !== String(loggedId);
+        }
+        if (loggedEmail && uEmail) {
+            return uEmail !== loggedEmail;
+        }
+        return false;
+    });
+
+    return otherUser || users[0] || null;
+};
+
 export const getPicture = (loggedUser, users) => {
     const defaultPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     if (!users || users.length === 0) return defaultPic;

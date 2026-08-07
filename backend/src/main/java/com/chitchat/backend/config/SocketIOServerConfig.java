@@ -26,6 +26,9 @@ public class SocketIOServerConfig {
     @Autowired
     private WebSocketMessageBuffer messageBuffer;
 
+    @Autowired
+    private com.chitchat.backend.service.UserService userService;
+
     // Maps Socket.IO client session ID → app user ID (from JWT)
     private final Map<String, String> sessionToUserId = new ConcurrentHashMap<>();
 
@@ -56,6 +59,12 @@ public class SocketIOServerConfig {
                 if (userId != null) {
                     sessionToUserId.put(client.getSessionId().toString(), userId);
                     client.joinRoom("user_" + userId);
+                    userService.updateOnlineStatus(userId, true);
+                    server.getBroadcastOperations().sendEvent("user status change", Map.of(
+                        "userId", userId,
+                        "isOnline", true,
+                        "lastSeen", ""
+                    ));
                     System.out.println("✅ User " + userId + " connected via socket");
                 }
             }
@@ -130,13 +139,48 @@ public class SocketIOServerConfig {
             server.getBroadcastOperations().sendEvent("end-call", data);
         });
 
+        // ── Direct Browser Close / Unload Event ─────────────────────────────
+        server.addEventListener("leave-app", Object.class, (client, data, ackSender) -> {
+            String sessionId = client.getSessionId().toString();
+            String userId    = sessionToUserId.remove(sessionId);
+            if (userId != null) {
+                if (messageBuffer.hasPending(userId)) {
+                    messageBuffer.flushForClient(userId);
+                }
+                if (!sessionToUserId.containsValue(userId)) {
+                    var updatedUser = userService.updateOnlineStatus(userId, false);
+                    String lastSeenStr = (updatedUser != null && updatedUser.getLastSeen() != null)
+                            ? updatedUser.getLastSeen().toString()
+                            : java.time.LocalDateTime.now().toString();
+                    server.getBroadcastOperations().sendEvent("user status change", Map.of(
+                        "userId", userId,
+                        "isOnline", false,
+                        "lastSeen", lastSeenStr
+                    ));
+                }
+            }
+        });
+
         // ── On disconnect: flush all pending messages for this user ─────────
         server.addDisconnectListener(client -> {
             String sessionId = client.getSessionId().toString();
             String userId    = sessionToUserId.remove(sessionId);
-            if (userId != null && messageBuffer.hasPending(userId)) {
-                System.out.println("👋 User " + userId + " disconnected — flushing buffered messages…");
-                messageBuffer.flushForClient(userId);
+            if (userId != null) {
+                if (messageBuffer.hasPending(userId)) {
+                    System.out.println("👋 User " + userId + " disconnected — flushing buffered messages…");
+                    messageBuffer.flushForClient(userId);
+                }
+                if (!sessionToUserId.containsValue(userId)) {
+                    var updatedUser = userService.updateOnlineStatus(userId, false);
+                    String lastSeenStr = (updatedUser != null && updatedUser.getLastSeen() != null)
+                            ? updatedUser.getLastSeen().toString()
+                            : java.time.LocalDateTime.now().toString();
+                    server.getBroadcastOperations().sendEvent("user status change", Map.of(
+                        "userId", userId,
+                        "isOnline", false,
+                        "lastSeen", lastSeenStr
+                    ));
+                }
             }
         });
 

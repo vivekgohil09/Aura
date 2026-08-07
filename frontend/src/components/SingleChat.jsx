@@ -28,7 +28,7 @@ import {
     Portal
 } from '@chakra-ui/react'
 import { delSelectedChat , setNotification } from "../redux/actions/index"
-import { getSender, getPicture } from '../config/ChatsLogic';
+import { getSender, getPicture, getSenderUser } from '../config/ChatsLogic';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDisclosure } from "@chakra-ui/hooks";
@@ -82,6 +82,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [scheduleModal, setScheduleModal] = useState(false);
     const [scheduledAt, setScheduledAt] = useState('');
     const [pendingScheduled, setPendingScheduled] = useState([]);
+    const [userStatuses, setUserStatuses] = useState({});
+
+    const formatLastSeenDate = (lastSeenRaw) => {
+        if (!lastSeenRaw) return "recently";
+        try {
+            const date = new Date(lastSeenRaw);
+            if (isNaN(date.getTime())) return "recently";
+            
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            const isYesterday = date.toDateString() === yesterday.toDateString();
+            
+            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            if (isToday) {
+                return `today at ${timeString}`;
+            }
+            if (isYesterday) {
+                return `yesterday at ${timeString}`;
+            }
+            const dateString = date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+            return `${dateString}, ${timeString}`;
+        } catch (e) {
+            return "recently";
+        }
+    };
 
     // WebRTC & WebSocket Call State Management
     const [showPicker, setShowPicker] = useState(false);
@@ -781,6 +810,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             if (globalSocket) {
                 socket = globalSocket;
                 socket.off("connected").on("connected", () => setSocketConnected(true));
+                socket.off("user status change").on("user status change", (data) => {
+                    if (data && data.userId) {
+                        setUserStatuses(prev => ({
+                            ...prev,
+                            [data.userId]: {
+                                isOnline: Boolean(data.isOnline),
+                                lastSeen: data.lastSeen
+                            }
+                        }));
+                    }
+                });
                 socket.off("end-call").on("end-call", () => {
                     if (localVideoRef.current && localVideoRef.current.srcObject) {
                         localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
@@ -795,6 +835,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     socket = io(ENDPOINT, { transports: ["websocket", "polling"] });
                     socket.emit("setup", userInfo);
                     socket.on("connected", () => setSocketConnected(true));
+                    socket.on("user status change", (data) => {
+                        if (data && data.userId) {
+                            setUserStatuses(prev => ({
+                                ...prev,
+                                [data.userId]: {
+                                    isOnline: Boolean(data.isOnline),
+                                    lastSeen: data.lastSeen
+                                }
+                            }));
+                        }
+                    });
                     window.__auraSocket = socket;
                 } catch (e) {}
             }
@@ -861,8 +912,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                         alignItems="center"
                         style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", marginBottom: "10px" }}
                     >
-                        {!selectedChat.isGroupChat ? (
-                            <>
+                        {!selectedChat.isGroupChat ? (() => {
+                            const targetUser = getSenderUser(user, selectedChat.users);
+                            const targetUserId = targetUser?._id || targetUser?.id;
+                            const statusObj = targetUserId && userStatuses[targetUserId] ? userStatuses[targetUserId] : null;
+                            const isTargetOnline = statusObj != null 
+                                ? statusObj.isOnline 
+                                : Boolean(targetUser?.isOnline || targetUser?.online);
+                            const targetLastSeen = statusObj != null && statusObj.lastSeen != null
+                                ? statusObj.lastSeen
+                                : targetUser?.lastSeen;
+
+                            return (
                                 <div className='d-flex align-items-center' style={{ gap: '12px' }}>
                                     <Box display={{ base: "inline-block", md: "none" }}>
                                         <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
@@ -900,7 +961,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 right: "2px",
                                                 width: "10px",
                                                 height: "10px",
-                                                backgroundColor: "#10B981",
+                                                backgroundColor: isTargetOnline ? "#10B981" : "#9CA3AF",
                                                 borderRadius: "50%",
                                                 border: "2px solid #FFFFFF",
                                             }}
@@ -910,12 +971,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         <p className="fw-bold fs-5 m-0" style={{ color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap" }}>
                                             {getSender(user, selectedChat.users)}
                                         </p>
-                                        <span style={{ fontSize: "0.75rem", color: "#10B981", display: "flex", alignItems: "center", gap: "5px", fontWeight: 600, marginTop: "2px" }}>
-                                            <span style={{ width: "6px", height: "6px", backgroundColor: "#10B981", borderRadius: "50%", display: "inline-block" }}></span>
-                                            Online
-                                        </span>
+                                        {isTargetOnline ? (
+                                            <span style={{ fontSize: "0.75rem", color: "#10B981", display: "flex", alignItems: "center", gap: "5px", fontWeight: 600, marginTop: "2px" }}>
+                                                <span style={{ width: "6px", height: "6px", backgroundColor: "#10B981", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px rgba(16, 185, 129, 0.6)" }}></span>
+                                                Online
+                                            </span>
+                                        ) : (
+                                            <span style={{ fontSize: "0.75rem", color: "#71717A", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, marginTop: "2px" }}>
+                                                <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block" }}></span>
+                                                Last seen {formatLastSeenDate(targetLastSeen)}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
+                            );
+                        })()
                                 <div className='d-flex align-items-center gap-2'>
                                     <Tooltip label="Voice Call" hasArrow placement="bottom-end">
                                         <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>

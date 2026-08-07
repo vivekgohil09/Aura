@@ -244,4 +244,15 @@ public class UserService {
         }
         return userRepository.save(user);
     }
+
+    public User updateOnlineStatus(String userId, boolean isOnline) {
+        if (userId == null) return null;
+        return userRepository.findById(userId).map(user -> {
+            user.setOnline(isOnline);
+            if (!isOnline) {
+                user.setLastSeen(java.time.LocalDateTime.now());
+            }
+            return userRepository.save(user);
+        }).orElse(null);
+    }
 }

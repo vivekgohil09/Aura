@@ -61,6 +61,22 @@ export default function App() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("userInfo"));
     dispatch(setUserDetails(user));
+
+    const handleUnload = () => {
+      if (window.__auraSocket) {
+        try {
+          window.__auraSocket.emit("leave-app", { userId: user?._id || user?.id });
+          window.__auraSocket.disconnect();
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", handleUnload);
+    };
   }, []);
 
   return (

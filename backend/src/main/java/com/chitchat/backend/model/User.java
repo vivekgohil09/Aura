@@ -41,6 +41,12 @@ public class User {
     @Column(nullable = false)
     private boolean isAdmin = false;
 
+    @Column(name = "IS_ONLINE")
+    private boolean isOnline = false;
+
+    @Column(name = "LAST_SEEN")
+    private LocalDateTime lastSeen;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
