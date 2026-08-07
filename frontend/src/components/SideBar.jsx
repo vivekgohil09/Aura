@@ -1158,35 +1158,179 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 </ModalContent>
             </Modal>
 
-            {/* ── QR CODE & BARCODE SCANNER MODAL ── */}
-            <Modal isOpen={isQrScannerOpen} onClose={() => setIsQrScannerOpen(false)} size="md">
-                <ModalOverlay style={{ backdropFilter: "blur(8px)" }} />
-                <ModalContent style={{ borderRadius: '24px', p: 2 }}>
-                    <ModalHeader style={{ textAlign: 'center', fontWeight: 800, color: '#303633', borderBottom: '1px solid #ECE9E1', pb: 3 }}>
-                        📱 Profile QR Code & Barcode Card
-                    </ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody className="text-center py-4">
-                        <Box sx={{
-                            p: 3,
-                            borderRadius: '18px',
-                            background: '#FFF0F2',
-                            border: '1.5px solid #FFE3E6',
-                            mb: 4
-                        }}>
-                            <h5 style={{ margin: '0 0 10px', fontSize: '1rem', fontWeight: 800, color: '#E63946' }}>
+            {/* ── DIGITAL VIP QR PASS MODAL (ULTRA-AESTHETIC DESIGN) ── */}
+            <Modal isOpen={isQrScannerOpen} onClose={() => setIsQrScannerOpen(false)} size="md" isCentered>
+                <ModalOverlay style={{ backdropFilter: "blur(14px)", background: "rgba(15, 12, 10, 0.55)" }} />
+                <ModalContent style={{
+                    borderRadius: '32px',
+                    background: '#FAF8F5',
+                    color: '#303633',
+                    border: '1px solid rgba(230, 57, 70, 0.15)',
+                    boxShadow: '0 35px 80px rgba(30, 20, 15, 0.25)',
+                    overflow: 'hidden'
+                }}>
+                    {/* Hero Header Cover */}
+                    <Box sx={{
+                        height: '110px',
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #18181B 0%, #27272A 50%, #3F3F46 100%)',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        p: 3,
+                        px: 4
+                    }}>
+                        <Badge
+                            sx={{
+                                bg: 'rgba(255, 255, 255, 0.15)',
+                                backdropFilter: 'blur(10px)',
+                                color: '#FFFFFF',
+                                borderRadius: '12px',
+                                px: 3,
+                                py: 1,
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                border: '1px solid rgba(255, 255, 255, 0.2)'
+                            }}
+                        >
+                            ✦ DIGITAL VIP PASS
+                        </Badge>
+                        <Box
+                            onClick={() => setIsQrScannerOpen(false)}
+                            sx={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                bg: 'rgba(255, 255, 255, 0.15)',
+                                backdropFilter: 'blur(10px)',
+                                color: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                '&:hover': {
+                                    bg: '#E63946',
+                                    transform: 'scale(1.1)'
+                                }
+                            }}
+                        >
+                            <CloseIcon style={{ fontSize: 10 }} />
+                        </Box>
+                    </Box>
+
+                    <ModalBody className="text-center pb-6 pt-0 px-6">
+                        {/* Overlapping Avatar Circle */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4, position: 'relative', marginTop: '-45px' }}>
+                            <Avatar
+                                size="lg"
+                                name={user && user.name}
+                                src={user && user.pic}
+                                bg="#E63946"
+                                color="#FFFFFF"
+                                style={{
+                                    width: '86px',
+                                    height: '86px',
+                                    border: "3.5px solid #FFFFFF",
+                                    boxShadow: "0 12px 30px rgba(0, 0, 0, 0.2)"
+                                }}
+                            />
+                            <h4 style={{ margin: '10px 0 2px', fontSize: '1.25rem', fontWeight: 800, color: '#18181B', fontFamily: "'Outfit', sans-serif" }}>
+                                {user?.name || "Aura User"}
+                            </h4>
+                            <Badge
+                                sx={{
+                                    bg: '#FFF0F2',
+                                    color: '#E63946',
+                                    borderRadius: '20px',
+                                    px: 3,
+                                    py: 0.6,
+                                    fontSize: '0.8rem',
+                                    fontWeight: 800,
+                                    border: '1px solid #FFE3E6'
+                                }}
+                            >
                                 @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
-                            </h5>
-                            <div style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '14px', borderRadius: '16px', border: '1px solid #FFE3E6', marginBottom: '10px' }}>
-                                <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=@${user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}`}
-                                    alt="User QR Code"
-                                    style={{ width: '150px', height: '150px' }}
-                                />
-                            </div>
-                            <p style={{ margin: 0, fontSize: '0.78rem', color: '#806C65', fontWeight: 600 }}>
-                                Scan this QR code or Barcode payload to view profile
-                            </p>
+                            </Badge>
+                        </Box>
+
+                        {/* Pristine QR Code Container */}
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.25 }}>
+                            <Box sx={{
+                                p: 4,
+                                borderRadius: '24px',
+                                background: '#FFFFFF',
+                                border: '1px solid #ECE9E3',
+                                boxShadow: '0 16px 40px rgba(61, 43, 38, 0.06)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                mb: 5
+                            }}>
+                                <Box sx={{
+                                    p: 3,
+                                    borderRadius: '20px',
+                                    background: 'linear-gradient(135deg, #FFF0F2 0%, #FFFFFF 100%)',
+                                    border: '1.5px solid #FFE3E6',
+                                    boxShadow: 'inset 0 2px 6px rgba(230, 57, 70, 0.05)',
+                                    mb: 3
+                                }}>
+                                    <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=@${user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}`}
+                                        alt="User QR Code"
+                                        style={{ width: '160px', height: '160px', borderRadius: '12px', display: 'block' }}
+                                    />
+                                </Box>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#806C65', fontWeight: 600 }}>
+                                    📱 Scan payload to instantly view profile card
+                                </p>
+                            </Box>
+                        </motion.div>
+
+                        {/* Dual Action Buttons */}
+                        <Box display="flex" gap={3} width="100%">
+                            <Button
+                                onClick={() => {
+                                    const uName = user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user');
+                                    navigator.clipboard.writeText(`@${uName}`);
+                                    toast.success('Username copied!', { autoClose: 1500, hideProgressBar: true });
+                                }}
+                                style={{
+                                    flex: 1,
+                                    background: '#FFF0F2',
+                                    color: '#E63946',
+                                    fontWeight: 700,
+                                    height: '44px',
+                                    borderRadius: '24px',
+                                    border: '1px solid #FFE3E6',
+                                    fontSize: '0.85rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <ContentCopyIcon style={{ fontSize: 14 }} /> Copy Handle
+                            </Button>
+                            <Button
+                                onClick={() => setIsQrScannerOpen(false)}
+                                style={{
+                                    flex: 1,
+                                    background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                                    color: '#FFFFFF',
+                                    fontWeight: 700,
+                                    height: '44px',
+                                    borderRadius: '24px',
+                                    boxShadow: '0 6px 20px rgba(230, 57, 70, 0.3)',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                Close Pass
+                            </Button>
                         </Box>
                     </ModalBody>
                 </ModalContent>
