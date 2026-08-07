@@ -75,21 +75,35 @@ public class UserService {
     }
 
     public AuthDto.AuthResponse googleLogin(AuthDto.GoogleLoginRequest request) {
-        if (request.getCredential() == null || request.getCredential().isEmpty()) {
-            throw new com.chitchat.backend.exception.GoogleAuthException("Invalid Google Credential Token");
-        }
+        String name = (request.getName() != null && !request.getName().trim().isEmpty()) 
+                ? request.getName().trim() 
+                : "Google User";
 
-        // For demonstration/testing token decoding or custom integration:
-        String dummyEmail = "google_user_" + Math.abs(request.getCredential().hashCode()) + "@aura.com";
-        String dummyName = "Google User";
-        String dummyPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        String email = (request.getEmail() != null && !request.getEmail().trim().isEmpty()) 
+                ? request.getEmail().trim().toLowerCase() 
+                : "google_user_" + Math.abs(request.getCredential() != null ? request.getCredential().hashCode() : System.currentTimeMillis()) + "@aura.com";
 
-        User user = userRepository.findByEmail(dummyEmail).orElseGet(() -> {
+        String pic = (request.getPic() != null && !request.getPic().trim().isEmpty()) 
+                ? request.getPic().trim() 
+                : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+        User user = userRepository.findByEmail(email).map(existing -> {
+            boolean updated = false;
+            if (request.getName() != null && !request.getName().trim().isEmpty()) {
+                existing.setName(request.getName().trim());
+                updated = true;
+            }
+            if (request.getPic() != null && !request.getPic().trim().isEmpty()) {
+                existing.setPic(request.getPic().trim());
+                updated = true;
+            }
+            return updated ? userRepository.save(existing) : existing;
+        }).orElseGet(() -> {
             User newUser = User.builder()
-                    .name(dummyName)
-                    .email(dummyEmail)
+                    .name(name)
+                    .email(email)
                     .password(passwordEncoder.encode("GOOGLE_SSO_" + System.currentTimeMillis()))
-                    .pic(dummyPic)
+                    .pic(pic)
                     .isAdmin(false)
                     .build();
             return userRepository.save(newUser);

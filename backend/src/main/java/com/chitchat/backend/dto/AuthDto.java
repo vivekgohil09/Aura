@@ -29,6 +29,9 @@ public class AuthDto {
     @AllArgsConstructor
     public static class GoogleLoginRequest {
         private String credential;
+        private String name;
+        private String email;
+        private String pic;
     }
 
     @Data

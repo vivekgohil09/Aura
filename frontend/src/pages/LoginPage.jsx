@@ -178,9 +178,30 @@ export default function LoginPage() {
     }
   };
 
+  const parseJwt = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
+  };
+
   const handleGoogleLogin = async (response) => {
     setLoading(true);
     try {
+      const decoded = response?.credential ? parseJwt(response.credential) : null;
+      const googleName = decoded?.name || decoded?.given_name || "Google User";
+      const googleEmail = decoded?.email || "";
+      const googlePic = decoded?.picture || "";
+
       const config = {
         headers: {
           "Content-type": "application/json",
@@ -189,7 +210,12 @@ export default function LoginPage() {
 
       const { data } = await axios.post(
         `/api/user/google/login`,
-        { credential: response?.credential || "GOOGLE_SSO_DEMO_TOKEN" },
+        {
+          credential: response?.credential || "GOOGLE_SSO_DEMO_TOKEN",
+          name: googleName,
+          email: googleEmail,
+          pic: googlePic,
+        },
         config
       );
 
