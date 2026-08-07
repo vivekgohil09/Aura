@@ -924,108 +924,108 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                 : targetUser?.lastSeen;
 
                             return (
-                                <div className='d-flex align-items-center' style={{ gap: '12px' }}>
-                                    <Box display={{ base: "inline-block", md: "none" }}>
-                                        <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
-                                            <IconButton
-                                                size="sm"
-                                                icon={<ArrowBackIcon color="#E63946" fontSize="20px" />}
-                                                onClick={() => dispatch(delSelectedChat())}
-                                                aria-label="Back to conversations"
+                                <>
+                                    <div className='d-flex align-items-center' style={{ gap: '12px' }}>
+                                        <Box display={{ base: "inline-block", md: "none" }}>
+                                            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                                                <IconButton
+                                                    size="sm"
+                                                    icon={<ArrowBackIcon color="#E63946" fontSize="20px" />}
+                                                    onClick={() => dispatch(delSelectedChat())}
+                                                    aria-label="Back to conversations"
+                                                    style={{
+                                                        background: "#FFF0F2",
+                                                        borderRadius: "12px",
+                                                        border: "1px solid #FFE3E6",
+                                                        width: "38px",
+                                                        height: "38px",
+                                                        boxShadow: "0 2px 8px rgba(230, 57, 70, 0.1)"
+                                                    }}
+                                                />
+                                            </motion.div>
+                                        </Box>
+                                        <div style={{ position: "relative" }}>
+                                            <Avatar 
+                                                size="md" 
+                                                cursor="pointer" 
+                                                src={getPicture(user, selectedChat.users)} 
+                                                name={getSender(user, selectedChat.users)} 
+                                                bg="#FFE3E6"
+                                                color="#E63946"
+                                                fontWeight="700"
+                                                style={{ border: "2px solid #FFE3E6" }}
+                                            />
+                                            <span 
                                                 style={{
-                                                    background: "#FFF0F2",
-                                                    borderRadius: "12px",
-                                                    border: "1px solid #FFE3E6",
-                                                    width: "38px",
-                                                    height: "38px",
-                                                    boxShadow: "0 2px 8px rgba(230, 57, 70, 0.1)"
+                                                    position: "absolute",
+                                                    bottom: "2px",
+                                                    right: "2px",
+                                                    width: "10px",
+                                                    height: "10px",
+                                                    backgroundColor: isTargetOnline ? "#10B981" : "#9CA3AF",
+                                                    borderRadius: "50%",
+                                                    border: "2px solid #FFFFFF",
                                                 }}
                                             />
-                                        </motion.div>
-                                    </Box>
-                                    <div style={{ position: "relative" }}>
-                                        <Avatar 
-                                            size="md" 
-                                            cursor="pointer" 
-                                            src={getPicture(user, selectedChat.users)} 
-                                            name={getSender(user, selectedChat.users)} 
-                                            bg="#FFE3E6"
-                                            color="#E63946"
-                                            fontWeight="700"
-                                            style={{ border: "2px solid #FFE3E6" }}
-                                        />
-                                        <span 
-                                            style={{
-                                                position: "absolute",
-                                                bottom: "2px",
-                                                right: "2px",
-                                                width: "10px",
-                                                height: "10px",
-                                                backgroundColor: isTargetOnline ? "#10B981" : "#9CA3AF",
-                                                borderRadius: "50%",
-                                                border: "2px solid #FFFFFF",
-                                            }}
-                                        />
+                                        </div>
+                                        <div className="d-flex flex-column justify-content-center">
+                                            <p className="fw-bold fs-5 m-0" style={{ color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                                                {getSender(user, selectedChat.users)}
+                                            </p>
+                                            {isTargetOnline ? (
+                                                <span style={{ fontSize: "0.75rem", color: "#10B981", display: "flex", alignItems: "center", gap: "5px", fontWeight: 600, marginTop: "2px" }}>
+                                                    <span style={{ width: "6px", height: "6px", backgroundColor: "#10B981", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px rgba(16, 185, 129, 0.6)" }}></span>
+                                                    Online
+                                                </span>
+                                            ) : (
+                                                <span style={{ fontSize: "0.75rem", color: "#71717A", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, marginTop: "2px" }}>
+                                                    <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block" }}></span>
+                                                    Last seen {formatLastSeenDate(targetLastSeen)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="d-flex flex-column justify-content-center">
-                                        <p className="fw-bold fs-5 m-0" style={{ color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap" }}>
-                                            {getSender(user, selectedChat.users)}
-                                        </p>
-                                        {isTargetOnline ? (
-                                            <span style={{ fontSize: "0.75rem", color: "#10B981", display: "flex", alignItems: "center", gap: "5px", fontWeight: 600, marginTop: "2px" }}>
-                                                <span style={{ width: "6px", height: "6px", backgroundColor: "#10B981", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px rgba(16, 185, 129, 0.6)" }}></span>
-                                                Online
-                                            </span>
-                                        ) : (
-                                            <span style={{ fontSize: "0.75rem", color: "#71717A", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, marginTop: "2px" }}>
-                                                <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block" }}></span>
-                                                Last seen {formatLastSeenDate(targetLastSeen)}
-                                            </span>
-                                        )}
+                                    <div className='d-flex align-items-center gap-2'>
+                                        <Tooltip label="Voice Call" hasArrow placement="bottom-end">
+                                            <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
+                                                <IconButton
+                                                    size="sm"
+                                                    onClick={() => startVideoCall("voice")}
+                                                    icon={<Phone size={18} color="#E63946" />}
+                                                    aria-label="Voice Call"
+                                                    style={{
+                                                        background: "#FFFFFF",
+                                                        borderRadius: "12px",
+                                                        border: "1px solid #F1F1F4",
+                                                        width: "38px",
+                                                        height: "38px",
+                                                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
+                                                    }}
+                                                />
+                                            </motion.div>
+                                        </Tooltip>
+                                        <Tooltip label="Video Call" hasArrow placement="bottom-end">
+                                            <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
+                                                <IconButton
+                                                    size="sm"
+                                                    onClick={() => startVideoCall("video")}
+                                                    icon={<Video size={18} color="#FFFFFF" />}
+                                                    aria-label="Video Call"
+                                                    style={{
+                                                        background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
+                                                        borderRadius: "12px",
+                                                        border: "none",
+                                                        width: "38px",
+                                                        height: "38px",
+                                                        boxShadow: "0 4px 14px rgba(230, 57, 70, 0.3)"
+                                                    }}
+                                                />
+                                            </motion.div>
+                                        </Tooltip>
                                     </div>
-                                </div>
+                                </>
                             );
-                        })()
-                                <div className='d-flex align-items-center gap-2'>
-                                    <Tooltip label="Voice Call" hasArrow placement="bottom-end">
-                                        <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
-                                            <IconButton
-                                                size="sm"
-                                                onClick={() => startVideoCall("voice")}
-                                                icon={<Phone size={18} color="#E63946" />}
-                                                aria-label="Voice Call"
-                                                style={{
-                                                    background: "#FFFFFF",
-                                                    borderRadius: "12px",
-                                                    border: "1px solid #F1F1F4",
-                                                    width: "38px",
-                                                    height: "38px",
-                                                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
-                                                }}
-                                            />
-                                        </motion.div>
-                                    </Tooltip>
-                                    <Tooltip label="Video Call" hasArrow placement="bottom-end">
-                                        <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
-                                            <IconButton
-                                                size="sm"
-                                                onClick={() => startVideoCall("video")}
-                                                icon={<Video size={18} color="#FFFFFF" />}
-                                                aria-label="Video Call"
-                                                style={{
-                                                    background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
-                                                    borderRadius: "12px",
-                                                    border: "none",
-                                                    width: "38px",
-                                                    height: "38px",
-                                                    boxShadow: "0 4px 14px rgba(230, 57, 70, 0.3)"
-                                                }}
-                                            />
-                                        </motion.div>
-                                    </Tooltip>
-                                </div>
-                            </>
-                        ) : (
+                        })() : (
                             <>
                                 <div className='d-flex flex-column justify-content-start align-items-start'>
                                     <div className='d-flex justify-content-start align-items-center gap-2'>
