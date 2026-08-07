@@ -565,22 +565,22 @@ export default function LoginPage() {
             <Box
               sx={{
                 width: '100%',
-                maxWidth: '310px',
+                maxWidth: '345px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 background: 'rgba(255, 255, 255, 0.96)',
                 backdropFilter: 'blur(16px)',
-                p: { xs: 2.5, sm: 3 },
-                borderRadius: '18px',
+                p: { xs: 3, sm: 3.5 },
+                borderRadius: '20px',
                 border: '1px solid rgba(61, 43, 38, 0.08)',
                 boxShadow: '0 10px 32px rgba(61, 43, 38, 0.07)',
                 position: 'relative',
                 zIndex: 1
               }}
             >
-              <h1 style={{ fontSize: '1.65rem', marginBottom: '0.15rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif", color: '#3D2B26', letterSpacing: '-0.03em' }}>Welcome Back</h1>
-              <Typography variant="body2" sx={{ color: '#806C65', mb: 2, fontFamily: "'Inter', sans-serif", fontSize: '0.78rem' }}>
+              <h1 style={{ fontSize: '1.8rem', marginBottom: '0.15rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif", color: '#3D2B26', letterSpacing: '-0.03em' }}>Welcome Back</h1>
+              <Typography variant="body2" sx={{ color: '#806C65', mb: 2.2, fontFamily: "'Inter', sans-serif", fontSize: '0.8rem' }}>
                 Sign in to your <strong style={{ color: '#E63946' }}>AURA</strong> account
               </Typography>
 
