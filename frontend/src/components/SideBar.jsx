@@ -19,7 +19,7 @@ import { Input } from "@chakra-ui/input";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
-import { Search } from 'lucide-react';
+import { Search, QrCode } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
 import Stack from '@mui/material/Stack';
@@ -697,6 +697,33 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     boxShadow: "0 12px 28px rgba(230, 57, 70, 0.2)"
                                 }}
                             />
+                            <Tooltip label="Scan QR / Barcode to Add Friend" hasArrow placement="top">
+                                <Box
+                                    onClick={() => setIsQrScannerOpen(true)}
+                                    sx={{
+                                        position: 'absolute',
+                                        top: '2px',
+                                        right: '2px',
+                                        bg: '#E63946',
+                                        color: '#FFFFFF',
+                                        borderRadius: '50%',
+                                        width: '36px',
+                                        height: '36px',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        border: '3px solid #FFFFFF',
+                                        '&:hover': {
+                                            bg: '#d62839'
+                                        }
+                                    }}
+                                >
+                                    <QrCode size={18} color="#FFFFFF" />
+                                </Box>
+                            </Tooltip>
                             <Tooltip label="Change Photo / Create Avatar" hasArrow placement="top">
                                 <Box
                                     onClick={() => setIsAvatarStudioOpen(true)}
