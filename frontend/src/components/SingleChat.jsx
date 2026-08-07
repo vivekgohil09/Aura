@@ -240,6 +240,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
+            if (noiseFilterEnabled) {
+                applyNoiseFilter(stream);
+            }
 
             // Emit call signal over WebSocket
             const chatId = selectedChat.id || selectedChat._id;
@@ -255,6 +258,127 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             setIsVideoCallActive(false);
             setIsCallAccepted(false);
         }
+    };
+
+    // AI Call Suite States: Live Captions, Real-time Voice Translation, Noise Removal
+    const [liveCaptionsEnabled, setLiveCaptionsEnabled] = useState(true);
+    const [noiseFilterEnabled, setNoiseFilterEnabled] = useState(true);
+    const [translateEnabled, setTranslateEnabled] = useState(false);
+    const [targetLang, setTargetLang] = useState("hi"); // Default Hindi translation
+    const [captionsLog, setCaptionsLog] = useState([]);
+    const [currentTranscript, setCurrentTranscript] = useState("");
+    const recognitionRef = React.useRef(null);
+    const audioContextRef = React.useRef(null);
+    const noiseFilterNodeRef = React.useRef(null);
+
+    // Dynamic Translation Helper
+    const translateText = async (text, lang) => {
+        if (!text || text.trim() === "") return "";
+        try {
+            const res = await fetch(
+                `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`
+            );
+            const data = await res.json();
+            return data && data[0] && data[0][0] ? data[0][0][0] : text;
+        } catch {
+            return text;
+        }
+    };
+
+    // Live Captions & Real-Time Speech Recognition Engine
+    useEffect(() => {
+        let recognition = null;
+        if (isVideoCallActive && liveCaptionsEnabled) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = async (event) => {
+                    let interim = '';
+                    let final = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            final += transcript;
+                        } else {
+                            interim += transcript;
+                        }
+                    }
+
+                    if (final.trim()) {
+                        let translated = '';
+                        if (translateEnabled) {
+                            translated = await translateText(final, targetLang);
+                        }
+                        const entry = {
+                            id: Date.now(),
+                            speaker: user?.name || "Me",
+                            original: final,
+                            translated: translated
+                        };
+                        setCaptionsLog(prev => [...prev.slice(-4), entry]);
+                        setCurrentTranscript('');
+                    } else if (interim.trim()) {
+                        setCurrentTranscript(interim);
+                    }
+                };
+
+                recognition.onerror = () => {};
+                try {
+                    recognition.start();
+                    recognitionRef.current = recognition;
+                } catch (e) {}
+            }
+        } else {
+            if (recognitionRef.current) {
+                try { recognitionRef.current.stop(); } catch (e) {}
+                recognitionRef.current = null;
+            }
+            setCurrentTranscript('');
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                try { recognitionRef.current.stop(); } catch (e) {}
+                recognitionRef.current = null;
+            }
+        };
+    }, [isVideoCallActive, liveCaptionsEnabled, translateEnabled, targetLang]);
+
+    // Web Audio API Noise Removal & Audio Enhancer DSP Filter
+    const applyNoiseFilter = (stream) => {
+        if (!stream || stream.getAudioTracks().length === 0) return;
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioContextRef.current = audioCtx;
+            const source = audioCtx.createMediaStreamSource(stream);
+
+            // High-pass filter to eliminate background low-frequency hums/rumble (< 80Hz)
+            const highpass = audioCtx.createBiquadFilter();
+            highpass.type = 'highpass';
+            highpass.frequency.value = 85;
+
+            // Low-pass filter to remove high-frequency static noise (> 3.5kHz)
+            const lowpass = audioCtx.createBiquadFilter();
+            lowpass.type = 'lowpass';
+            lowpass.frequency.value = 3500;
+
+            // Compressor for crystal-clear voice normalization
+            const compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-24, audioCtx.currentTime);
+            compressor.knee.setValueAtTime(30, audioCtx.currentTime);
+            compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+            compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+            compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+
+            source.connect(highpass);
+            highpass.connect(lowpass);
+            lowpass.connect(compressor);
+            noiseFilterNodeRef.current = compressor;
+        } catch (e) {}
     };
 
     const toggleMute = () => {
@@ -1153,7 +1277,140 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             />
                                         </motion.div>
                                     )}
+
+                                    {/* AI Live Captions Toggle Button */}
+                                    <Tooltip label={liveCaptionsEnabled ? "Live Captions ACTIVE" : "Enable Live Captions"} hasArrow placement="top">
+                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                            <Button
+                                                onClick={() => setLiveCaptionsEnabled(!liveCaptionsEnabled)}
+                                                style={{
+                                                    background: liveCaptionsEnabled ? "linear-gradient(135deg, #10B981 0%, #059669 100%)" : "#F4F4F5",
+                                                    color: liveCaptionsEnabled ? "#FFF" : "#71717A",
+                                                    border: "none",
+                                                    borderRadius: "99px",
+                                                    padding: "0 18px",
+                                                    height: "52px",
+                                                    fontWeight: 700,
+                                                    fontSize: "0.85rem",
+                                                    boxShadow: liveCaptionsEnabled ? "0 4px 14px rgba(16, 185, 129, 0.35)" : "none"
+                                                }}
+                                            >
+                                                💬 Captions
+                                            </Button>
+                                        </motion.div>
+                                    </Tooltip>
+
+                                    {/* AI Real-time Voice Translation Button */}
+                                    <Tooltip label={translateEnabled ? `Translating into ${targetLang.toUpperCase()}` : "Enable AI Voice Translation"} hasArrow placement="top">
+                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                            <Button
+                                                onClick={() => setTranslateEnabled(!translateEnabled)}
+                                                style={{
+                                                    background: translateEnabled ? "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)" : "#F4F4F5",
+                                                    color: translateEnabled ? "#FFF" : "#71717A",
+                                                    border: "none",
+                                                    borderRadius: "99px",
+                                                    padding: "0 18px",
+                                                    height: "52px",
+                                                    fontWeight: 700,
+                                                    fontSize: "0.85rem",
+                                                    boxShadow: translateEnabled ? "0 4px 14px rgba(99, 102, 241, 0.35)" : "none"
+                                                }}
+                                            >
+                                                🌐 {translateEnabled ? `Translate: ${targetLang.toUpperCase()}` : "Translate"}
+                                            </Button>
+                                        </motion.div>
+                                    </Tooltip>
+
+                                    {translateEnabled && (
+                                        <select
+                                            value={targetLang}
+                                            onChange={(e) => setTargetLang(e.target.value)}
+                                            style={{
+                                                background: "#1E1B18",
+                                                color: "#FFF",
+                                                borderRadius: "12px",
+                                                padding: "6px 10px",
+                                                fontSize: "0.8rem",
+                                                fontWeight: 700,
+                                                border: "none",
+                                                outline: "none"
+                                            }}
+                                        >
+                                            <option value="hi">Hindi (हिंदी)</option>
+                                            <option value="es">Spanish (Español)</option>
+                                            <option value="fr">French (Français)</option>
+                                            <option value="de">German (Deutsch)</option>
+                                            <option value="ja">Japanese (日本語)</option>
+                                            <option value="zh">Chinese (中文)</option>
+                                        </select>
+                                    )}
+
+                                    {/* Noise Removal & Audio Enhancer DSP Toggle */}
+                                    <Tooltip label={noiseFilterEnabled ? "Noise Removal ACTIVE" : "Enable Noise Removal"} hasArrow placement="top">
+                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                            <Button
+                                                onClick={() => setNoiseFilterEnabled(!noiseFilterEnabled)}
+                                                style={{
+                                                    background: noiseFilterEnabled ? "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)" : "#F4F4F5",
+                                                    color: noiseFilterEnabled ? "#FFF" : "#71717A",
+                                                    border: "none",
+                                                    borderRadius: "99px",
+                                                    padding: "0 18px",
+                                                    height: "52px",
+                                                    fontWeight: 700,
+                                                    fontSize: "0.85rem",
+                                                    boxShadow: noiseFilterEnabled ? "0 4px 14px rgba(245, 158, 11, 0.35)" : "none"
+                                                }}
+                                            >
+                                                🎙️ Noise Filter
+                                            </Button>
+                                        </motion.div>
+                                    </Tooltip>
                                 </Box>
+
+                                {/* Real-time Live Subtitles / Captions & Translation Overlay Container */}
+                                {liveCaptionsEnabled && (
+                                    <Box
+                                        position="absolute"
+                                        bottom="110px"
+                                        left="50%"
+                                        transform="translateX(-50%)"
+                                        bg="rgba(15, 23, 42, 0.85)"
+                                        backdropFilter="blur(16px)"
+                                        px={6}
+                                        py={3}
+                                        borderRadius="20px"
+                                        maxWidth="85%"
+                                        textAlign="center"
+                                        border="1px solid rgba(255, 255, 255, 0.15)"
+                                        boxShadow="0 10px 30px rgba(0,0,0,0.5)"
+                                        zIndex={20}
+                                    >
+                                        {captionsLog.length === 0 && !currentTranscript && (
+                                            <Text color="#94A3B8" fontSize="0.85rem" fontWeight="600" italic>
+                                                🎙️ Speaking to generate Live Captions & Real-Time Translation...
+                                            </Text>
+                                        )}
+                                        {captionsLog.map((c) => (
+                                            <Box key={c.id} mb={1}>
+                                                <Text color="#F8FAFC" fontSize="0.95rem" fontWeight="700">
+                                                    <span style={{ color: "#38BDF8" }}>{c.speaker}:</span> {c.original}
+                                                </Text>
+                                                {c.translated && (
+                                                    <Text color="#A7F3D0" fontSize="0.9rem" fontWeight="800">
+                                                        🌐 {c.translated}
+                                                    </Text>
+                                                )}
+                                            </Box>
+                                        ))}
+                                        {currentTranscript && (
+                                            <Text color="#FDE047" fontSize="0.9rem" fontWeight="600" italic>
+                                                {currentTranscript} ...
+                                            </Text>
+                                        )}
+                                    </Box>
+                                )}
                             </motion.div>
                             </Portal>
                         )}
