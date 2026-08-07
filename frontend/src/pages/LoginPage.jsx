@@ -274,6 +274,7 @@ export default function LoginPage() {
             client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
             callback: handleGoogleLogin,
             auto_select: false,
+            use_fedcm_for_prompt: true,
           });
           isGoogleInitialized.current = true;
           window.google.accounts.id.prompt((notification) => {
