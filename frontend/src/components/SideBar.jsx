@@ -1200,27 +1200,142 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             />
 
             {/* ── HIGH-RES PROFILE PICTURE PREVIEW LIGHTBOX MODAL ── */}
-            <Modal isOpen={isPreviewPicOpen} onClose={() => setIsPreviewPicOpen(false)} size="lg" isCentered>
-                <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(0, 0, 0, 0.75)" }} />
-                <ModalContent style={{ borderRadius: '24px', background: 'transparent', boxShadow: 'none', textAlign: 'center', border: 'none' }}>
-                    <ModalCloseButton color="#FFFFFF" style={{ top: "10px", right: "10px", zIndex: 10, background: "rgba(0,0,0,0.5)", borderRadius: "50%" }} />
-                    <ModalBody display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={4}>
+            <Modal isOpen={isPreviewPicOpen} onClose={() => setIsPreviewPicOpen(false)} size="md" isCentered>
+                <ModalOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(10, 10, 12, 0.85)" }} />
+                <ModalContent style={{
+                    borderRadius: '32px',
+                    background: 'rgba(24, 24, 27, 0.95)',
+                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    boxShadow: '0 40px 100px rgba(0, 0, 0, 0.7)',
+                    overflow: 'hidden',
+                    color: '#FFFFFF'
+                }}>
+                    {/* Header */}
+                    <Box sx={{
+                        p: 3,
+                        px: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: '#E63946', fontSize: '1.1rem' }}>✦</span>
+                            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#FFFFFF', letterSpacing: '0.04em' }}>PROFILE PICTURE PREVIEW</span>
+                        </div>
                         <Box
-                            component="img"
-                            src={user?.pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-                            alt={user?.name || "Profile Picture"}
+                            onClick={() => setIsPreviewPicOpen(false)}
                             sx={{
-                                maxWidth: "90vw",
-                                maxHeight: "75vh",
-                                borderRadius: "24px",
-                                objectFit: "contain",
-                                boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
-                                border: "3px solid rgba(255, 255, 255, 0.4)"
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                bg: 'rgba(255, 255, 255, 0.15)',
+                                color: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                    bg: '#E63946',
+                                    transform: 'scale(1.1)'
+                                }
                             }}
-                        />
-                        <Text color="#FFFFFF" fontSize="1.15rem" fontWeight="700" mt={3} style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-                            {user?.name} <span style={{ color: "#FFE3E6", fontWeight: 600 }}>(@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')})</span>
-                        </Text>
+                        >
+                            <CloseIcon style={{ fontSize: 10 }} />
+                        </Box>
+                    </Box>
+
+                    <ModalBody display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={6} px={6}>
+                        {/* Avatar High-Res Photo Container */}
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        >
+                            <Box sx={{
+                                p: '4px',
+                                borderRadius: '28px',
+                                background: 'linear-gradient(135deg, rgba(230, 57, 70, 0.6) 0%, rgba(255, 255, 255, 0.3) 100%)',
+                                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+                                display: 'inline-block'
+                            }}>
+                                <img
+                                    src={user?.pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                                    alt={user?.name || "Profile Picture"}
+                                    style={{
+                                        width: '240px',
+                                        height: '240px',
+                                        borderRadius: '24px',
+                                        objectFit: 'cover',
+                                        display: 'block'
+                                    }}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                                    }}
+                                />
+                            </Box>
+                        </motion.div>
+
+                        {/* Identity Tag */}
+                        <Box mt={4} textAlign="center">
+                            <Text color="#FFFFFF" fontSize="1.25rem" fontWeight="800" fontFamily="'Outfit', sans-serif">
+                                {user?.name}
+                            </Text>
+                            <Badge
+                                sx={{
+                                    mt: 1,
+                                    bg: 'rgba(230, 57, 70, 0.2)',
+                                    color: '#FF6B6B',
+                                    borderRadius: '20px',
+                                    px: 3,
+                                    py: 0.8,
+                                    fontSize: '0.85rem',
+                                    fontWeight: 700,
+                                    border: '1px solid rgba(230, 57, 70, 0.4)'
+                                }}
+                            >
+                                @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
+                            </Badge>
+                        </Box>
+
+                        {/* Action Pill Buttons */}
+                        <Box display="flex" gap={3} mt={6} width="100%">
+                            <Button
+                                onClick={() => {
+                                    setIsPreviewPicOpen(false);
+                                    setIsAvatarStudioOpen(true);
+                                }}
+                                style={{
+                                    flex: 1,
+                                    background: 'rgba(255, 255, 255, 0.12)',
+                                    color: '#FFFFFF',
+                                    fontWeight: 700,
+                                    height: '42px',
+                                    borderRadius: '24px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                📷 Change Photo
+                            </Button>
+                            <Button
+                                onClick={() => setIsPreviewPicOpen(false)}
+                                style={{
+                                    flex: 1,
+                                    background: '#E63946',
+                                    color: '#FFFFFF',
+                                    fontWeight: 700,
+                                    height: '42px',
+                                    borderRadius: '24px',
+                                    boxShadow: '0 6px 20px rgba(230, 57, 70, 0.4)',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                Close Preview
+                            </Button>
+                        </Box>
                     </ModalBody>
                 </ModalContent>
             </Modal>
