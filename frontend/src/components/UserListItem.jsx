@@ -1,8 +1,10 @@
+import React, { useState } from "react";
 import { Avatar } from "@chakra-ui/avatar";
 import { Box, Text } from "@chakra-ui/layout";
 import { useSelector } from "react-redux";
 
 const UserListItem = ({ user, handleFunction }) => {
+    const [isSent, setIsSent] = useState(false);
     const loggedInUser = useSelector((state) => state.user) || JSON.parse(localStorage.getItem("userInfo") || "{}");
     
     const loggedUserId = loggedInUser?._id || loggedInUser?.id;
@@ -12,6 +14,12 @@ const UserListItem = ({ user, handleFunction }) => {
         (loggedUserId && targetUserId && String(loggedUserId) === String(targetUserId)) || 
         (loggedInUser?.email && user?.email && loggedInUser.email.toLowerCase() === user.email.toLowerCase())
     );
+
+    const handleAddClick = (e) => {
+        e.stopPropagation();
+        setIsSent(true);
+        if (handleFunction) handleFunction(user);
+    };
 
     return (
         <Box
@@ -71,6 +79,32 @@ const UserListItem = ({ user, handleFunction }) => {
                     @{user.username || (user.email ? user.email.split('@')[0] : 'user')}
                 </Text>
             </Box>
+            {!isMe && (
+                <button
+                    type="button"
+                    onClick={handleAddClick}
+                    style={{
+                        background: isSent
+                            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                            : 'linear-gradient(135deg, #E63946 0%, #D62839 100%)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '99px',
+                        padding: '6px 14px',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        marginLeft: '8px',
+                        boxShadow: isSent
+                            ? '0 3px 10px rgba(16, 185, 129, 0.25)'
+                            : '0 3px 10px rgba(230, 57, 70, 0.25)',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    {isSent ? '✓ Sent' : '+ Add'}
+                </button>
+            )}
         </Box>
     );
 };

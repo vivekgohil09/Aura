@@ -89,33 +89,18 @@ export default function LoginPage() {
 
   useEffect(() => {
     document.title = "Aura | Login";
-    const initGoogle = () => {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
-            callback: handleGoogleLogin,
-            auto_select: false,
-            use_fedcm_for_prompt: true,
-          });
-          isGoogleInitialized.current = true;
-          const container = document.getElementById("googleSignInDiv");
-          if (container && container.children.length === 0) {
-            window.google.accounts.id.renderButton(container, {
-              theme: "outline",
-              size: "large",
-              width: "100%",
-              shape: "pill",
-            });
-          }
-        } catch (err) {
-          console.error("Google Sign-In initialization failed:", err);
-        }
+    if (window.google && window.google.accounts && window.google.accounts.id && !isGoogleInitialized.current) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
+          callback: handleGoogleLogin,
+          auto_select: false,
+        });
+        isGoogleInitialized.current = true;
+      } catch (err) {
+        console.error("Google Sign-In initialization failed:", err);
       }
-    };
-    initGoogle();
-    const timer = setTimeout(initGoogle, 1000);
-    return () => clearTimeout(timer);
+    }
   }, []);
 
   const handleSubmit = async (e) => {
@@ -709,9 +694,8 @@ export default function LoginPage() {
                   </Button>
                 </motion.div>
 
-                {/* Official & Fallback Google Sign In Container */}
-                <Box sx={{ mb: 2, width: '100%' }}>
-                  <div id="googleSignInDiv" style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '8px' }}></div>
+                {/* Google Sign In Button */}
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -733,11 +717,11 @@ export default function LoginPage() {
                       padding: '10px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                     }}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ mb: 3, textTransform: 'none' }}
                   >
                     Sign in with Google
                   </Button>
-                </Box>
+                </motion.div>
                 <Grid container spacing={1.5} justifyContent="space-between" alignItems="center" sx={{ mt: 1, mb: 1 }}>
                   <Grid item xs={12} sm="auto">
                     <Link to="/change-password" style={{

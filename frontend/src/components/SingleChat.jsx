@@ -25,7 +25,11 @@ import {
     FormControl,
     Input,
     Progress,
-    Portal
+    Portal,
+    Menu,
+    MenuButton,
+    MenuList,
+    MenuItem
 } from '@chakra-ui/react'
 import { delSelectedChat , setNotification } from "../redux/actions/index"
 import { getSender, getPicture, getSenderUser } from '../config/ChatsLogic';
@@ -56,7 +60,7 @@ import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CallIcon from '@mui/icons-material/Call';
-import { Phone, Video, Info } from 'lucide-react';
+import { Phone, Video, Info, MoreVertical, Eye, Clock, Smile } from 'lucide-react';
 
 const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const history = useHistory();
@@ -260,13 +264,48 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     };
 
     const startVideoCall = async (type = "video", accepted = false) => {
+        // Prevent calling yourself
+        if (selectedChat && !selectedChat.isGroupChat && selectedChat.users) {
+            const otherUser = selectedChat.users.find((u) => (u._id || u.id) !== (user._id || user.id));
+            if (!otherUser) {
+                toast.error("You cannot start a voice or video call with yourself!", {
+                    position: "top-center",
+                    autoClose: 2500,
+                    hideProgressBar: true,
+                    theme: "colored"
+                });
+                return;
+            }
+        }
+
         setCallType(type);
         setIsVideoCallActive(true);
         setIsMuted(false);
         setIsCameraOff(false);
         setIsCallAccepted(accepted);
         try {
-            const constraints = type === "video" ? { video: true, audio: true } : { video: false, audio: true };
+            const constraints = type === "video" ? {
+                video: {
+                    width: { ideal: 3840, max: 3840, min: 1280 },
+                    height: { ideal: 2160, max: 2160, min: 720 },
+                    frameRate: { ideal: 60, max: 60, min: 30 },
+                    facingMode: "user"
+                },
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: 48000
+                }
+            } : {
+                video: false,
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: 48000
+                }
+            };
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
@@ -295,6 +334,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [liveCaptionsEnabled, setLiveCaptionsEnabled] = useState(true);
     const [noiseFilterEnabled, setNoiseFilterEnabled] = useState(true);
     const [translateEnabled, setTranslateEnabled] = useState(false);
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [targetLang, setTargetLang] = useState("hi"); // Default Hindi translation
     const [captionsLog, setCaptionsLog] = useState([]);
     const [currentTranscript, setCurrentTranscript] = useState("");
@@ -795,7 +835,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         }
     }
 
-    // ── STOMP Connection & Call Signaling Mount ──────────────
+    // Auto-request Browser Live Notification Permission
+    useEffect(() => {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }, []);
     useEffect(() => {
         const userInfo = JSON.parse(localStorage.getItem("userInfo"));
         if (!userInfo) return;
@@ -1280,132 +1325,327 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     </Box>
                                 )}
 
-                                {/* Floating Control Bar */}
-                                <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    gap={6}
-                                    bg="rgba(255, 255, 255, 0.92)"
-                                    backdropFilter="blur(24px)"
-                                    px={7}
-                                    py={3.5}
-                                    borderRadius="99px"
-                                    border="1px solid rgba(255, 42, 84, 0.15)"
-                                    boxShadow="0 20px 50px rgba(255, 42, 84, 0.18)"
-                                >
-                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                        <IconButton
-                                            aria-label="Toggle Audio"
-                                            icon={isMuted ? <MicOffIcon style={{ color: "#FF2A54", fontSize: 24 }} /> : <MicIcon style={{ color: "#1E1B18", fontSize: 24 }} />}
-                                            isRound
-                                            size="lg"
-                                            style={{
-                                                background: isMuted ? "#FFE3E6" : "#F4F4F5",
-                                                border: isMuted ? "1px solid #FFCDD2" : "1px solid #E4E4E7",
-                                                width: "52px",
-                                                height: "52px",
-                                                boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
-                                            }}
-                                            onClick={toggleMute}
-                                        />
+                                {/* Real-time Live Subtitles / Captions Container - Transparent Frosted Glass with Typewriter Effect */}
+                                {liveCaptionsEnabled && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                                        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                        whileHover={{
+                                            scale: 1.01,
+                                            boxShadow: "0 25px 60px rgba(0, 0, 0, 0.14)",
+                                            borderColor: "rgba(255, 42, 84, 0.4)"
+                                        }}
+                                        style={{
+                                            width: "95%",
+                                            maxWidth: "480px",
+                                            margin: "0 auto 12px auto",
+                                            background: "rgba(255, 255, 255, 0.45)",
+                                            backdropFilter: "blur(24px)",
+                                            WebkitBackdropFilter: "blur(24px)",
+                                            padding: "14px 18px",
+                                            borderRadius: "24px",
+                                            textAlign: "left",
+                                            border: "1.5px solid rgba(255, 255, 255, 0.75)",
+                                            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.08)",
+                                            zIndex: 40,
+                                            cursor: "pointer",
+                                            transition: "border-color 0.25s ease, box-shadow 0.25s ease"
+                                        }}
+                                    >
+                                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                                            <Box display="flex" alignItems="center" gap="6px">
+                                                <motion.span
+                                                    animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
+                                                    transition={{ repeat: Infinity, duration: 1.5 }}
+                                                    style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FF2A54", display: "inline-block" }}
+                                                />
+                                                <Text color="#FF2A54" fontSize="0.72rem" fontWeight="800" letterSpacing="0.08em" textTransform="uppercase" m={0}>
+                                                    LIVE AI CAPTIONS & TRANSLATION
+                                                </Text>
+                                            </Box>
+                                            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#475569", background: "rgba(0, 0, 0, 0.06)", padding: "2px 8px", borderRadius: "99px" }}>
+                                                HD REAL-TIME
+                                            </span>
+                                        </Box>
+
+                                        {captionsLog.length === 0 && !currentTranscript && (
+                                            <Text color="#475569" fontSize="0.84rem" fontWeight="600" italic m={0}>
+                                                🎙️ Speaking to generate live captions...
+                                                <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.75 }} style={{ color: "#FF2A54", marginLeft: "4px", fontWeight: "bold" }}>|</motion.span>
+                                            </Text>
+                                        )}
+                                        {captionsLog.map((c, index) => (
+                                            <motion.div key={c.id || index} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} style={{ marginBottom: "8px" }}>
+                                                <Text color="#0F172A" fontSize="0.92rem" fontWeight="700" m={0} style={{ lineHeight: 1.4 }}>
+                                                    <span style={{ color: "#FF2A54", fontWeight: 800 }}>{c.speaker}:</span> {c.original}
+                                                </Text>
+                                                {c.translated && (
+                                                    <Text color="#059669" fontSize="0.86rem" fontWeight="800" m={0} style={{ marginTop: "2px" }}>
+                                                        🌐 {c.translated}
+                                                    </Text>
+                                                )}
+                                            </motion.div>
+                                        ))}
+                                        {currentTranscript && (
+                                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                                <Text color="#0284C7" fontSize="0.9rem" fontWeight="700" italic m={0}>
+                                                    {currentTranscript}
+                                                    <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.6 }} style={{ color: "#FF2A54", marginLeft: "3px", fontWeight: 900 }}>|</motion.span>
+                                                </Text>
+                                            </motion.div>
+                                        )}
                                     </motion.div>
+                                )}
 
-                                    <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}>
-                                        <Button 
-                                            onClick={endVideoCall} 
-                                            leftIcon={callType === "video" ? <VideocamOffIcon style={{ fontSize: 22 }} /> : <CallEndIcon style={{ fontSize: 22 }} />}
-                                            size="lg"
-                                            style={{
-                                                background: "linear-gradient(135deg, #FF2A54 0%, #D62839 100%)",
-                                                color: "#FFFFFF",
-                                                borderRadius: "99px",
-                                                padding: "0 32px",
-                                                height: "52px",
-                                                fontWeight: 800,
-                                                fontSize: "1rem",
-                                                boxShadow: "0 8px 25px rgba(255, 42, 84, 0.45)",
-                                                border: "none"
-                                            }}
-                                        >
-                                            End Call
-                                        </Button>
-                                    </motion.div>
-
-                                    {callType === "video" && (
-                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                            <IconButton
-                                                aria-label="Toggle Camera"
-                                                icon={isCameraOff ? <VideocamOffIcon style={{ color: "#FF2A54", fontSize: 24 }} /> : <VideocamIcon style={{ color: "#1E1B18", fontSize: 24 }} />}
-                                                isRound
-                                                size="lg"
-                                                style={{
-                                                    background: isCameraOff ? "#FFE3E6" : "#F4F4F5",
-                                                    border: isCameraOff ? "1px solid #FFCDD2" : "1px solid #E4E4E7",
-                                                    width: "52px",
-                                                    height: "52px",
-                                                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
-                                                }}
-                                                onClick={toggleCamera}
-                                            />
-                                        </motion.div>
-                                    )}
-
-                                    {/* AI Live Captions Toggle Button */}
-                                    <Tooltip label={liveCaptionsEnabled ? "Live Captions ACTIVE" : "Enable Live Captions"} hasArrow placement="top">
-                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                            <Button
+                                {/* Three-Dots More Options Glass Popover Menu */}
+                                {showMoreMenu && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        transition={{ duration: 0.2 }}
+                                        style={{
+                                            marginBottom: "12px",
+                                            background: "rgba(255, 255, 255, 0.88)",
+                                            backdropFilter: "blur(28px)",
+                                            WebkitBackdropFilter: "blur(28px)",
+                                            borderRadius: "24px",
+                                            padding: "12px 16px",
+                                            border: "1.5px solid rgba(255, 255, 255, 0.95)",
+                                            boxShadow: "0 20px 45px rgba(0, 0, 0, 0.12)",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "12px",
+                                            zIndex: 50
+                                        }}
+                                    >
+                                        {/* Captions Toggle */}
+                                        <Tooltip label={liveCaptionsEnabled ? "Disable Captions" : "Enable Captions"} hasArrow placement="top">
+                                            <motion.div
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
                                                 onClick={() => setLiveCaptionsEnabled(!liveCaptionsEnabled)}
                                                 style={{
-                                                    background: liveCaptionsEnabled ? "linear-gradient(135deg, #10B981 0%, #059669 100%)" : "#F4F4F5",
-                                                    color: liveCaptionsEnabled ? "#FFF" : "#71717A",
-                                                    border: "none",
+                                                    padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    padding: "0 18px",
-                                                    height: "52px",
-                                                    fontWeight: 700,
-                                                    fontSize: "0.85rem",
-                                                    boxShadow: liveCaptionsEnabled ? "0 4px 14px rgba(16, 185, 129, 0.35)" : "none"
+                                                    background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.15)" : "rgba(0, 0, 0, 0.05)",
+                                                    border: liveCaptionsEnabled ? "1.5px solid #10B981" : "1px solid #E2E8F0",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "6px"
                                                 }}
                                             >
-                                                💬 Captions
-                                            </Button>
-                                        </motion.div>
-                                    </Tooltip>
+                                                <span>💬</span>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={liveCaptionsEnabled ? "#059669" : "#475569"} m={0}>
+                                                    Captions {liveCaptionsEnabled ? "ON" : "OFF"}
+                                                </Text>
+                                            </motion.div>
+                                        </Tooltip>
 
-                                    {/* AI Real-time Voice Translation Button */}
-                                    <Tooltip label={translateEnabled ? `Translating into ${targetLang.toUpperCase()}` : "Enable AI Voice Translation"} hasArrow placement="top">
-                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                            <Button
+                                        {/* Voice Translation Toggle */}
+                                        <Tooltip label={translateEnabled ? "Disable Translation" : "Enable Translation"} hasArrow placement="top">
+                                            <motion.div
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
                                                 onClick={() => setTranslateEnabled(!translateEnabled)}
                                                 style={{
-                                                    background: translateEnabled ? "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)" : "#F4F4F5",
-                                                    color: translateEnabled ? "#FFF" : "#71717A",
-                                                    border: "none",
+                                                    padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    padding: "0 18px",
-                                                    height: "52px",
-                                                    fontWeight: 700,
-                                                    fontSize: "0.85rem",
-                                                    boxShadow: translateEnabled ? "0 4px 14px rgba(99, 102, 241, 0.35)" : "none"
+                                                    background: translateEnabled ? "rgba(99, 102, 241, 0.15)" : "rgba(0, 0, 0, 0.05)",
+                                                    border: translateEnabled ? "1.5px solid #6366F1" : "1px solid #E2E8F0",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "6px"
                                                 }}
                                             >
-                                                🌐 {translateEnabled ? `Translate: ${targetLang.toUpperCase()}` : "Translate"}
-                                            </Button>
-                                        </motion.div>
-                                    </Tooltip>
+                                                <span>🌐</span>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={translateEnabled ? "#4F46E5" : "#475569"} m={0}>
+                                                    Translate {translateEnabled ? "ON" : "OFF"}
+                                                </Text>
+                                            </motion.div>
+                                        </Tooltip>
 
-                                    {translateEnabled && (
+                                        {/* Noise Filter Toggle */}
+                                        <Tooltip label={noiseFilterEnabled ? "Disable Noise Suppression" : "Enable Noise Suppression"} hasArrow placement="top">
+                                            <motion.div
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => setNoiseFilterEnabled(!noiseFilterEnabled)}
+                                                style={{
+                                                    padding: "8px 14px",
+                                                    borderRadius: "99px",
+                                                    background: noiseFilterEnabled ? "rgba(245, 158, 11, 0.15)" : "rgba(0, 0, 0, 0.05)",
+                                                    border: noiseFilterEnabled ? "1.5px solid #F59E0B" : "1px solid #E2E8F0",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "6px"
+                                                }}
+                                            >
+                                                <span>🎙️</span>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={noiseFilterEnabled ? "#D97706" : "#475569"} m={0}>
+                                                    Noise Filter {noiseFilterEnabled ? "ON" : "OFF"}
+                                                </Text>
+                                            </motion.div>
+                                        </Tooltip>
+                                    </motion.div>
+                                )}
+
+                                {/* Floating Control Bar - 4 Main Buttons (Mute, Video Switch, Three-Dots, End Call) */}
+                                <motion.div
+                                    initial={{ y: 40, opacity: 0, scale: 0.96 }}
+                                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                                    exit={{ y: 40, opacity: 0, scale: 0.96 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 26 }}
+                                    style={{ width: "100%", display: "flex", justifyContent: "center" }}
+                                >
+                                    <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        bg="rgba(255, 255, 255, 0.78)"
+                                        backdropFilter="blur(30px)"
+                                        WebkitBackdropFilter="blur(30px)"
+                                        px={{ base: 4, sm: 5, md: 6 }}
+                                        py={2.5}
+                                        borderRadius="99px"
+                                        border="1.5px solid rgba(255, 255, 255, 0.95)"
+                                        boxShadow="0 20px 50px rgba(255, 42, 84, 0.15), 0 10px 30px rgba(0, 0, 0, 0.08)"
+                                        maxW="100%"
+                                        mx="auto"
+                                        zIndex={30}
+                                    >
+                                        <Box display="flex" alignItems="center" justifyContent="center" flexWrap="nowrap" gap={{ base: 2.5, sm: 3.5, md: 4 }}>
+                                            {/* 1. Mic Toggle Button */}
+                                            <Tooltip label={isMuted ? "Unmute Mic" : "Mute Mic"} hasArrow placement="top">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.12, y: -2 }}
+                                                    whileTap={{ scale: 0.88 }}
+                                                    onClick={toggleMute}
+                                                    style={{
+                                                        width: "48px",
+                                                        height: "48px",
+                                                        minWidth: "48px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        background: isMuted ? "rgba(255, 42, 84, 0.15)" : "#FFFFFF",
+                                                        border: isMuted ? "2px solid #FF2A54" : "1.5px solid #F1F1F4",
+                                                        boxShadow: isMuted ? "0 0 18px rgba(255, 42, 84, 0.35)" : "0 5px 15px rgba(0, 0, 0, 0.05)",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    {isMuted ? <MicOffIcon style={{ color: "#FF2A54", fontSize: 20 }} /> : <MicIcon style={{ color: "#1E1B18", fontSize: 20 }} />}
+                                                </motion.div>
+                                            </Tooltip>
+
+                                            {/* 2. Switch Video / Audio Call Button */}
+                                            <Tooltip label={callType === "video" ? (isCameraOff ? "Turn Camera On" : "Turn Camera Off") : "Switch to Video Call"} hasArrow placement="top">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.12, y: -2 }}
+                                                    whileTap={{ scale: 0.88 }}
+                                                    onClick={() => {
+                                                        if (callType === "video") {
+                                                            toggleCamera();
+                                                        } else {
+                                                            setCallType("video");
+                                                            toast.success("Switched to HD Video Call!");
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        width: "48px",
+                                                        height: "48px",
+                                                        minWidth: "48px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        background: (callType === "video" && isCameraOff) ? "rgba(255, 42, 84, 0.15)" : "#FFFFFF",
+                                                        border: (callType === "video" && isCameraOff) ? "2px solid #FF2A54" : "1.5px solid #F1F1F4",
+                                                        boxShadow: "0 5px 15px rgba(0, 0, 0, 0.05)",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    {(callType === "video" && isCameraOff) ? (
+                                                        <VideocamOffIcon style={{ color: "#FF2A54", fontSize: 20 }} />
+                                                    ) : (
+                                                        <VideocamIcon style={{ color: "#1E1B18", fontSize: 20 }} />
+                                                    )}
+                                                </motion.div>
+                                            </Tooltip>
+
+                                            {/* 3. Three-Dots More Options Button */}
+                                            <Tooltip label="More Options" hasArrow placement="top">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.12, y: -2 }}
+                                                    whileTap={{ scale: 0.88 }}
+                                                    onClick={() => setShowMoreMenu(!showMoreMenu)}
+                                                    style={{
+                                                        width: "48px",
+                                                        height: "48px",
+                                                        minWidth: "48px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        background: showMoreMenu ? "rgba(255, 42, 84, 0.15)" : "#FFFFFF",
+                                                        border: showMoreMenu ? "2px solid #FF2A54" : "1.5px solid #F1F1F4",
+                                                        boxShadow: "0 5px 15px rgba(0, 0, 0, 0.05)",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: "1.3rem", fontWeight: 900, color: showMoreMenu ? "#FF2A54" : "#1E1B18", lineHeight: 1 }}>⋮</span>
+                                                </motion.div>
+                                            </Tooltip>
+
+                                            {/* 4. End Call Button */}
+                                            <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.94 }}>
+                                                <Button 
+                                                    onClick={endVideoCall} 
+                                                    leftIcon={<CallEndIcon style={{ fontSize: 18 }} />}
+                                                    size="md"
+                                                    style={{
+                                                        background: "linear-gradient(135deg, #FF2A54 0%, #D62839 100%)",
+                                                        color: "#FFFFFF",
+                                                        borderRadius: "99px",
+                                                        padding: "0 20px",
+                                                        height: "48px",
+                                                        fontWeight: 800,
+                                                        fontSize: "0.88rem",
+                                                        boxShadow: "0 8px 24px rgba(255, 42, 84, 0.5)",
+                                                        border: "none",
+                                                        whiteSpace: "nowrap"
+                                                    }}
+                                                >
+                                                    End Call
+                                                </Button>
+                                            </motion.div>
+                                        </Box>
+                                    </Box>
+                                </motion.div>
+
+                                {/* Secondary Bar for Language Selection when Translate is active */}
+                                {translateEnabled && (
+                                    <Box display="flex" alignItems="center" gap={2} pt={2}>
+                                        <Text fontSize="0.75rem" fontWeight="800" color="#FF2A54" m={0}>
+                                            Target Language:
+                                        </Text>
                                         <select
                                             value={targetLang}
                                             onChange={(e) => setTargetLang(e.target.value)}
                                             style={{
-                                                background: "#1E1B18",
-                                                color: "#FFF",
-                                                borderRadius: "12px",
-                                                padding: "6px 10px",
-                                                fontSize: "0.8rem",
+                                                background: "rgba(255, 255, 255, 0.8)",
+                                                color: "#1E1B18",
+                                                borderRadius: "10px",
+                                                padding: "4px 12px",
+                                                fontSize: "0.78rem",
                                                 fontWeight: 700,
-                                                border: "none",
+                                                border: "1px solid #FFE3E6",
                                                 outline: "none"
                                             }}
                                         >
@@ -1416,76 +1656,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             <option value="ja">Japanese (日本語)</option>
                                             <option value="zh">Chinese (中文)</option>
                                         </select>
-                                    )}
-
-                                    {/* Noise Removal & Audio Enhancer DSP Toggle */}
-                                    <Tooltip label={noiseFilterEnabled ? "Noise Removal ACTIVE" : "Enable Noise Removal"} hasArrow placement="top">
-                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                            <Button
-                                                onClick={() => setNoiseFilterEnabled(!noiseFilterEnabled)}
-                                                style={{
-                                                    background: noiseFilterEnabled ? "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)" : "#F4F4F5",
-                                                    color: noiseFilterEnabled ? "#FFF" : "#71717A",
-                                                    border: "none",
-                                                    borderRadius: "99px",
-                                                    padding: "0 18px",
-                                                    height: "52px",
-                                                    fontWeight: 700,
-                                                    fontSize: "0.85rem",
-                                                    boxShadow: noiseFilterEnabled ? "0 4px 14px rgba(245, 158, 11, 0.35)" : "none"
-                                                }}
-                                            >
-                                                🎙️ Noise Filter
-                                            </Button>
-                                        </motion.div>
-                                    </Tooltip>
-                                </Box>
-
-                                {/* Real-time Live Subtitles / Captions & Translation Overlay Container */}
-                                {liveCaptionsEnabled && (
-                                    <Box
-                                        position="absolute"
-                                        bottom="110px"
-                                        left="50%"
-                                        transform="translateX(-50%)"
-                                        bg="rgba(15, 23, 42, 0.85)"
-                                        backdropFilter="blur(16px)"
-                                        px={6}
-                                        py={3}
-                                        borderRadius="20px"
-                                        maxWidth="85%"
-                                        textAlign="center"
-                                        border="1px solid rgba(255, 255, 255, 0.15)"
-                                        boxShadow="0 10px 30px rgba(0,0,0,0.5)"
-                                        zIndex={20}
-                                    >
-                                        {captionsLog.length === 0 && !currentTranscript && (
-                                            <Text color="#94A3B8" fontSize="0.85rem" fontWeight="600" italic>
-                                                🎙️ Speaking to generate Live Captions & Real-Time Translation...
-                                            </Text>
-                                        )}
-                                        {captionsLog.map((c) => (
-                                            <Box key={c.id} mb={1}>
-                                                <Text color="#F8FAFC" fontSize="0.95rem" fontWeight="700">
-                                                    <span style={{ color: "#38BDF8" }}>{c.speaker}:</span> {c.original}
-                                                </Text>
-                                                {c.translated && (
-                                                    <Text color="#A7F3D0" fontSize="0.9rem" fontWeight="800">
-                                                        🌐 {c.translated}
-                                                    </Text>
-                                                )}
-                                            </Box>
-                                        ))}
-                                        {currentTranscript && (
-                                            <Text color="#FDE047" fontSize="0.9rem" fontWeight="600" italic>
-                                                {currentTranscript} ...
-                                            </Text>
-                                        )}
                                     </Box>
                                 )}
                             </motion.div>
-                            </Portal>
-                        )}
+                        </Portal>
+                    )}
 
                         {/* Hidden file input for attachment upload */}
                         <input
@@ -1524,114 +1699,169 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '10px',
+                                    gap: '6px',
                                     background: 'rgba(255, 255, 255, 0.95)',
                                     backdropFilter: 'blur(20px)',
                                     border: '1px solid rgba(226, 232, 240, 0.9)',
                                     borderRadius: '24px',
-                                    padding: '8px 12px',
-                                    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)'
+                                    padding: '6px 10px',
+                                    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
+                                    WebkitTapHighlightColor: 'transparent'
                                 }}
                             >
-                                {/* Emoji Button */}
-                                <Tooltip label="Emoji Picker" hasArrow placement="top">
-                                    <motion.button
-                                        type="button"
-                                        whileHover={{ scale: 1.12, translateY: -2 }}
-                                        whileTap={{ scale: 0.92 }}
-                                        onClick={toggleEmojiPicker}
-                                        style={{
-                                            background: '#FFFBEB',
-                                            border: '1px solid #FDE68A',
-                                            borderRadius: '16px',
-                                            width: '42px',
-                                            height: '42px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            boxShadow: '0 2px 8px rgba(217, 119, 6, 0.1)'
-                                        }}
-                                    >
-                                        <EmojiEmotionsIcon style={{ fontSize: '22px', color: '#D97706' }} />
-                                    </motion.button>
-                                </Tooltip>
-
-                                {/* File Attachment Button */}
+                                {/* Primary File Attachment Button */}
                                 <Tooltip label="Attach File / Photo" hasArrow placement="top">
                                     <motion.button
                                         type="button"
-                                        whileHover={{ scale: 1.12, translateY: -2 }}
+                                        whileHover={{ scale: 1.08, y: -1 }}
                                         whileTap={{ scale: 0.92 }}
-                                        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                                        onClick={() => {
+                                            if (showPicker) setShowPicker(false);
+                                            if (fileInputRef.current) fileInputRef.current.click();
+                                        }}
                                         style={{
-                                            background: '#F0FDF4',
-                                            border: '1px solid #BBF7D0',
-                                            borderRadius: '16px',
-                                            width: '42px',
-                                            height: '42px',
+                                            background: 'rgba(0, 0, 0, 0.03)',
+                                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                                            borderRadius: '14px',
+                                            width: '36px',
+                                            height: '36px',
+                                            minWidth: '36px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
-                                            boxShadow: '0 2px 8px rgba(22, 163, 74, 0.1)'
+                                            touchAction: 'manipulation',
+                                            WebkitTapHighlightColor: 'transparent',
+                                            transition: 'all 0.2s ease'
                                         }}
                                     >
-                                        <AttachFileIcon style={{ fontSize: '20px', color: '#16A34A' }} />
+                                        <AttachFileIcon style={{ fontSize: '18px', color: '#71717A' }} />
                                     </motion.button>
                                 </Tooltip>
 
-                                {/* View-once toggle */}
-                                <Tooltip label={viewOnceMode ? "View-Once ACTIVE (click to cancel)" : "Send as View-Once"} hasArrow placement="top">
-                                    <motion.button
+                                {/* Three Dots Options Menu (More Actions) */}
+                                <Menu placement="top-start" isLazy>
+                                    <MenuButton
+                                        as={motion.button}
                                         type="button"
-                                        whileHover={{ scale: 1.12, translateY: -2 }}
+                                        p={0}
+                                        m={0}
+                                        whileHover={{ scale: 1.08, y: -1 }}
                                         whileTap={{ scale: 0.92 }}
-                                        onClick={() => setViewOnceMode(!viewOnceMode)}
+                                        onClick={() => {
+                                            if (showPicker) setShowPicker(false);
+                                        }}
                                         style={{
-                                            background: viewOnceMode ? 'linear-gradient(135deg, #FF2A54 0%, #E60044 100%)' : '#FFF0F2',
-                                            border: viewOnceMode ? 'none' : '1px solid #FFE3E6',
-                                            borderRadius: '16px',
-                                            width: '42px',
-                                            height: '42px',
+                                            background: (viewOnceMode || showPicker || scheduleModal) ? 'rgba(230, 57, 70, 0.08)' : 'rgba(0, 0, 0, 0.03)',
+                                            border: (viewOnceMode || showPicker || scheduleModal) ? '1px solid rgba(230, 57, 70, 0.2)' : '1px solid rgba(0, 0, 0, 0.05)',
+                                            borderRadius: '14px',
+                                            width: '36px',
+                                            height: '36px',
+                                            minWidth: '36px',
+                                            padding: '0',
+                                            margin: '0',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
-                                            color: viewOnceMode ? '#FFFFFF' : '#FF2A54',
-                                            fontSize: '18px',
-                                            boxShadow: viewOnceMode ? '0 4px 14px rgba(255, 42, 84, 0.35)' : '0 2px 8px rgba(255, 42, 84, 0.1)',
-                                            transition: 'all 0.2s'
+                                            touchAction: 'manipulation',
+                                            WebkitTapHighlightColor: 'transparent',
+                                            transition: 'all 0.2s ease',
+                                            position: 'relative'
                                         }}
                                     >
-                                        👁
-                                    </motion.button>
-                                </Tooltip>
-
-                                {/* Schedule button */}
-                                <Tooltip label="Schedule Message" hasArrow placement="top">
-                                    <motion.button
-                                        type="button"
-                                        whileHover={{ scale: 1.12, translateY: -2 }}
-                                        whileTap={{ scale: 0.92 }}
-                                        onClick={() => setScheduleModal(true)}
+                                        <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%">
+                                            <MoreVertical size={18} color={(viewOnceMode || showPicker || scheduleModal) ? '#E63946' : '#71717A'} />
+                                        </Box>
+                                        {viewOnceMode && (
+                                            <span style={{
+                                                position: 'absolute', top: '3px', right: '3px', width: '6px', height: '6px',
+                                                borderRadius: '50%', background: '#E63946', boxShadow: '0 0 6px rgba(230, 57, 70, 0.6)'
+                                            }} />
+                                        )}
+                                    </MenuButton>
+                                    <MenuList
                                         style={{
-                                            background: '#EEF2FF',
-                                            border: '1px solid #C7D2FE',
-                                            borderRadius: '16px',
-                                            width: '42px',
-                                            height: '42px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            fontSize: '18px',
-                                            boxShadow: '0 2px 8px rgba(79, 70, 229, 0.1)'
+                                            background: 'rgba(255, 255, 255, 0.95)',
+                                            backdropFilter: 'blur(24px)',
+                                            WebkitBackdropFilter: 'blur(24px)',
+                                            borderRadius: '20px',
+                                            border: '1px solid rgba(0, 0, 0, 0.06)',
+                                            boxShadow: '0 18px 45px rgba(0, 0, 0, 0.12)',
+                                            padding: '8px',
+                                            minWidth: '200px',
+                                            zIndex: 9999
                                         }}
                                     >
-                                        ⏱
-                                    </motion.button>
-                                </Tooltip>
+                                        <MenuItem
+                                            onClick={toggleEmojiPicker}
+                                            style={{
+                                                borderRadius: '12px',
+                                                fontSize: '0.86rem',
+                                                fontWeight: 700,
+                                                color: showPicker ? '#E63946' : '#18181B',
+                                                fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                padding: '10px 14px'
+                                            }}
+                                            _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
+                                        >
+                                            <Smile size={18} color={showPicker ? '#E63946' : '#71717A'} />
+                                            <span>{showPicker ? 'Close Emoji Picker' : 'Emoji Picker'}</span>
+                                        </MenuItem>
+                                        <MenuItem
+                                            onClick={() => {
+                                                setViewOnceMode(!viewOnceMode);
+                                                if (showPicker) setShowPicker(false);
+                                            }}
+                                            style={{
+                                                borderRadius: '12px',
+                                                fontSize: '0.86rem',
+                                                fontWeight: 700,
+                                                color: viewOnceMode ? '#E63946' : '#18181B',
+                                                fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '10px 14px'
+                                            }}
+                                            _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <Eye size={18} color={viewOnceMode ? '#E63946' : '#71717A'} />
+                                                <span>Send as View-Once</span>
+                                            </div>
+                                            {viewOnceMode && (
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#E63946', background: 'rgba(230, 57, 70, 0.1)', padding: '2px 6px', borderRadius: '6px' }}>
+                                                    ON
+                                                </span>
+                                            )}
+                                        </MenuItem>
+                                        <MenuItem
+                                            onClick={() => {
+                                                setScheduleModal(true);
+                                                if (showPicker) setShowPicker(false);
+                                            }}
+                                            style={{
+                                                borderRadius: '12px',
+                                                fontSize: '0.86rem',
+                                                fontWeight: 700,
+                                                color: '#18181B',
+                                                fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                padding: '10px 14px'
+                                            }}
+                                            _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
+                                        >
+                                            <Clock size={18} color="#71717A" />
+                                            <span>Schedule Message</span>
+                                        </MenuItem>
+                                    </MenuList>
+                                </Menu>
 
                                 {/* Input text field */}
                                 <Input
@@ -1640,12 +1870,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     value={newMessage}
                                     onChange={typingHandler}
                                     onKeyDown={sendMessage}
-                                    px={3}
-                                    h="44px"
+                                    px={2}
+                                    h="40px"
                                     style={{
                                         border: 'none',
                                         outline: 'none',
-                                        fontSize: '0.96rem',
+                                        fontSize: '0.92rem',
                                         fontFamily: "'Outfit', 'Inter', sans-serif",
                                         fontWeight: 500,
                                         color: '#0F172A',
@@ -1655,25 +1885,27 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                 {/* Glowing Send Button */}
                                 <motion.button
                                     type="button"
-                                    whileHover={{ scale: 1.08, translateY: -2 }}
-                                    whileTap={{ scale: 0.92 }}
+                                    whileHover={{ scale: 1.08, y: -2 }}
+                                    whileTap={{ scale: 0.88 }}
                                     onClick={() => sendMessage({ key: "Enter" })}
                                     aria-label="Send Message"
                                     style={{
                                         background: "linear-gradient(135deg, #FF2A54 0%, #E60044 100%)",
-                                        borderRadius: "18px",
-                                        width: "44px",
-                                        height: "44px",
-                                        minWidth: "44px",
+                                        borderRadius: "16px",
+                                        width: "40px",
+                                        height: "40px",
+                                        minWidth: "40px",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
                                         boxShadow: "0 6px 20px rgba(255, 42, 84, 0.38)",
                                         border: "none",
-                                        cursor: "pointer"
+                                        cursor: "pointer",
+                                        touchAction: 'manipulation',
+                                        WebkitTapHighlightColor: 'transparent'
                                     }}
                                 >
-                                    <SendIcon style={{ fontSize: "20px", color: "#FFFFFF", marginLeft: "2px" }} />
+                                    <SendIcon style={{ fontSize: "18px", color: "#FFFFFF", marginLeft: "2px" }} />
                                 </motion.button>
                             </div>
 
@@ -1694,48 +1926,218 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             {/* Schedule Modal */}
                             {scheduleModal && (
                                 <div style={{
-                                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
-                                    zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    position: 'fixed', inset: 0,
+                                    background: 'rgba(10, 10, 12, 0.45)',
+                                    backdropFilter: 'blur(20px)',
+                                    WebkitBackdropFilter: 'blur(20px)',
+                                    zIndex: 10001,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '20px'
                                 }}>
-                                    <div style={{
-                                        background: '#FFFFFF', borderRadius: 20, padding: 28, minWidth: 320,
-                                        boxShadow: '0 24px 60px rgba(61,43,38,0.18)', fontFamily: "'Inter', sans-serif",
-                                    }}>
-                                        <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '1.1rem', color: '#3D2B26', marginBottom: 16 }}>
-                                            🕐 Schedule Message
-                                        </h3>
-                                        <p style={{ fontSize: 12, color: '#806C65', marginBottom: 12, lineHeight: 1.5 }}>
-                                            Message: "{newMessage.slice(0, 60)}{newMessage.length > 60 ? '…' : ''}"
-                                        </p>
-                                        <label style={{ fontSize: 12, fontWeight: 700, color: '#806C65', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Send At</label>
+                                    <motion.div
+                                        initial={{ scale: 0.94, opacity: 0, y: 15 }}
+                                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                                        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                        style={{
+                                            background: 'rgba(255, 255, 255, 0.96)',
+                                            backdropFilter: 'blur(40px)',
+                                            WebkitBackdropFilter: 'blur(40px)',
+                                            borderRadius: 28,
+                                            padding: '28px 24px',
+                                            maxWidth: 380,
+                                            width: '100%',
+                                            border: '1px solid rgba(255, 255, 255, 0.8)',
+                                            boxShadow: '0 30px 80px rgba(0, 0, 0, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.9)',
+                                            fontFamily: "'Outfit', 'Inter', sans-serif",
+                                        }}
+                                    >
+                                        {/* Header */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                                            <span style={{
+                                                fontSize: '0.72rem',
+                                                fontWeight: 800,
+                                                color: '#E63946',
+                                                background: 'rgba(230, 57, 70, 0.08)',
+                                                border: '1px solid rgba(230, 57, 70, 0.15)',
+                                                padding: '4px 14px',
+                                                borderRadius: 99,
+                                                letterSpacing: '0.08em',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                ✦ SCHEDULE MESSAGE
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setScheduleModal(false)}
+                                                style={{
+                                                    background: 'transparent', border: 'none', fontSize: 18, color: '#A1A1AA',
+                                                    cursor: 'pointer', padding: '0 4px', lineHeight: 1
+                                                }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        {/* Message Preview Card */}
+                                        <div style={{
+                                            background: 'rgba(230, 57, 70, 0.04)',
+                                            border: '1px solid rgba(230, 57, 70, 0.12)',
+                                            borderRadius: '16px',
+                                            padding: '12px 14px',
+                                            marginBottom: '18px'
+                                        }}>
+                                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#E63946', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                                                Message Payload
+                                            </span>
+                                            <p style={{ fontSize: '0.88rem', color: '#18181B', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                "{newMessage || 'No message typed...'}"
+                                            </p>
+                                        </div>
+
+                                        {/* Quick Presets */}
+                                        <label style={{ fontSize: 11, fontWeight: 800, color: '#A1A1AA', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                                            Quick Time Presets
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                                            <motion.button
+                                                type="button"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
+                                                    const d = new Date(Date.now() + 30 * 60000);
+                                                    const year = d.getFullYear();
+                                                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                    const day = String(d.getDate()).padStart(2, '0');
+                                                    const hours = String(d.getHours()).padStart(2, '0');
+                                                    const mins = String(d.getMinutes()).padStart(2, '0');
+                                                    setScheduledAt(`${year}-${month}-${day}T${hours}:${mins}`);
+                                                }}
+                                                style={{
+                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '99px',
+                                                    background: 'rgba(0, 0, 0, 0.04)', border: '1px solid rgba(0, 0, 0, 0.06)',
+                                                    color: '#52525B', cursor: 'pointer', transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                ⚡ +30 Mins
+                                            </motion.button>
+                                            <motion.button
+                                                type="button"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
+                                                    const d = new Date(Date.now() + 60 * 60000);
+                                                    const year = d.getFullYear();
+                                                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                    const day = String(d.getDate()).padStart(2, '0');
+                                                    const hours = String(d.getHours()).padStart(2, '0');
+                                                    const mins = String(d.getMinutes()).padStart(2, '0');
+                                                    setScheduledAt(`${year}-${month}-${day}T${hours}:${mins}`);
+                                                }}
+                                                style={{
+                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '99px',
+                                                    background: 'rgba(0, 0, 0, 0.04)', border: '1px solid rgba(0, 0, 0, 0.06)',
+                                                    color: '#52525B', cursor: 'pointer', transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                ⏳ +1 Hour
+                                            </motion.button>
+                                            <motion.button
+                                                type="button"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
+                                                    const d = new Date();
+                                                    d.setDate(d.getDate() + 1);
+                                                    const year = d.getFullYear();
+                                                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                    const day = String(d.getDate()).padStart(2, '0');
+                                                    setScheduledAt(`${year}-${month}-${day}T09:00`);
+                                                }}
+                                                style={{
+                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '99px',
+                                                    background: 'rgba(0, 0, 0, 0.04)', border: '1px solid rgba(0, 0, 0, 0.06)',
+                                                    color: '#52525B', cursor: 'pointer', transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                🌅 Tomorrow 9 AM
+                                            </motion.button>
+                                        </div>
+
+                                        {/* Date-Time Picker Input */}
+                                        <label style={{ fontSize: 11, fontWeight: 800, color: '#A1A1AA', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                                            Custom Delivery Date & Time
+                                        </label>
                                         <input
                                             type="datetime-local"
                                             value={scheduledAt}
                                             onChange={e => setScheduledAt(e.target.value)}
                                             style={{
-                                                width: '100%', padding: '10px 14px', borderRadius: 12,
-                                                border: '1.5px solid #E63946', fontSize: 14, marginBottom: 20,
-                                                fontFamily: "'Inter', sans-serif", outline: 'none',
+                                                width: '100%',
+                                                height: '48px',
+                                                padding: '10px 16px',
+                                                borderRadius: 16,
+                                                border: '1.5px solid #E4E4E7',
+                                                background: '#FAFAFA',
+                                                color: '#18181B',
+                                                fontSize: '0.92rem',
+                                                fontWeight: 700,
+                                                marginBottom: 24,
+                                                fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                outline: 'none',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                                                transition: 'all 0.2s ease'
                                             }}
                                         />
+
+                                        {/* Action Buttons */}
                                         <div style={{ display: 'flex', gap: 10 }}>
-                                            <button
+                                            <motion.button
+                                                type="button"
+                                                whileHover={{ scale: 1.02, y: -1 }}
+                                                whileTap={{ scale: 0.95 }}
                                                 onClick={sendScheduledMessage}
                                                 style={{
-                                                    flex: 1, background: 'linear-gradient(135deg,#E63946,#d62839)',
-                                                    color: '#fff', border: 'none', borderRadius: 12, padding: '11px',
-                                                    fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                                                    flex: 1,
+                                                    background: 'linear-gradient(135deg, #E63946 0%, #D62839 100%)',
+                                                    color: '#FFFFFF',
+                                                    border: 'none',
+                                                    borderRadius: 99,
+                                                    padding: '13px 18px',
+                                                    fontWeight: 800,
+                                                    fontSize: 14,
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 8px 22px rgba(230, 57, 70, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                                                    touchAction: 'manipulation',
+                                                    WebkitTapHighlightColor: 'transparent'
                                                 }}
-                                            >Schedule Send</button>
-                                            <button
+                                            >
+                                                Schedule Send
+                                            </motion.button>
+                                            <motion.button
+                                                type="button"
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.95 }}
                                                 onClick={() => setScheduleModal(false)}
                                                 style={{
-                                                    padding: '11px 18px', background: '#F5F5F5', border: 'none',
-                                                    borderRadius: 12, fontSize: 14, cursor: 'pointer', fontWeight: 600, color: '#806C65',
+                                                    padding: '13px 20px',
+                                                    background: '#F4F4F5',
+                                                    border: '1px solid #E4E4E7',
+                                                    borderRadius: 99,
+                                                    fontSize: 14,
+                                                    cursor: 'pointer',
+                                                    fontWeight: 700,
+                                                    color: '#71717A',
+                                                    touchAction: 'manipulation',
+                                                    WebkitTapHighlightColor: 'transparent'
                                                 }}
-                                            >Cancel</button>
+                                            >
+                                                Cancel
+                                            </motion.button>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 </div>
                             )}
                         </FormControl>
