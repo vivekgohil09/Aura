@@ -39,6 +39,8 @@ import {
 import AvatarCameraModal from './AvatarCameraModal';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { setUserDetails } from '../redux/actions';
 
 import {
@@ -970,7 +972,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         justifyContent: 'center',
                                         flexShrink: 0
                                     }}>
-                                        <span style={{ fontSize: '1.2rem' }}>🏷️</span>
+                                        <AlternateEmailIcon style={{ color: '#E63946', fontSize: 20 }} />
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
                                         <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '1px' }}>Unique Username</strong>
@@ -1016,7 +1018,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 <Button
                                                     size="xs"
                                                     onClick={() => { setEditUsername(user?.username || ''); setIsEditingUsername(true); }}
-                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 10px', fontWeight: 700, fontSize: '0.75rem' }}
+                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 12px', fontWeight: 700, fontSize: '0.75rem' }}
                                                 >
                                                     <EditIcon fontSize="11px" style={{ marginRight: '4px' }} /> Edit
                                                 </Button>
@@ -1029,9 +1031,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         navigator.clipboard.writeText(`@${uName}`);
                                                         toast.success('Username copied!', { autoClose: 1500, hideProgressBar: true });
                                                     }}
-                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 10px', fontWeight: 700, fontSize: '0.75rem' }}
+                                                    style={{ background: '#FFF0F2', color: '#E63946', borderRadius: '20px', border: '1px solid #FFE3E6', padding: '4px 12px', fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
                                                 >
-                                                    📋 Copy
+                                                    <ContentCopyIcon style={{ fontSize: 12 }} /> Copy
                                                 </Button>
                                             </Tooltip>
                                         </Box>
