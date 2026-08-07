@@ -1008,38 +1008,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 />
                             </div>
                             <p style={{ margin: 0, fontSize: '0.78rem', color: '#806C65', fontWeight: 600 }}>
-                                Scan this QR code or Barcode payload to find profile
+                                Scan this QR code or Barcode payload to view profile
                             </p>
-                        </Box>
-
-                        <Box sx={{ borderTop: '1px solid #ECE9E1', pt: 3 }}>
-                            <p style={{ fontSize: '0.85rem', color: '#303633', fontWeight: 700, marginBottom: '10px' }}>
-                                📷 Scan or Enter Target Username:
-                            </p>
-                            <Input
-                                placeholder="e.g. @vicky123"
-                                value={qrScanInput}
-                                onChange={(e) => setQrScanInput(e.target.value)}
-                                mb={3}
-                                borderRadius="12px"
-                                focusBorderColor="#E63946"
-                            />
-                            <Button
-                                width="100%"
-                                bg="#E63946"
-                                color="#FFFFFF"
-                                fontWeight="700"
-                                borderRadius="12px"
-                                _hover={{ bg: "#d62839" }}
-                                onClick={() => {
-                                    setIsQrScannerOpen(false);
-                                    onOpenDrawer();
-                                    handleSearch({ preventDefault: () => {} }, qrScanInput);
-                                    setSearch(qrScanInput);
-                                }}
-                            >
-                                🔍 Search Scanned Username
-                            </Button>
                         </Box>
                     </ModalBody>
                 </ModalContent>
