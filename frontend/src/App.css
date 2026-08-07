@@ -46,7 +46,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transform-origin: top center;
+  zoom: 0.90;
 }
 
 h1,
