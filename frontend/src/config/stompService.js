@@ -17,11 +17,15 @@ class StompService {
       return;
     }
 
-    const token = getJwtToken();
-    const wsUrl = window.location.protocol + '//' + window.location.hostname + ':8080/ws';
+    const getWsBackendUrl = () => {
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return '/ws';
+      }
+      return 'https://aura-vdcq.onrender.com/ws';
+    };
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS('/ws'), // Vite proxy handles /ws or relative path
+      webSocketFactory: () => new SockJS(getWsBackendUrl()),
       connectHeaders: {
         Authorization: token ? `Bearer ${token}` : '',
       },

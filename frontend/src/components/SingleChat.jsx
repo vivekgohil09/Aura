@@ -40,7 +40,9 @@ import animationData from "../animations/typing.json";
 import { compressData } from '../config/dataCompressor';
 import { stompService } from '../config/stompService';
 const url = window.location.origin;
-const ENDPOINT = window.location.protocol + "//" + window.location.hostname + ":9092";
+const ENDPOINT = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? window.location.protocol + "//" + window.location.hostname + ":9092"
+  : "https://aura-vdcq.onrender.com";
 // Use the global socket initialized in ChatPage so call listeners work app-wide
 const getSocket = () => window.__auraSocket || null;
 var socket, selectedChatCompare;

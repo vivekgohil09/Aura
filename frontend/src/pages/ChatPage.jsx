@@ -11,7 +11,9 @@ import { io } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Portal } from "@chakra-ui/react";
 
-const ENDPOINT = window.location.protocol + "//" + window.location.hostname + ":9092";
+const ENDPOINT = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? window.location.protocol + "//" + window.location.hostname + ":9092"
+  : "https://aura-vdcq.onrender.com";
 let globalSocket = null;
 
 const MotionBox = motion(Box);
