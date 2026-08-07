@@ -2,6 +2,10 @@
 
 ChitChat is a complete one-to-one and group real-time chatting application.
 
+## 🌐 Official Website
+
+**Aura:** https://aura-vvekgohil-gmailcoms-projects.vercel.app/
+
 ## Tech Stack Used
 
 **Client:** React JS
@@ -10,38 +14,10 @@ ChitChat is a complete one-to-one and group real-time chatting application.
 
 **Database:** H2 / PostgreSQL
 
-## Run Locally
+...
 
-Clone the project:
+## Aura
 
-```bash
-git clone <repository-url>
-```
+Aura is the official web application for the ChitChat platform.
 
-Go to the project directory:
-
-```bash
-cd Chit_Chat
-```
-
-### Start Backend (Java Spring Boot)
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-### Start Frontend (React)
-```bash
-cd frontend
-npm install
-npm start
-```
-
-# Features
-
-- **Authentication**: JWT Token based login & signup
-- **Real-Time Chatting**: WebSockets (STOMP / SockJS)
-- **One to One & Group Chats**: Dynamic group creation and management
-- **User Search**: Search users by name or email
-
-# Aura  
+**Official Website:** https://aura-vvekgohil-gmailcoms-projects.vercel.app/
