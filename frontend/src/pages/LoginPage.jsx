@@ -151,7 +151,7 @@ export default function LoginPage() {
       setLoading(false);
 
       setTimeout(() => {
-        history.push("/");
+        history.push("/chats");
       }, 1000);
     } catch (error) {
       // Extract backend error message dynamically
@@ -237,7 +237,7 @@ export default function LoginPage() {
       setLoading(false);
 
       setTimeout(() => {
-        history.push("/");
+        history.push("/chats");
       }, 1000);
     } catch (error) {
       // Extract backend Google login error message dynamically

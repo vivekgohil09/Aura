@@ -88,8 +88,8 @@ export default function SignUpPage() {
 
       setLoading(false);
       setTimeout(() => {
-        history.push("/");
-      }, 3000);
+        history.push("/chats");
+      }, 1500);
     } catch (error) {
       const errorMessage = error.response && error.response.data && (error.response.data.message || error.response.data)
         ? (typeof error.response.data === 'string' ? error.response.data : error.response.data.message)
