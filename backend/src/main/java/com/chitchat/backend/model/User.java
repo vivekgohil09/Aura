@@ -35,6 +35,9 @@ public class User {
     @Column(columnDefinition = "LONGTEXT")
     private String pic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
+    @Column(name = "USERNAME", nullable = false, unique = true, length = 50)
+    private String username;
+
     @Column(nullable = false)
     private boolean isAdmin = false;
 
@@ -48,6 +51,19 @@ public class User {
         if (pic == null || pic.trim().isEmpty()) {
             pic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
         }
+        if (username == null || username.trim().isEmpty()) {
+            if (email != null && email.contains("@")) {
+                username = email.split("@")[0].replaceAll("[^a-z0-9_.]", "").toLowerCase();
+            } else if (name != null) {
+                username = name.replaceAll("[^a-z0-9_.]", "").toLowerCase();
+            } else {
+                username = "user_" + System.currentTimeMillis();
+            }
+        }
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        username = username.toLowerCase().trim();
     }
 
     @PreUpdate

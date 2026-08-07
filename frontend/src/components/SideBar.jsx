@@ -171,46 +171,63 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             dispatch(setUserDetails(updatedUser));
         }
     };
+    const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+    const [qrScanInput, setQrScanInput] = useState('');
+    const [searchError, setSearchError] = useState('');
+
     useEffect(() => {
         if (isOpenDrawer) {
-            handleSearch("");
+            setSearch("");
+            setSearchResult([]);
+            setSearchError("");
         }
     }, [isOpenDrawer]);
 
-    const handleSearch = async (query = "") => {
-        setSearch(query);
+    const handleSearch = async (e) => {
+        if (e) e.preventDefault();
+        setSearchError('');
+        if (!search || !search.trim()) {
+            toast.error("Please enter a username to search (e.g. @vicky123)");
+            return;
+        }
+
+        let cleanUsername = search.trim();
+        if (cleanUsername.startsWith('@')) {
+            cleanUsername = cleanUsername.substring(1);
+        }
 
         try {
             setLoading(true);
+            setSearchResult([]);
 
             const config = {
                 headers: {
                     Authorization: "Bearer " + getJwtToken(),
                 },
             };
-            const url = query ? `/api/user/all-users?search=${query}` : `/api/user/all-users`;
-            const { data } = await axios.get(url, config);
+            const { data } = await axios.get(`/api/v1/users/by-username/${cleanUsername}`, config);
             setLoading(false);
-            setSearchResult(data);
+            setSearchResult([{
+                id: data.publicId,
+                _id: data.publicId,
+                name: data.displayName,
+                username: data.username,
+                pic: data.profilePictureUrl
+            }]);
 
         } catch (error) {
             if (handleAuthError(error, history)) return;
-            if (!toast.isActive("failed-to-load-search-result-toast")) {
-                toast.error('Failed to load search result!', {
-                    toastId: "failed-to-load-search-result-toast",
-                    position: "top-center",
-                    autoClose: 2000,
-                    hideProgressBar: true,
-                    closeOnClick: false,
-                    pauseOnHover: false,
-                    draggable: true,
-                    progress: undefined,
-                    theme: 'colored'
-                });
-            }
             setLoading(false);
+            const errResponse = error.response?.data;
+            const msg = errResponse?.message || "No user found with this username.";
+            setSearchError(msg);
+            toast.error(msg, {
+                position: "top-center",
+                autoClose: 2500,
+                hideProgressBar: true,
+                theme: 'colored'
+            });
         }
-
     }
 
     const accessChat = async (userId) => {
@@ -553,45 +570,79 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     width: '32px',
                                     height: '32px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(135deg, #E7F1EE 0%, #F7F0DF 100%)',
+                                    background: 'linear-gradient(135deg, #FFF0F2 0%, #FFF9FA 100%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    border: '1px solid #E5E1D8'
+                                    border: '1px solid #FFE3E6'
                                 }}>
-                                    <span style={{ fontSize: '1rem', color: '#4F8A82' }}>✦</span>
+                                    <span style={{ fontSize: '1rem', color: '#E63946' }}>🔍</span>
                                 </Box>
-                                <h3 className="m-0" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#303633" }}>Search Contacts</h3>
+                                <h3 className="m-0" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#303633" }}>Add User by Username</h3>
                             </div>
                         </div>
                     </DrawerHeader>
 
                     <DrawerBody px={4} py={3}>
-                        <Box d="flex" py={2}>
-                            <div style={{ position: 'relative', width: '100%' }}>
-                                <Search size={18} color="#4F8A82" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
-                                <Input
-                                    placeholder="Search name or email..."
-                                    value={search}
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    bg="#FCFBF8"
-                                    color="#303633"
-                                    pl="42px"
-                                    h="46px"
-                                    _focus={{ borderColor: "#4F8A82", bg: "#FFFFFF", boxShadow: "0 4px 15px rgba(79, 138, 130, 0.1)" }}
-                                    borderRadius="14px"
-                                    style={{ border: "1px solid #E5E1D8", fontSize: "0.95rem" }}
-                                />
-                            </div>
-                        </Box>
+                        <form onSubmit={handleSearch}>
+                            <Box d="flex" flexDirection="column" gap={3} py={2}>
+                                <div style={{ position: 'relative', width: '100%' }}>
+                                    <Search size={18} color="#E63946" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
+                                    <Input
+                                        placeholder="Enter exact @username (e.g. @vicky123)"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        bg="#FCFBF8"
+                                        color="#303633"
+                                        pl="42px"
+                                        h="46px"
+                                        _focus={{ borderColor: "#E63946", bg: "#FFFFFF", boxShadow: "0 4px 15px rgba(230, 57, 70, 0.15)" }}
+                                        borderRadius="14px"
+                                        style={{ border: "1px solid #E5E1D8", fontSize: "0.95rem" }}
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    width="100%"
+                                    h="44px"
+                                    borderRadius="12px"
+                                    bg="linear-gradient(135deg, #E63946 0%, #d62839 100%)"
+                                    color="#FFFFFF"
+                                    fontWeight="700"
+                                    _hover={{ bg: "#d62839" }}
+                                    isLoading={loading}
+                                >
+                                    🔍 Search Username
+                                </Button>
+                            </Box>
+                        </form>
+
+                        {searchError && (
+                            <Box p={3} mt={2} bg="#FFF0F2" color="#E63946" borderRadius="12px" border="1px solid #FFE3E6" textAlign="center" fontSize="0.85rem" fontWeight="600">
+                                ❌ {searchError}
+                            </Box>
+                        )}
+
                         {loading ? <ChatLoading /> :
                             (
-                                searchResult?.map((user) => (
-                                    <UserListItem
-                                        key={user.id || user._id}
-                                        user={user}
-                                        handleFunction={() => accessChat(user.id || user._id)}
-                                    />
+                                searchResult?.map((u) => (
+                                    <Box key={u.id || u._id} mt={4} p={4} borderRadius="18px" bg="#FFFFFF" border="1.5px solid #FFE3E6" boxShadow="0 10px 30px rgba(230, 57, 70, 0.08)" textAlign="center">
+                                        <Avatar size="xl" name={u.name} src={u.pic} mb={2} style={{ border: '3px solid #E63946' }} />
+                                        <h4 style={{ margin: '4px 0 0', fontWeight: 800, color: '#303633', fontSize: '1.2rem' }}>{u.name}</h4>
+                                        <p style={{ margin: '0 0 16px', color: '#E63946', fontWeight: 700, fontSize: '0.9rem' }}>@{u.username}</p>
+                                        <Button
+                                            width="100%"
+                                            h="42px"
+                                            borderRadius="12px"
+                                            bg="#E63946"
+                                            color="#FFFFFF"
+                                            fontWeight="700"
+                                            _hover={{ bg: "#d62839" }}
+                                            onClick={() => accessChat(u.id || u._id)}
+                                        >
+                                            💬 Start Chat
+                                        </Button>
+                                    </Box>
                                 ))
                             )
                         }
@@ -819,6 +870,66 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     )}
                                 </Box>
                             </motion.div>
+
+                            {/* 3. USERNAME FIELD & QR CARD */}
+                            <motion.div
+                                whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(230, 57, 70, 0.08)" }}
+                                transition={{ duration: 0.2 }}
+                                style={{ width: '100%' }}
+                            >
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 3.5,
+                                    px: 4,
+                                    borderRadius: '16px',
+                                    background: 'linear-gradient(to right, #FFFFFF, #FCFBF9)',
+                                    border: '1px solid #EAE8E3',
+                                    borderLeft: '4px solid #E63946',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    fontSize: '0.95rem',
+                                    color: '#303633',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
+                                }}>
+                                    <span style={{ fontSize: '1.3rem', color: '#E63946' }}>🏷️</span>
+                                    <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
+                                        <strong style={{ color: '#909893', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '2px' }}>Unique Username</strong>
+                                        <span style={{ fontWeight: 800, color: '#E63946', fontSize: '1.05rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                    </span>
+                                </Box>
+                            </motion.div>
+
+                            {/* 4. MY QR CODE & BARCODE DISPLAY CARD */}
+                            <Box sx={{
+                                width: '100%',
+                                p: 3,
+                                borderRadius: '18px',
+                                background: '#FFF0F2',
+                                border: '1.5px solid #FFE3E6',
+                                textAlign: 'center'
+                            }}>
+                                <h5 style={{ margin: '0 0 10px', fontSize: '0.9rem', fontWeight: 800, color: '#E63946' }}>📱 SCAN PROFILE QR CODE / BARCODE</h5>
+                                <div style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '12px', borderRadius: '14px', border: '1px solid #FFE3E6', marginBottom: '10px' }}>
+                                    <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=@${user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}`}
+                                        alt="User QR Code"
+                                        style={{ width: '130px', height: '130px' }}
+                                    />
+                                </div>
+                                <Button
+                                    size="sm"
+                                    width="100%"
+                                    bg="#E63946"
+                                    color="#FFFFFF"
+                                    borderRadius="10px"
+                                    fontWeight="700"
+                                    _hover={{ bg: "#d62839" }}
+                                    onClick={() => setIsQrScannerOpen(true)}
+                                >
+                                    📷 Scan QR / Barcode to Add Friend
+                                </Button>
+                            </Box>
                         </VStack>
 
                         <Box display="flex" gap={3} justifyContent="center" width="100%">
@@ -851,9 +962,49 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     boxShadow: '0 4px 12px rgba(230, 57, 70, 0.2)'
                                 }}
                             >
-                                Close
+                                Done
                             </MDBBtn>
                         </Box>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+
+            {/* ── QR CODE & BARCODE SCANNER MODAL ── */}
+            <Modal isOpen={isQrScannerOpen} onClose={() => setIsQrScannerOpen(false)} size="md">
+                <ModalOverlay style={{ backdropFilter: "blur(8px)" }} />
+                <ModalContent style={{ borderRadius: '24px', p: 2 }}>
+                    <ModalHeader style={{ textAlign: 'center', fontWeight: 800, color: '#303633' }}>
+                        📷 Scan QR Code / Barcode
+                    </ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody className="text-center pb-4">
+                        <p style={{ fontSize: '0.85rem', color: '#806C65', marginBottom: '16px' }}>
+                            Scan or enter the target user's username QR payload:
+                        </p>
+                        <Input
+                            placeholder="e.g. @vicky123"
+                            value={qrScanInput}
+                            onChange={(e) => setQrScanInput(e.target.value)}
+                            mb={3}
+                            borderRadius="12px"
+                            focusBorderColor="#E63946"
+                        />
+                        <Button
+                            width="100%"
+                            bg="#E63946"
+                            color="#FFFFFF"
+                            fontWeight="700"
+                            borderRadius="12px"
+                            _hover={{ bg: "#d62839" }}
+                            onClick={() => {
+                                setIsQrScannerOpen(false);
+                                onOpenDrawer();
+                                handleSearch({ preventDefault: () => {} }, qrScanInput);
+                                setSearch(qrScanInput);
+                            }}
+                        >
+                            🔍 Search Scanned Username
+                        </Button>
                     </ModalBody>
                 </ModalContent>
             </Modal>

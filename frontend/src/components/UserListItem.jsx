@@ -67,9 +67,8 @@ const UserListItem = ({ user, handleFunction }) => {
                         </span>
                     )}
                 </Box>
-                <Text fontSize="xs" color="#806C65" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85 }}>
-                    <b style={{ color: '#3D2B26' }}>Email: </b>
-                    {user.email}
+                <Text fontSize="xs" color="#E63946" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700 }}>
+                    @{user.username || (user.email ? user.email.split('@')[0] : 'user')}
                 </Text>
             </Box>
         </Box>

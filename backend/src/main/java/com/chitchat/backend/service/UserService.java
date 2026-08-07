@@ -31,11 +31,22 @@ public class UserService {
             throw new RuntimeException("User already exists");
         }
 
+        String username = request.getUsername();
+        if (username == null || username.trim().isEmpty()) {
+            username = request.getEmail().split("@")[0];
+        }
+        username = normalizeUsername(username);
+
+        if (userRepository.existsByUsername(username)) {
+            username = username + "_" + (int)(Math.random() * 1000);
+        }
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .pic(request.getPic())
+                .username(username)
                 .isAdmin(false)
                 .build();
 
@@ -49,7 +60,8 @@ public class UserService {
                 savedUser.getEmail(),
                 savedUser.getPic(),
                 savedUser.isAdmin(),
-                token
+                token,
+                savedUser.getUsername()
         );
     }
 
@@ -61,6 +73,11 @@ public class UserService {
             throw new RuntimeException("Invalid Email or Password");
         }
 
+        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            user.setUsername(normalizeUsername(user.getEmail().split("@")[0]));
+            user = userRepository.save(user);
+        }
+
         String token = jwtProvider.generateToken(user.getId());
 
         return new AuthDto.AuthResponse(
@@ -70,7 +87,8 @@ public class UserService {
                 user.getEmail(),
                 user.getPic(),
                 user.isAdmin(),
-                token
+                token,
+                user.getUsername()
         );
     }
 
@@ -87,6 +105,10 @@ public class UserService {
                 ? request.getPic().trim() 
                 : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
+        String suggestedUsername = (request.getUsername() != null && !request.getUsername().trim().isEmpty())
+                ? normalizeUsername(request.getUsername())
+                : normalizeUsername(email.split("@")[0]);
+
         User user = userRepository.findByEmail(email).map(existing -> {
             boolean updated = false;
             if (request.getName() != null && !request.getName().trim().isEmpty()) {
@@ -97,13 +119,22 @@ public class UserService {
                 existing.setPic(request.getPic().trim());
                 updated = true;
             }
+            if (existing.getUsername() == null || existing.getUsername().trim().isEmpty()) {
+                existing.setUsername(suggestedUsername);
+                updated = true;
+            }
             return updated ? userRepository.save(existing) : existing;
         }).orElseGet(() -> {
+            String finalUsername = suggestedUsername;
+            if (userRepository.existsByUsername(finalUsername)) {
+                finalUsername = finalUsername + "_" + (int)(Math.random() * 1000);
+            }
             User newUser = User.builder()
                     .name(name)
                     .email(email)
                     .password(passwordEncoder.encode("GOOGLE_SSO_" + System.currentTimeMillis()))
                     .pic(pic)
+                    .username(finalUsername)
                     .isAdmin(false)
                     .build();
             return userRepository.save(newUser);
@@ -118,8 +149,42 @@ public class UserService {
                 user.getEmail(),
                 user.getPic(),
                 user.isAdmin(),
-                token
+                token,
+                user.getUsername()
         );
+    }
+
+    public String normalizeUsername(String username) {
+        if (username == null) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        String normalized = username.trim();
+        if (normalized.startsWith("@")) {
+            normalized = normalized.substring(1);
+        }
+        normalized = normalized.toLowerCase(java.util.Locale.ROOT);
+        if (!normalized.matches("^[a-z0-9_.]{3,30}$")) {
+            throw new IllegalArgumentException("Username must be 3-30 characters containing only letters, numbers, underscores, or dots.");
+        }
+        return normalized;
+    }
+
+    public com.chitchat.backend.dto.UserSearchDto.UserSearchResponse findUserByExactUsername(String rawUsername, User currentUser) {
+        String normalized = normalizeUsername(rawUsername);
+
+        if (currentUser != null && currentUser.getUsername() != null && currentUser.getUsername().equalsIgnoreCase(normalized)) {
+            throw new IllegalArgumentException("SELF_USER: You cannot add yourself.");
+        }
+
+        User foundUser = userRepository.findByUsername(normalized)
+                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND: No user found with this username."));
+
+        return com.chitchat.backend.dto.UserSearchDto.UserSearchResponse.builder()
+                .publicId(foundUser.getId())
+                .username(foundUser.getUsername())
+                .displayName(foundUser.getName())
+                .profilePictureUrl(foundUser.getPic())
+                .build();
     }
 
     public List<User> searchUsers(String search, User currentUser) {

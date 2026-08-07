@@ -51,6 +51,28 @@ public class UserController {
         return ResponseEntity.ok(userService.searchUsers(search, currentUser));
     }
 
+    @GetMapping("/by-username/{username}")
+    public ResponseEntity<?> getUserByUsername(
+            @PathVariable("username") String username,
+            @AuthenticationPrincipal User currentUser) {
+        try {
+            return ResponseEntity.ok(userService.findUserByExactUsername(username, currentUser));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().startsWith("SELF_USER")) {
+                return ResponseEntity.status(400).body(new com.chitchat.backend.dto.UserSearchDto.ErrorResponse(
+                        "SELF_USER", "You cannot add yourself."
+                ));
+            }
+            return ResponseEntity.status(400).body(new com.chitchat.backend.dto.UserSearchDto.ErrorResponse(
+                    "INVALID_USERNAME", e.getMessage()
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(new com.chitchat.backend.dto.UserSearchDto.ErrorResponse(
+                    "USER_NOT_FOUND", "No user found with this username."
+            ));
+        }
+    }
+
     @PostMapping("/find-email")
     public ResponseEntity<java.util.Map<String, String>> findEmail(@RequestBody AuthDto.LoginRequest request) {
         userService.findEmail(request.getEmail());

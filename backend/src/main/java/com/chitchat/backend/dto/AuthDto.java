@@ -22,6 +22,7 @@ public class AuthDto {
         private String email;
         private String password;
         private String pic;
+        private String username;
     }
 
     @Data
@@ -32,6 +33,7 @@ public class AuthDto {
         private String name;
         private String email;
         private String pic;
+        private String username;
     }
 
     @Data
@@ -44,6 +46,7 @@ public class AuthDto {
         private String pic;
         private boolean isAdmin;
         private String token;
+        private String username;
     }
 
     @Data
@@ -57,9 +60,10 @@ public class AuthDto {
         private String pic;
         private boolean isAdmin;
         private String token;
+        private String username;
         private UserInfo userLogin;
 
-        public AuthResponse(String message, String _id, String name, String email, String pic, boolean isAdmin, String token) {
+        public AuthResponse(String message, String _id, String name, String email, String pic, boolean isAdmin, String token, String username) {
             this.message = message;
             this._id = _id;
             this.name = name;
@@ -67,7 +71,8 @@ public class AuthDto {
             this.pic = pic;
             this.isAdmin = isAdmin;
             this.token = token;
-            this.userLogin = new UserInfo(_id, name, email, pic, isAdmin, token);
+            this.username = username;
+            this.userLogin = new UserInfo(_id, name, email, pic, isAdmin, token, username);
         }
     }
 }
