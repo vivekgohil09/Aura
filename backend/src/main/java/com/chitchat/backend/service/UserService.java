@@ -248,7 +248,7 @@ public class UserService {
     public User updateOnlineStatus(String userId, boolean isOnline) {
         if (userId == null) return null;
         return userRepository.findById(userId).map(user -> {
-            user.setOnline(isOnline);
+            user.setIsOnline(isOnline);
             if (!isOnline) {
                 user.setLastSeen(java.time.LocalDateTime.now());
             }

@@ -42,13 +42,20 @@ public class User {
     private boolean isAdmin = false;
 
     @Column(name = "IS_ONLINE")
-    private boolean isOnline = false;
+    private Boolean isOnline = false;
 
     @Column(name = "LAST_SEEN")
     private LocalDateTime lastSeen;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @PostLoad
+    protected void onLoad() {
+        if (isOnline == null) {
+            isOnline = false;
+        }
+    }
 
     @PrePersist
     protected void onCreate() {
