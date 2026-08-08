@@ -4,7 +4,7 @@ ChitChat is a complete one-to-one and group real-time chatting application.
 
 ## 🌐 Official Website
 
-**Aura:** https://aura-vvekgohil-gmailcoms-projects.vercel.app/
+**Aura:** [https://aura-vvekgohil-gmailcoms-projects.vercel.app/](https://aura-vvekgohil-gmailcoms-projects.vercel.app?utm_source=chatgpt.com)
 
 ## Tech Stack Used
 
