@@ -533,12 +533,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         }
 
         try {
-            // Save to sent requests in localStorage
+            // Save to sent requests in localStorage scoped by logged user ID
             if (targetId) {
                 try {
-                    const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                    const storageKey = myId ? `aura_sent_requests_${myId}` : "aura_sent_requests";
+                    const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
                     if (!sentList.includes(String(targetId))) {
-                        localStorage.setItem("aura_sent_requests", JSON.stringify([...sentList, String(targetId)]));
+                        localStorage.setItem(storageKey, JSON.stringify([...sentList, String(targetId)]));
                     }
                 } catch (e) {}
             }
@@ -1049,7 +1050,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             bg={(() => {
                                                 try {
                                                     const targetId = String(u.id || u._id);
-                                                    const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                                                    const myId = user?._id || user?.id;
+                                                    const storageKey = myId ? `aura_sent_requests_${myId}` : "aura_sent_requests";
+                                                    const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
                                                     return sentList.includes(targetId) ? "#10B981" : "#E63946";
                                                 } catch { return "#E63946"; }
                                             })()}
@@ -1061,7 +1064,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             {(() => {
                                                 try {
                                                     const targetId = String(u.id || u._id);
-                                                    const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                                                    const myId = user?._id || user?.id;
+                                                    const storageKey = myId ? `aura_sent_requests_${myId}` : "aura_sent_requests";
+                                                    const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
                                                     return sentList.includes(targetId) ? "✓ Requested" : "+ Send Chat Request";
                                                 } catch { return "+ Send Chat Request"; }
                                             })()}

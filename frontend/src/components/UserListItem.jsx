@@ -5,12 +5,14 @@ import { useSelector } from "react-redux";
 
 const UserListItem = ({ user, handleFunction }) => {
     const loggedInUser = useSelector((state) => state.user) || JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const loggedUserId = loggedInUser?._id || loggedInUser?.id;
+    const loggedUserId = loggedInUser?._id || loggedInUser?.id || loggedInUser?.userId;
     const targetUserId = user?._id || user?.id;
+
+    const storageKey = loggedUserId ? `aura_sent_requests_${loggedUserId}` : "aura_sent_requests";
 
     const [isSent, setIsSent] = useState(() => {
         try {
-            const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+            const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
             return targetUserId ? sentList.includes(String(targetUserId)) : false;
         } catch {
             return false;
@@ -28,9 +30,9 @@ const UserListItem = ({ user, handleFunction }) => {
         setIsSent(true);
         if (targetUserId) {
             try {
-                const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
                 if (!sentList.includes(String(targetUserId))) {
-                    localStorage.setItem("aura_sent_requests", JSON.stringify([...sentList, String(targetUserId)]));
+                    localStorage.setItem(storageKey, JSON.stringify([...sentList, String(targetUserId)]));
                 }
             } catch (e) {}
         }
