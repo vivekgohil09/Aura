@@ -51,6 +51,12 @@ const ChatPage = () => {
 
     globalSocket.off("chat-request-received").on("chat-request-received", (data) => {
       if (data && data.sender) {
+        const targetUserId = data.targetUserId;
+        const myId = userInfo._id || userInfo.id;
+        if (targetUserId && myId && String(targetUserId) !== String(myId)) {
+          return; // Ignore requests meant for other users
+        }
+
         const senderId = data.sender._id || data.sender.id;
         const notifItem = {
           _id: "req_" + senderId,
@@ -77,6 +83,12 @@ const ChatPage = () => {
 
     globalSocket.off("chat-request-accepted-received").on("chat-request-accepted-received", (data) => {
       if (data && data.chat) {
+        const senderId = data.senderId;
+        const myId = userInfo._id || userInfo.id;
+        if (senderId && myId && String(senderId) !== String(myId)) {
+          return; // Ignore acceptances meant for other senders
+        }
+
         const fullChat = data.chat;
         const chatsList = window.__auraChats || [];
         const fullChatId = fullChat._id || fullChat.id;

@@ -190,6 +190,8 @@ public class SocketIOServerConfig {
                 Object targetId = map.get("targetUserId");
                 if (targetId != null) {
                     server.getRoomOperations("user_" + targetId.toString()).sendEvent("chat-request-received", map);
+                    // Broadcast to ensure real-time delivery across web sockets
+                    server.getBroadcastOperations().sendEvent("chat-request-received", map);
                 }
             }
         });
@@ -199,6 +201,8 @@ public class SocketIOServerConfig {
                 Object senderId = map.get("senderId");
                 if (senderId != null) {
                     server.getRoomOperations("user_" + senderId.toString()).sendEvent("chat-request-accepted-received", map);
+                    // Broadcast acceptance to ensure real-time delivery
+                    server.getBroadcastOperations().sendEvent("chat-request-accepted-received", map);
                 }
             }
         });
