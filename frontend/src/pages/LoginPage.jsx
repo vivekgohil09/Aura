@@ -266,7 +266,7 @@ export default function LoginPage() {
       const token = data.data?.token || data.token;
 
       localStorage.setItem("userInfo", JSON.stringify(userObj));
-      if (token) localStorage.setItem("jwt", JSON.stringify(token));
+      if (token) localStorage.setItem("jwt", token);
 
       dispatch(setUserDetails(userObj));
       setLoading(false);

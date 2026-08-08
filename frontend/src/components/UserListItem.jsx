@@ -4,12 +4,19 @@ import { Box, Text } from "@chakra-ui/layout";
 import { useSelector } from "react-redux";
 
 const UserListItem = ({ user, handleFunction }) => {
-    const [isSent, setIsSent] = useState(false);
     const loggedInUser = useSelector((state) => state.user) || JSON.parse(localStorage.getItem("userInfo") || "{}");
-    
     const loggedUserId = loggedInUser?._id || loggedInUser?.id;
     const targetUserId = user?._id || user?.id;
-    
+
+    const [isSent, setIsSent] = useState(() => {
+        try {
+            const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+            return targetUserId ? sentList.includes(String(targetUserId)) : false;
+        } catch {
+            return false;
+        }
+    });
+
     const isMe = Boolean(
         (loggedUserId && targetUserId && String(loggedUserId) === String(targetUserId)) || 
         (loggedInUser?.email && user?.email && loggedInUser.email.toLowerCase() === user.email.toLowerCase())
@@ -17,7 +24,16 @@ const UserListItem = ({ user, handleFunction }) => {
 
     const handleAddClick = (e) => {
         e.stopPropagation();
+        if (isSent) return;
         setIsSent(true);
+        if (targetUserId) {
+            try {
+                const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                if (!sentList.includes(String(targetUserId))) {
+                    localStorage.setItem("aura_sent_requests", JSON.stringify([...sentList, String(targetUserId)]));
+                }
+            } catch (e) {}
+        }
         if (handleFunction) handleFunction(user);
     };
 
@@ -102,7 +118,7 @@ const UserListItem = ({ user, handleFunction }) => {
                         transition: 'all 0.2s ease'
                     }}
                 >
-                    {isSent ? '✓ Sent' : '+ Add'}
+                    {isSent ? 'Requested' : '+ Add'}
                 </button>
             )}
         </Box>

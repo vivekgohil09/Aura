@@ -12,7 +12,7 @@ import ChatLoading from "./ChatLoading";
 import { getSender, getPicture, getSenderUser } from '../config/ChatsLogic';
 import { Avatar, Tooltip, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, FormControl, Input, Progress, Spinner, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Badge } from '@chakra-ui/react';
 import AddIcon from '@mui/icons-material/Add';
-import { Search, MoreVertical, Trash2, Pin, VolumeX, Sparkles, Lock, ShieldCheck } from 'lucide-react';
+import { Search, MoreVertical, Trash2, Pin, VolumeX, Sparkles, Lock, ShieldCheck, Users } from 'lucide-react';
 import UserListItem from './UserListItem';
 import UserBadgeItem from './UserBadgeItem';
 import axios from 'axios';
@@ -35,7 +35,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
   const [loading, setLoading] = useState(false);
   const [loadingTwo, setLoadingTwo] = useState(false);
 
-  // Pinned, Muted, and Deleted chat states
+  const [chatFilter, setChatFilter] = useState('all'); // 'all' or 'friends'
   const [pinnedChatIds, setPinnedChatIds] = useState([]);
   const [mutedChatIds, setMutedChatIds] = useState([]);
   const [deletedChatIds, setDeletedChatIds] = useState(() => {
@@ -322,41 +322,74 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         overflow="hidden"
         zIndex={1}
       >
-        {/* 1. Conversations Label & Group CTA */}
-        <Box px={4} pt={4} pb={2} d="flex" alignItems="center" justifyContent="space-between">
-          <Text fontWeight="800" fontSize="1.1rem" color="#18181B" margin={0} letterSpacing="-0.02em">
-            Conversations
-          </Text>
-          <motion.div whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={onOpen}
-              size="sm"
-              leftIcon={<AddIcon style={{ fontSize: "14px", color: "#E63946" }} />}
-              style={{
-                background: "rgba(230, 57, 70, 0.06)",
-                color: "#E63946",
-                borderRadius: "99px",
-                padding: "6px 16px",
-                fontWeight: 800,
-                fontSize: "0.82rem",
-                fontFamily: "'Outfit', sans-serif",
-                letterSpacing: "0.02em",
-                boxShadow: "0 4px 12px rgba(230, 57, 70, 0.08)",
-                border: "1px solid rgba(230, 57, 70, 0.18)",
-                height: "34px",
-                cursor: "pointer",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "transparent",
-                transition: "all 0.2s ease"
-              }}
-              _hover={{
-                background: "rgba(230, 57, 70, 0.12)",
-                borderColor: "#E63946"
-              }}
-            >
-              New Group
-            </Button>
-          </motion.div>
+        {/* 1. Conversations Label & Filter CTA */}
+        <Box px={4} pt={4} pb={2} d="flex" flexDir="column" gap={2.5}>
+          <Box d="flex" alignItems="center" justifyContent="space-between">
+            <Text fontWeight="800" fontSize="1.1rem" color="#18181B" margin={0} letterSpacing="-0.02em">
+              Conversations
+            </Text>
+            <Box d="flex" alignItems="center" gap={2}>
+              <Tooltip label={chatFilter === 'friends' ? "Show All Chats" : "Filter 1-on-1 Friends"} hasArrow placement="top">
+                <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                  <Button
+                    onClick={() => setChatFilter(chatFilter === 'friends' ? 'all' : 'friends')}
+                    size="sm"
+                    style={{
+                      background: chatFilter === 'friends' ? 'linear-gradient(135deg, #E63946 0%, #D62839 100%)' : 'rgba(230, 57, 70, 0.06)',
+                      color: chatFilter === 'friends' ? '#FFFFFF' : '#E63946',
+                      borderRadius: '99px',
+                      padding: '0 12px',
+                      fontWeight: 800,
+                      fontSize: '0.8rem',
+                      fontFamily: "'Outfit', sans-serif",
+                      border: chatFilter === 'friends' ? 'none' : '1px solid rgba(230, 57, 70, 0.18)',
+                      height: '34px',
+                      minWidth: '34px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: chatFilter === 'friends' ? '0 4px 14px rgba(230, 57, 70, 0.3)' : 'none',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <Users size={15} color={chatFilter === 'friends' ? '#FFFFFF' : '#E63946'} />
+                    <span>Friends</span>
+                  </Button>
+                </motion.div>
+              </Tooltip>
+              <motion.div whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={onOpen}
+                  size="sm"
+                  leftIcon={<AddIcon style={{ fontSize: "14px", color: "#E63946" }} />}
+                  style={{
+                    background: "rgba(230, 57, 70, 0.06)",
+                    color: "#E63946",
+                    borderRadius: "99px",
+                    padding: "6px 14px",
+                    fontWeight: 800,
+                    fontSize: "0.82rem",
+                    fontFamily: "'Outfit', sans-serif",
+                    letterSpacing: "0.02em",
+                    boxShadow: "0 4px 12px rgba(230, 57, 70, 0.08)",
+                    border: "1px solid rgba(230, 57, 70, 0.18)",
+                    height: "34px",
+                    cursor: "pointer",
+                    touchAction: "manipulation",
+                    WebkitTapHighlightColor: "transparent",
+                    transition: "all 0.2s ease"
+                  }}
+                  _hover={{
+                    background: "rgba(230, 57, 70, 0.12)",
+                    borderColor: "#E63946"
+                  }}
+                >
+                  New Group
+                </Button>
+              </motion.div>
+            </Box>
+          </Box>
         </Box>
 
         {/* 2. Conversations List */}
@@ -383,8 +416,13 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                   }
                 }
 
-                // Sort chats so pinned ones stay at top
-                const sortedChats = uniqueChats.sort((a, b) => {
+                // Sort chats so pinned ones stay at top and filter by chatFilter ('friends' vs 'all')
+                const filteredList = uniqueChats.filter(c => {
+                  if (chatFilter === 'friends') return !c.isGroupChat;
+                  return true;
+                });
+
+                const sortedChats = filteredList.sort((a, b) => {
                   const aId = String(a.id || a._id);
                   const bId = String(b.id || b._id);
                   const aPinned = pinnedChatIds.includes(aId) ? 1 : 0;

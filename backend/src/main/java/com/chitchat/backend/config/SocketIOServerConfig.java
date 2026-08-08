@@ -184,6 +184,25 @@ public class SocketIOServerConfig {
             }
         });
 
+        // ── Chat Request Event Relays ────────────────────────────────────
+        server.addEventListener("send-chat-request", Object.class, (client, data, ackSender) -> {
+            if (data instanceof Map<?, ?> map) {
+                Object targetId = map.get("targetUserId");
+                if (targetId != null) {
+                    server.getRoomOperations("user_" + targetId.toString()).sendEvent("chat-request-received", map);
+                }
+            }
+        });
+
+        server.addEventListener("chat-request-accepted", Object.class, (client, data, ackSender) -> {
+            if (data instanceof Map<?, ?> map) {
+                Object senderId = map.get("senderId");
+                if (senderId != null) {
+                    server.getRoomOperations("user_" + senderId.toString()).sendEvent("chat-request-accepted-received", map);
+                }
+            }
+        });
+
         if (isPortAvailable(9092)) {
             try {
                 server.start();

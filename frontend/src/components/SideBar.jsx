@@ -533,13 +533,29 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         }
 
         try {
-            const fullChat = await accessChat(targetId);
+            // Save to sent requests in localStorage
+            if (targetId) {
+                try {
+                    const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                    if (!sentList.includes(String(targetId))) {
+                        localStorage.setItem("aura_sent_requests", JSON.stringify([...sentList, String(targetId)]));
+                    }
+                } catch (e) {}
+            }
+
+            // Send real-time request via socket to target user
+            if (window.__auraSocket) {
+                window.__auraSocket.emit("send-chat-request", {
+                    targetUserId: targetId,
+                    sender: user
+                });
+            }
             setIsQrScannerOpen(false);
             setScannedUser(null);
             setScannedUsername('');
-            toast.success(`Chat connected with @${targetUser.username || targetUser.name}!`, {
-                position: 'top-center',
-                autoClose: 2500,
+            toast.success(`Request Sent to @${targetUser.username || targetUser.name}! Waiting for them to accept.`, {
+                position: 'top-right',
+                autoClose: 3000,
                 hideProgressBar: true
             });
         } catch (err) {
@@ -559,11 +575,27 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         dispatch(setChats([fullChat, ...existingChats]));
                     }
                     dispatch(setSelectedChat(fullChat));
+
+                    // Emit acceptance back to the original sender via WebSockets
+                    if (window.__auraSocket) {
+                        window.__auraSocket.emit("chat-request-accepted", {
+                            senderId: senderId,
+                            acceptedBy: user,
+                            chat: fullChat
+                        });
+                    }
                 }
             }
-            dispatch(setNotification(notification.filter(n => n !== notif)));
+            const updatedNotifs = notification.filter(n => n !== notif);
+            dispatch(setNotification(updatedNotifs));
+            try {
+                const stored = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+                const filtered = stored.filter(n => n.senderId !== notif.senderId);
+                localStorage.setItem("aura_received_requests", JSON.stringify(filtered));
+            } catch (e) {}
+
             toast.success("Chat request accepted! Conversation added to list.", {
-                position: 'top-center',
+                position: 'top-right',
                 autoClose: 3000,
                 hideProgressBar: true
             });
@@ -581,24 +613,25 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 bg="rgba(255, 255, 255, 0.85)"
                 position="relative"
                 zIndex={100}
+                px={{ base: 2, sm: 4, md: 6 }}
+                py={2.5}
                 style={{
                     backdropFilter: "blur(20px)",
                     WebkitBackdropFilter: "blur(20px)",
-                    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-                    padding: "10px 24px"
+                    borderBottom: "1px solid rgba(0, 0, 0, 0.05)"
                 }}
             >
-                <div className="d-flex align-items-center gap-3" style={{ flex: 1 }}>
+                <div className="d-flex align-items-center gap-2 gap-sm-3" style={{ flex: 1, minWidth: 0 }}>
                     {/* Brand Logo */}
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}
                         onClick={() => history.push("/")}
                     >
                         <Box sx={{
-                            width: '38px',
-                            height: '38px',
+                            width: '36px',
+                            height: '36px',
                             borderRadius: '12px',
                             background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
                             display: 'flex',
@@ -607,11 +640,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             boxShadow: '0 6px 16px rgba(230, 57, 70, 0.3)',
                             position: 'relative'
                         }}>
-                            <span style={{ fontSize: '1.3rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
+                            <span style={{ fontSize: '1.2rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
                         </Box>
-                        <div>
-                            <h2 className="gradient-text m-0" style={{ fontSize: "1.45rem", fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>AURA</h2>
-                        </div>
+                        <Box display={{ base: "none", sm: "block" }}>
+                            <h2 className="gradient-text m-0" style={{ fontSize: "1.35rem", fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>AURA</h2>
+                        </Box>
                     </motion.div>
 
                     {/* Modern Light Grey Pill Search Bar */}
@@ -693,16 +726,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 </Tooltip>
                             </Box>
 
-                            {/* Dropdown search results centered directly under top search bar */}
+                            {/* Dropdown search results aligned directly under top search bar */}
                             {search && searchResult && searchResult.length > 0 && (
                                 <Box
                                     position="absolute"
                                     top="52px"
-                                    left="50%"
-                                    transform="translateX(-50%)"
+                                    left="0"
                                     w="100%"
-                                    maxW="480px"
-                                    minW="320px"
+                                    maxW="100%"
                                     bg="#FFFFFF"
                                     borderRadius="22px"
                                     border="1.5px solid rgba(230, 57, 70, 0.15)"
@@ -862,7 +893,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        dispatch(setNotification(notification.filter((n) => n !== notif)));
+                                                        const filtered = notification.filter((n) => n !== notif);
+                                                        dispatch(setNotification(filtered));
+                                                        try {
+                                                            const stored = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+                                                            const rem = stored.filter(n => n.senderId !== notif.senderId);
+                                                            localStorage.setItem("aura_received_requests", JSON.stringify(rem));
+                                                        } catch (err) {}
                                                         toast.info("Chat request declined");
                                                     }}
                                                 >
@@ -1009,13 +1046,25 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             width="100%"
                                             h="42px"
                                             borderRadius="12px"
-                                            bg="#E63946"
+                                            bg={(() => {
+                                                try {
+                                                    const targetId = String(u.id || u._id);
+                                                    const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                                                    return sentList.includes(targetId) ? "#10B981" : "#E63946";
+                                                } catch { return "#E63946"; }
+                                            })()}
                                             color="#FFFFFF"
                                             fontWeight="700"
-                                            _hover={{ bg: "#d62839" }}
-                                            onClick={() => accessChat(u.id || u._id)}
+                                            _hover={{ opacity: 0.9 }}
+                                            onClick={() => sendChatRequest(u)}
                                         >
-                                            💬 Start Chat
+                                            {(() => {
+                                                try {
+                                                    const targetId = String(u.id || u._id);
+                                                    const sentList = JSON.parse(localStorage.getItem("aura_sent_requests") || "[]");
+                                                    return sentList.includes(targetId) ? "✓ Requested" : "+ Send Chat Request";
+                                                } catch { return "+ Send Chat Request"; }
+                                            })()}
                                         </Button>
                                     </Box>
                                 ))

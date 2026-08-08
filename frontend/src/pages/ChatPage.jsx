@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import SideBar from "../components/SideBar";
+import { getJwtToken } from "../config/getJwt";
 import MyChat from "../components/MyChat";
 import ChatBox from "../components/ChatBox";
 import { Box, Modal, ModalOverlay, ModalContent, ModalBody, Avatar, Text, Flex, Button } from "@chakra-ui/react";
@@ -30,29 +31,90 @@ const ChatPage = () => {
   // ── Initialize global socket and call listeners on page mount ─────────────
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+    const jwtToken = localStorage.getItem("jwt") || getJwtToken();
     if (!userInfo) return;
 
     if (!globalSocket) {
       globalSocket = io(ENDPOINT, { transports: ["websocket", "polling"] });
-      globalSocket.emit("setup", userInfo);
+      globalSocket.emit("setup", {
+        ...userInfo,
+        token: jwtToken
+      });
       globalSocket.on("connected", () => console.log("Global socket connected"));
       globalSocket.on("connect_error", err => console.error("Socket error:", err.message));
     }
 
-    // Incoming call — always listen globally
+    // Incoming call & chat requests — always listen globally
     globalSocket.off("call-user").on("call-user", (data) => {
       setIncomingCall(data);
     });
 
+    globalSocket.off("chat-request-received").on("chat-request-received", (data) => {
+      if (data && data.sender) {
+        const senderId = data.sender._id || data.sender.id;
+        const notifItem = {
+          _id: "req_" + senderId,
+          isChatRequest: true,
+          senderId: senderId,
+          senderName: data.sender.name || "User",
+          senderUsername: data.sender.username || data.sender.name,
+          senderPic: data.sender.pic || ""
+        };
+
+        try {
+          const storedNotifs = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+          if (!storedNotifs.some(n => n.senderId === senderId)) {
+            localStorage.setItem("aura_received_requests", JSON.stringify([notifItem, ...storedNotifs]));
+          }
+        } catch (e) {}
+
+        const currentNotifs = window.__auraNotifs || [];
+        if (!currentNotifs.some(n => n.senderId === senderId)) {
+          dispatch(setNotification([notifItem, ...currentNotifs]));
+        }
+      }
+    });
+
+    globalSocket.off("chat-request-accepted-received").on("chat-request-accepted-received", (data) => {
+      if (data && data.chat) {
+        const fullChat = data.chat;
+        const chatsList = window.__auraChats || [];
+        const fullChatId = fullChat._id || fullChat.id;
+        if (!chatsList.some(c => (c._id || c.id) === fullChatId)) {
+          dispatch(setChats([fullChat, ...chatsList]));
+        }
+      }
+    });
+
     return () => {
       globalSocket?.off("call-user");
+      globalSocket?.off("chat-request-received");
+      globalSocket?.off("chat-request-accepted-received");
     };
-  }, []);
+  }, [dispatch]);
 
-  // ── Expose globalSocket so SingleChat can reuse it ─────────────────────────
+  const notification = useSelector(state => state.notification) || [];
+
+  // ── Hydrate stored received requests into Redux state on page load ─────────────
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+      if (stored.length > 0) {
+        const existingNotifs = window.__auraNotifs || [];
+        const merged = [...stored, ...existingNotifs.filter(n => !stored.some(s => s.senderId === n.senderId))];
+        dispatch(setNotification(merged));
+      }
+    } catch (e) {}
+  }, [dispatch]);
+
+  const chats = useSelector(state => state.chats) || [];
+
+  // ── Expose globalSocket & notifications & chats so components can reuse ───────
   useEffect(() => {
     window.__auraSocket = globalSocket;
-  }, [globalSocket]);
+    window.__auraNotifs = notification;
+    window.__auraChats = chats;
+  }, [globalSocket, notification, chats]);
 
   const acceptCall = async () => {
     try {

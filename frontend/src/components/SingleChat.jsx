@@ -265,8 +265,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
     const startVideoCall = async (type = "video", accepted = false) => {
         // Prevent calling yourself
-        if (selectedChat && !selectedChat.isGroupChat && selectedChat.users) {
-            const otherUser = selectedChat.users.find((u) => (u._id || u.id) !== (user._id || user.id));
+        if (selectedChat && !selectedChat.isGroupChat && Array.isArray(selectedChat.users) && selectedChat.users.length === 1) {
+            const myId = user?._id || user?.id;
+            const otherUser = selectedChat.users.find((u) => u && String(u._id || u.id) !== String(myId));
             if (!otherUser) {
                 toast.error("You cannot start a voice or video call with yourself!", {
                     position: "top-center",
@@ -284,29 +285,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         setIsCameraOff(false);
         setIsCallAccepted(accepted);
         try {
-            const constraints = type === "video" ? {
-                video: {
-                    width: { ideal: 3840, max: 3840, min: 1280 },
-                    height: { ideal: 2160, max: 2160, min: 720 },
-                    frameRate: { ideal: 60, max: 60, min: 30 },
-                    facingMode: "user"
-                },
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
-                    sampleRate: 48000
-                }
-            } : {
-                video: false,
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
-                    sampleRate: 48000
-                }
-            };
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            let stream;
+            try {
+                const constraints = type === "video" ? {
+                    video: {
+                        width: { ideal: 1920, max: 3840, min: 640 },
+                        height: { ideal: 1080, max: 2160, min: 480 },
+                        frameRate: { ideal: 30, max: 60, min: 15 },
+                        facingMode: "user"
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                } : {
+                    video: false,
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                };
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (strictErr) {
+                // Fallback to basic media constraints if ideal resolution/framerate or sampleRate fails
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: type === "video",
+                    audio: true
+                });
+            }
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
@@ -315,8 +323,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             }
 
             // Emit call signal over WebSocket
-            const chatId = selectedChat.id || selectedChat._id;
-            if (socket && !accepted) {
+            const chatId = selectedChat ? (selectedChat.id || selectedChat._id) : null;
+            if (socket && !accepted && chatId) {
                 socket.emit("call-user", {
                     chatId,
                     fromUser: user?.name || "User",
@@ -856,9 +864,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 socket.off("connected").on("connected", () => setSocketConnected(true));
                 socket.off("user status change").on("user status change", (data) => {
                     if (data && data.userId) {
+                        const sId = String(data.userId);
                         setUserStatuses(prev => ({
                             ...prev,
-                            [data.userId]: {
+                            [sId]: {
                                 isOnline: Boolean(data.isOnline),
                                 lastSeen: data.lastSeen
                             }
@@ -968,7 +977,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     >
                         {!selectedChat.isGroupChat ? (() => {
                             const targetUser = getSenderUser(user, selectedChat.users);
-                            const targetUserId = targetUser?._id || targetUser?.id;
+                            const targetUserId = targetUser ? String(targetUser._id || targetUser.id || targetUser.publicId || '') : '';
                             const statusObj = targetUserId && userStatuses[targetUserId] ? userStatuses[targetUserId] : null;
                             const isTargetOnline = statusObj != null 
                                 ? statusObj.isOnline 
@@ -979,8 +988,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
                             return (
                                 <>
-                                    <div className='d-flex align-items-center' style={{ gap: '12px' }}>
-                                        <Box display={{ base: "inline-block", md: "none" }}>
+                                    <div className='d-flex align-items-center' style={{ gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden', marginRight: '8px' }}>
+                                        <Box display={{ base: "inline-block", md: "none" }} style={{ flexShrink: 0 }}>
                                             <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
                                                 <IconButton
                                                     size="sm"
@@ -998,7 +1007,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 />
                                             </motion.div>
                                         </Box>
-                                        <div style={{ position: "relative" }}>
+                                        <div style={{ position: "relative", flexShrink: 0 }}>
                                             <Avatar 
                                                 size="md" 
                                                 cursor="pointer" 
@@ -1022,24 +1031,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             />
                                         </div>
-                                        <div className="d-flex flex-column justify-content-center">
-                                            <p className="fw-bold fs-5 m-0" style={{ color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                                        <div className="d-flex flex-column justify-content-center" style={{ minWidth: 0, overflow: 'hidden' }}>
+                                            <p className="fw-bold fs-6 m-0" style={{ color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                 {getSender(user, selectedChat.users)}
                                             </p>
                                             {isTargetOnline ? (
-                                                <span style={{ fontSize: "0.75rem", color: "#10B981", display: "flex", alignItems: "center", gap: "5px", fontWeight: 600, marginTop: "2px" }}>
+                                                <span style={{ fontSize: "0.72rem", color: "#10B981", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600, marginTop: "2px", whiteSpace: "nowrap" }}>
                                                     <span style={{ width: "6px", height: "6px", backgroundColor: "#10B981", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px rgba(16, 185, 129, 0.6)" }}></span>
                                                     Online
                                                 </span>
                                             ) : (
-                                                <span style={{ fontSize: "0.75rem", color: "#71717A", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500, marginTop: "2px" }}>
-                                                    <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block" }}></span>
+                                                <span style={{ fontSize: "0.72rem", color: "#71717A", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                    <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block", flexShrink: 0 }}></span>
                                                     Last seen {formatLastSeenDate(targetLastSeen)}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className='d-flex align-items-center gap-2'>
+                                    <div className='d-flex align-items-center gap-1.5 gap-sm-2' style={{ flexShrink: 0 }}>
                                         <Tooltip label="Voice Call" hasArrow placement="bottom-end">
                                             <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
                                                 <IconButton
