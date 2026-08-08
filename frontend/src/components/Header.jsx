@@ -48,11 +48,11 @@ export default function Header() {
                     width: 42,
                     height: 42,
                     borderRadius: '14px',
-                    background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 14px rgba(230, 57, 70, 0.25)'
+                    boxShadow: '0 6px 18px rgba(212, 175, 55, 0.35)'
                   }}
                 >
                   <span style={{ fontSize: '1.4rem', color: '#FFFFFF' }}>🪶</span>
@@ -64,10 +64,10 @@ export default function Header() {
                   component="span"
                   sx={{
                     fontFamily: "'Outfit', sans-serif",
-                    fontWeight: 800,
+                    fontWeight: 900,
                     fontSize: '1.6rem',
                     letterSpacing: '-0.03em',
-                    color: '#3D2B26',
+                    color: '#0F172A',
                     display: 'block',
                     lineHeight: 1
                   }}
@@ -85,7 +85,7 @@ export default function Header() {
                   to="/aura"
                   style={{
                     background: 'transparent',
-                    color: '#3D2B26',
+                    color: '#0F172A',
                     fontFamily: "'Outfit', sans-serif",
                     fontWeight: 700,
                     fontSize: '0.82rem',
@@ -107,20 +107,18 @@ export default function Header() {
                   to={isLogin ? '/signup' : '/login'}
                   endIcon={<ArrowRight size={14} />}
                   style={{
-                    background: isLogin
-                      ? 'linear-gradient(135deg, #E63946 0%, #d62839 100%)'
-                      : 'rgba(230, 57, 70, 0.08)',
-                    color: isLogin ? '#FFFFFF' : '#E63946',
-                    border: isLogin ? 'none' : '1.5px solid rgba(230, 57, 70, 0.3)',
+                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                    color: '#FFFFFF',
+                    border: 'none',
                     fontFamily: "'Outfit', sans-serif",
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: '0.82rem',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     whiteSpace: 'nowrap',
-                    padding: '8px 18px',
+                    padding: '8px 20px',
                     borderRadius: '99px',
-                    boxShadow: isLogin ? '0 4px 14px rgba(230, 57, 70, 0.25)' : 'none',
+                    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.25)',
                     minWidth: 0
                   }}
                 >

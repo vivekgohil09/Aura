@@ -477,14 +477,14 @@ export default function SignUpPage() {
                     fullWidth
                     variant="contained"
                     style={{
-                      background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                       color: '#FFFFFF',
-                      fontWeight: 700,
+                      fontWeight: 800,
                       fontFamily: "'Outfit', sans-serif",
                       fontSize: '1rem',
                       padding: '12px',
                       borderRadius: '12px',
-                      boxShadow: '0 6px 22px rgba(230, 57, 70, 0.3)',
+                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.25)',
                       textTransform: 'none'
                     }}
                     sx={{ mt: 3, mb: 2 }}

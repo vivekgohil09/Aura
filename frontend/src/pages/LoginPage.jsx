@@ -492,11 +492,11 @@ export default function LoginPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 1rem auto',
-                    filter: 'drop-shadow(0 10px 20px rgba(255, 107, 107, 0.5)) drop-shadow(0 3px 6px rgba(255, 142, 83, 0.3))',
+                    filter: 'drop-shadow(0 10px 24px rgba(212, 175, 55, 0.5)) drop-shadow(0 4px 10px rgba(245, 158, 11, 0.3))',
                     transformStyle: 'preserve-3d'
                   }}
                 >
-                  <Feather size={54} color="#FF6B6B" strokeWidth={1.5} />
+                  <Feather size={54} color="#D4AF37" strokeWidth={1.5} />
                 </motion.div>
 
                 <h1 style={{
@@ -505,12 +505,12 @@ export default function LoginPage() {
                   marginBottom: '0.35rem',
                   fontWeight: 900,
                   fontFamily: "'Outfit', sans-serif",
-                  background: 'linear-gradient(135deg, #3D2B26 0%, #FF6B6B 60%, #FF8E53 100%)',
+                  background: 'linear-gradient(135deg, #0F172A 0%, #D4AF37 60%, #F59E0B 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   letterSpacing: '-0.05em'
                 }}>AURA</h1>
-                <p style={{ color: '#806C65', fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: '0.75rem', marginBottom: '1.2rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Next-Gen Messaging</p>
+                <p style={{ color: '#D4AF37', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem', marginBottom: '1.2rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Premier Messaging</p>
 
                 <Grid container spacing={1.5} justifyContent="center">
                   <Grid item xs={6}>
@@ -659,30 +659,30 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: '#1E1B18',
+                      color: '#0F172A',
                       backgroundColor: '#FFFFFF',
                       borderRadius: '12px',
                       fontFamily: "'Inter', sans-serif",
                       fontWeight: 500,
                       '& fieldset': {
-                        borderColor: 'rgba(61, 43, 38, 0.15)',
+                        borderColor: 'rgba(212, 175, 55, 0.25)',
                         borderWidth: '1px'
                       },
                       '&:hover fieldset': {
-                        borderColor: '#E63946'
+                        borderColor: '#D4AF37'
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#E63946',
+                        borderColor: '#D4AF37',
                         borderWidth: '1.5px',
-                        boxShadow: '0 4px 12px rgba(230, 57, 70, 0.1)'
+                        boxShadow: '0 4px 14px rgba(212, 175, 55, 0.18)'
                       }
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#806C65',
+                      color: '#64748B',
                       fontFamily: "'Inter', sans-serif",
                       fontSize: '0.9rem',
                       '&.Mui-focused': {
-                        color: '#E63946'
+                        color: '#D4AF37'
                       }
                     }
                   }}
@@ -701,30 +701,30 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: '#1E1B18',
+                      color: '#0F172A',
                       backgroundColor: '#FFFFFF',
                       borderRadius: '12px',
                       fontFamily: "'Inter', sans-serif",
                       fontWeight: 500,
                       '& fieldset': {
-                        borderColor: 'rgba(61, 43, 38, 0.15)',
+                        borderColor: 'rgba(212, 175, 55, 0.25)',
                         borderWidth: '1px'
                       },
                       '&:hover fieldset': {
-                        borderColor: '#E63946'
+                        borderColor: '#D4AF37'
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#E63946',
+                        borderColor: '#D4AF37',
                         borderWidth: '1.5px',
-                        boxShadow: '0 4px 12px rgba(230, 57, 70, 0.1)'
+                        boxShadow: '0 4px 14px rgba(212, 175, 55, 0.18)'
                       }
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#806C65',
+                      color: '#64748B',
                       fontFamily: "'Inter', sans-serif",
                       fontSize: '0.9rem',
                       '&.Mui-focused': {
-                        color: '#E63946'
+                        color: '#D4AF37'
                       }
                     }
                   }}
@@ -733,13 +733,13 @@ export default function LoginPage() {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     style={{
-                      background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                       color: '#FFFFFF',
-                      fontWeight: 700,
+                      fontWeight: 800,
                       fontSize: '1rem',
                       padding: '12px',
                       borderRadius: '12px',
-                      boxShadow: '0 6px 20px rgba(230, 57, 70, 0.3)'
+                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.25)'
                     }}
                     type="submit"
                     fullWidth
