@@ -625,28 +625,38 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 }}
             >
                 <div className="d-flex align-items-center gap-2 gap-sm-3" style={{ flex: 1, minWidth: 0 }}>
-                    {/* Brand Logo */}
+                    {/* Brand Logo - Unified Premier Gold & Obsidian Theme */}
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flexShrink: 0 }}
                         onClick={() => history.push("/chats")}
                     >
                         <Box sx={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '12px',
-                            background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '13px',
+                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 6px 16px rgba(230, 57, 70, 0.3)',
+                            boxShadow: '0 8px 20px rgba(212, 175, 55, 0.35)',
                             position: 'relative'
                         }}>
                             <span style={{ fontSize: '1.2rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
                         </Box>
                         <Box display={{ base: "none", sm: "block" }}>
-                            <h2 className="gradient-text m-0" style={{ fontSize: "1.35rem", fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>AURA</h2>
+                            <h2 style={{
+                                fontSize: "1.4rem",
+                                fontWeight: 900,
+                                letterSpacing: "-0.03em",
+                                lineHeight: 1,
+                                margin: 0,
+                                background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                fontFamily: "'Outfit', sans-serif"
+                            }}>AURA</h2>
                         </Box>
                     </motion.div>
 

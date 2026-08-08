@@ -335,25 +335,25 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                     onClick={() => setChatFilter(chatFilter === 'friends' ? 'all' : 'friends')}
                     size="sm"
                     style={{
-                      background: chatFilter === 'friends' ? 'linear-gradient(135deg, #E63946 0%, #D62839 100%)' : 'rgba(230, 57, 70, 0.06)',
-                      color: chatFilter === 'friends' ? '#FFFFFF' : '#E63946',
+                      background: chatFilter === 'friends' ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : 'rgba(212, 175, 55, 0.08)',
+                      color: chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37',
                       borderRadius: '99px',
-                      padding: '0 12px',
+                      padding: '0 14px',
                       fontWeight: 800,
                       fontSize: '0.8rem',
                       fontFamily: "'Outfit', sans-serif",
-                      border: chatFilter === 'friends' ? 'none' : '1px solid rgba(230, 57, 70, 0.18)',
+                      border: chatFilter === 'friends' ? 'none' : '1px solid rgba(212, 175, 55, 0.25)',
                       height: '34px',
                       minWidth: '34px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      boxShadow: chatFilter === 'friends' ? '0 4px 14px rgba(230, 57, 70, 0.3)' : 'none',
+                      boxShadow: chatFilter === 'friends' ? '0 6px 16px rgba(212, 175, 55, 0.35)' : 'none',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <Users size={15} color={chatFilter === 'friends' ? '#FFFFFF' : '#E63946'} />
+                    <Users size={15} color={chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37'} />
                     <span>Friends</span>
                   </Button>
                 </motion.div>
@@ -362,27 +362,19 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 <Button
                   onClick={onOpen}
                   size="sm"
-                  leftIcon={<AddIcon style={{ fontSize: "14px", color: "#E63946" }} />}
+                  leftIcon={<AddIcon style={{ fontSize: "13px", color: "#D4AF37" }} />}
                   style={{
-                    background: "rgba(230, 57, 70, 0.06)",
-                    color: "#E63946",
+                    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                    color: "#FFFFFF",
                     borderRadius: "99px",
-                    padding: "6px 14px",
                     fontWeight: 800,
-                    fontSize: "0.82rem",
+                    fontSize: "0.8rem",
                     fontFamily: "'Outfit', sans-serif",
-                    letterSpacing: "0.02em",
-                    boxShadow: "0 4px 12px rgba(230, 57, 70, 0.08)",
-                    border: "1px solid rgba(230, 57, 70, 0.18)",
+                    border: "none",
                     height: "34px",
-                    cursor: "pointer",
-                    touchAction: "manipulation",
-                    WebkitTapHighlightColor: "transparent",
+                    padding: "0 14px",
+                    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.25)",
                     transition: "all 0.2s ease"
-                  }}
-                  _hover={{
-                    background: "rgba(230, 57, 70, 0.12)",
-                    borderColor: "#E63946"
                   }}
                 >
                   New Group

@@ -114,7 +114,7 @@ export default function SignUpPage() {
       <Grid container component="main" sx={{ 
         minHeight: 'calc(100vh - 80px)', 
         background: '#FFF9F2',
-        backgroundImage: 'radial-gradient(at 100% 0%, rgba(255, 232, 220, 0.7) 0px, transparent 50%), radial-gradient(at 0% 100%, rgba(255, 107, 107, 0.06) 0px, transparent 50%)'
+        backgroundImage: 'radial-gradient(at 100% 0%, rgba(246, 211, 101, 0.22) 0px, transparent 50%), radial-gradient(at 0% 100%, rgba(212, 175, 55, 0.08) 0px, transparent 50%)'
       }}>
         <CssBaseline />
         <Grid
@@ -124,7 +124,7 @@ export default function SignUpPage() {
           md={7}
           className="card-3d-wrapper"
           sx={{
-            background: 'linear-gradient(145deg, #FFF0E5 0%, #FFDECA 40%, #FFE8D5 100%)',
+            background: 'linear-gradient(145deg, #FFF9F2 0%, #FEF3E2 40%, #FAF0DF 100%)',
             display: { xs: 'none', md: 'flex' },
             flexDirection: 'column',
             justifyContent: 'center',
