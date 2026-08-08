@@ -44,7 +44,7 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/user/login", "/api/user/google/login", "/api/user", "/api/user/register", "/api/user/all-users", "/api/user/find-email", "/api/user/change-password", "/api/user/update-pic", "/uploads/**", "/ws/**", "/socket.io/**").permitAll()
+                .requestMatchers("/api/health", "/api/user/login", "/api/user/google/login", "/api/user", "/api/user/register", "/api/user/all-users", "/api/user/find-email", "/api/user/change-password", "/api/user/update-pic", "/uploads/**", "/ws/**", "/socket.io/**").permitAll()
                 .anyRequest().authenticated()
             );
 

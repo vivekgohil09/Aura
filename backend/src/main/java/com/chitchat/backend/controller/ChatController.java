@@ -61,4 +61,12 @@ public class ChatController {
     public ResponseEntity<Chat> removeFromGroupAlias(@RequestBody ChatDto.GroupMemberRequest request) {
         return ResponseEntity.ok(chatService.removeFromGroup(request));
     }
+
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<Void> deleteChat(
+            @PathVariable String chatId,
+            @AuthenticationPrincipal User currentUser) {
+        chatService.deleteChat(chatId, currentUser);
+        return ResponseEntity.ok().build();
+    }
 }

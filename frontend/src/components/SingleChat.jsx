@@ -499,13 +499,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
     const handleAlert = () => {
         toast.info('This feature is available soon!', {
-            position: "top-center",
+            position: "top-right",
             autoClose: 2000,
             hideProgressBar: true,
-            closeOnClick: false,
+            closeOnClick: true,
             pauseOnHover: false,
             draggable: true,
-            progress: undefined,
             theme: 'colored'
         });
     }
@@ -908,6 +907,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             const chatId = selectedChat.id || selectedChat._id;
             if (socket) {
                 socket.emit("join chat", chatId);
+                socket.off("typing").on("typing", (room) => {
+                    if (String(room) === String(chatId)) {
+                        setIsTyping(true);
+                    }
+                });
+                socket.off("stop typing").on("stop typing", (room) => {
+                    if (String(room) === String(chatId)) {
+                        setIsTyping(false);
+                    }
+                });
             }
 
             const unsubscribe = stompService.subscribeToConversation(chatId, (newMessageReceived) => {
@@ -1192,7 +1201,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             />
                         ) : (
                             <div>
-                            <ScrollableChat messages={messages} setMessages={setMessages} />
+                            <ScrollableChat messages={messages} setMessages={setMessages} isTyping={istyping} />
                             </div>
                         )}
                         {/* Video & Voice Call Modal Overlay */}
@@ -1247,16 +1256,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
                                 {/* Center Hero Content */}
                                 {callType === "video" ? (
-                                    <Box position="relative" width="100%" maxW="720px" height="420px" display="flex" justifyContent="center" alignItems="center">
+                                    <Box position="relative" width="100%" maxW="720px" height="440px" display="flex" justifyContent="center" alignItems="center" bg="#121214" borderRadius="24px" overflow="hidden" boxShadow="0 18px 45px rgba(0, 0, 0, 0.15)">
                                         <video 
                                             ref={localVideoRef} 
                                             autoPlay 
                                             playsInline 
                                             muted 
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '32px', border: '4px solid #FFFFFF', boxShadow: "0 25px 60px rgba(255, 42, 84, 0.18)" }} 
+                                            style={{ 
+                                                width: '100%', 
+                                                height: '100%', 
+                                                objectFit: 'cover', 
+                                                transform: 'scaleX(-1)', 
+                                                borderRadius: '24px' 
+                                            }} 
                                         />
-                                        <Box position="absolute" bottom="20px" right="20px" bg="rgba(255, 255, 255, 0.95)" backdropFilter="blur(16px)" px={4} py={1.5} borderRadius="16px" color="#1E1B18" border="1px solid #FFE3E6" boxShadow="0 8px 24px rgba(0,0,0,0.08)">
-                                            <Text fontSize="xs" fontWeight="800">You (Self View)</Text>
+                                        <Box position="absolute" bottom="16px" right="16px" bg="rgba(0, 0, 0, 0.65)" backdropFilter="blur(12px)" px={3.5} py={1.2} borderRadius="12px" color="#FFFFFF" border="1px solid rgba(255, 255, 255, 0.2)">
+                                            <Text fontSize="xs" fontWeight="700">You (HD Self View)</Text>
                                         </Box>
                                     </Box>
                                 ) : (
@@ -1663,6 +1678,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     )}
 
                         {/* Hidden file input for attachment upload */}
+                                        {/* Hidden file input for attachment upload */}
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -1677,7 +1693,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             id="first-name"
                             isRequired
                             mt={3}
-                            position="relative"
+                            position="sticky"
+                            bottom="0"
+                            zIndex="100"
                         >
                             {istyping && (
                                 <div>
@@ -1698,7 +1716,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             <div 
                                 style={{
                                     display: 'flex',
-                                    alignItems: 'center',
+                                    alignItems: 'flex-end',
                                     gap: '6px',
                                     background: 'rgba(255, 255, 255, 0.95)',
                                     backdropFilter: 'blur(20px)',
@@ -1730,6 +1748,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
+                                            marginBottom: '2px',
                                             touchAction: 'manipulation',
                                             WebkitTapHighlightColor: 'transparent',
                                             transition: 'all 0.2s ease'
@@ -1764,6 +1783,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
+                                            marginBottom: '2px',
                                             touchAction: 'manipulation',
                                             WebkitTapHighlightColor: 'transparent',
                                             transition: 'all 0.2s ease',
@@ -1824,20 +1844,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 fontFamily: "'Outfit', 'Inter', sans-serif",
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'space-between',
+                                                gap: '12px',
                                                 padding: '10px 14px'
                                             }}
                                             _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <Eye size={18} color={viewOnceMode ? '#E63946' : '#71717A'} />
-                                                <span>Send as View-Once</span>
+                                                <span>Send View-Once</span>
                                             </div>
-                                            {viewOnceMode && (
-                                                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#E63946', background: 'rgba(230, 57, 70, 0.1)', padding: '2px 6px', borderRadius: '6px' }}>
-                                                    ON
-                                                </span>
-                                            )}
+                                            {viewOnceMode && <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#E63946', background: 'rgba(230,57,70,0.1)', padding: '2px 6px', borderRadius: '6px' }}>ON</span>}
                                         </MenuItem>
                                         <MenuItem
                                             onClick={() => {
@@ -1863,22 +1879,46 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     </MenuList>
                                 </Menu>
 
-                                {/* Input text field */}
-                                <Input
-                                    variant="unstyled"
+                                {/* Auto-Expanding WhatsApp Style Textarea */}
+                                <textarea
+                                    rows={1}
                                     placeholder={viewOnceMode ? "👁 View-once message..." : "Type a message..."}
                                     value={newMessage}
-                                    onChange={typingHandler}
-                                    onKeyDown={sendMessage}
-                                    px={2}
-                                    h="40px"
+                                    onChange={(e) => {
+                                        typingHandler(e);
+                                        e.target.style.height = '38px';
+                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                                    }}
+                                    onFocus={(e) => {
+                                        setTimeout(() => {
+                                            try {
+                                                e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                            } catch (err) {}
+                                        }, 200);
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            sendMessage(e);
+                                            e.target.style.height = '38px';
+                                        }
+                                    }}
                                     style={{
+                                        flex: 1,
                                         border: 'none',
                                         outline: 'none',
                                         fontSize: '0.92rem',
                                         fontFamily: "'Outfit', 'Inter', sans-serif",
                                         fontWeight: 500,
                                         color: '#0F172A',
+                                        background: 'transparent',
+                                        resize: 'none',
+                                        height: '38px',
+                                        maxHeight: '120px',
+                                        minHeight: '38px',
+                                        lineHeight: '1.4',
+                                        padding: '8px 10px',
+                                        overflowY: newMessage ? 'auto' : 'hidden'
                                     }}
                                 />
 
@@ -1887,7 +1927,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     type="button"
                                     whileHover={{ scale: 1.08, y: -2 }}
                                     whileTap={{ scale: 0.88 }}
-                                    onClick={() => sendMessage({ key: "Enter" })}
+                                    onClick={(e) => {
+                                        sendMessage({ key: "Enter" });
+                                        const textarea = e.currentTarget.parentElement?.querySelector('textarea');
+                                        if (textarea) textarea.style.height = '38px';
+                                    }}
                                     aria-label="Send Message"
                                     style={{
                                         background: "linear-gradient(135deg, #FF2A54 0%, #E60044 100%)",
@@ -1901,6 +1945,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         boxShadow: "0 6px 20px rgba(255, 42, 84, 0.38)",
                                         border: "none",
                                         cursor: "pointer",
+                                        marginBottom: '1px',
                                         touchAction: 'manipulation',
                                         WebkitTapHighlightColor: 'transparent'
                                     }}

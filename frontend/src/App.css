@@ -514,7 +514,10 @@ button:active,
 
 .Toastify__progress-bar,
 .Toastify__progress-bar--error {
-  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  pointer-events: none !important;
 }
 
 /* MUI Soft Luxury Input & Autofill Overrides */

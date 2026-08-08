@@ -29,6 +29,7 @@ import { motion } from "framer-motion";
 import { Feather } from "lucide-react";
 
 import confetti from 'canvas-confetti';
+import { encryptMessage, decryptMessage } from '../config/dataCompressor';
 
 const url = "http://localhost:8000";
 
@@ -86,21 +87,43 @@ export default function LoginPage() {
   const dispatch = useDispatch();
 
   const isGoogleInitialized = useRef(false);
+  const googleButtonRef = useRef(null);
 
   useEffect(() => {
     document.title = "Aura | Login";
-    if (window.google && window.google.accounts && window.google.accounts.id && !isGoogleInitialized.current) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
-          callback: handleGoogleLogin,
-          auto_select: false,
-        });
-        isGoogleInitialized.current = true;
-      } catch (err) {
-        console.error("Google Sign-In initialization failed:", err);
+
+    const initGoogle = () => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
+            callback: handleGoogleLogin,
+            auto_select: false,
+          });
+          isGoogleInitialized.current = true;
+          if (googleButtonRef.current) {
+            window.google.accounts.id.renderButton(googleButtonRef.current, {
+              theme: "outline",
+              size: "large",
+              type: "standard"
+            });
+          }
+        } catch (err) {
+          console.error("Google Sign-In initialization failed:", err);
+        }
       }
-    }
+    };
+
+    initGoogle();
+    const interval = setInterval(() => {
+      if (!isGoogleInitialized.current && window.google) {
+        initGoogle();
+      } else if (isGoogleInitialized.current) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -109,13 +132,11 @@ export default function LoginPage() {
 
     if (!email || !password) {
       toast.warning('Please Fill all the fields!', {
-        position: "top-center",
+        position: "top-right",
         autoClose: 3000,
-        hideProgressBar: true,
         closeOnClick: true,
         pauseOnHover: false,
         draggable: true,
-        progress: undefined,
         theme: 'colored'
       });
       setLoading(false);
@@ -136,12 +157,11 @@ export default function LoginPage() {
       );
 
       toast.success(data.message || "Login successful!", {
-        position: "bottom-right",
-        hideProgressBar: true,
+        position: "top-right",
+        autoClose: 3000,
         closeOnClick: true,
         pauseOnHover: false,
         draggable: true,
-        progress: undefined,
         theme: 'colored'
       });
       localStorage.setItem("userInfo", JSON.stringify(data.userLogin));
@@ -154,7 +174,6 @@ export default function LoginPage() {
         history.push("/chats");
       }, 1000);
     } catch (error) {
-      // Extract backend error message dynamically
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -163,14 +182,12 @@ export default function LoginPage() {
       if (!toast.isActive("login-error-toast")) {
         toast.error(errorMessage, {
           toastId: "login-error-toast",
-          position: "top-center",
+          position: "top-right",
           autoClose: 3000,
-          hideProgressBar: true,
           closeButton: true,
           closeOnClick: true,
           pauseOnHover: false,
           draggable: true,
-          progress: undefined,
           theme: 'colored'
         });
       }
@@ -195,12 +212,30 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async (response) => {
+    toast.dismiss();
+    if (!response?.credential) {
+      toast.error("Google authentication cancelled or failed.", {
+        position: "top-right",
+        autoClose: 3000
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const decoded = response?.credential ? parseJwt(response.credential) : null;
-      const googleName = decoded?.name || decoded?.given_name || "Google User";
-      const googleEmail = decoded?.email || "";
-      const googlePic = decoded?.picture || "";
+      const decoded = parseJwt(response.credential);
+      if (!decoded || !decoded.email) {
+        toast.error("Could not retrieve email from Google credential.", {
+          position: "top-right",
+          autoClose: 3000
+        });
+        setLoading(false);
+        return;
+      }
+
+      const googleName = decoded.name || decoded.given_name || "Google User";
+      const googleEmail = decoded.email;
+      const googlePic = decoded.picture || "";
 
       const config = {
         headers: {
@@ -211,7 +246,7 @@ export default function LoginPage() {
       const { data } = await axios.post(
         `/api/user/google/login`,
         {
-          credential: response?.credential || "GOOGLE_SSO_DEMO_TOKEN",
+          credential: response.credential,
           name: googleName,
           email: googleEmail,
           pic: googlePic,
@@ -220,7 +255,7 @@ export default function LoginPage() {
       );
 
       toast.success(data.message || "Google Login Successful!", {
-        position: "top-center",
+        position: "top-right",
         hideProgressBar: true,
         closeOnClick: true,
         theme: 'colored',
@@ -237,17 +272,18 @@ export default function LoginPage() {
       setLoading(false);
 
       setTimeout(() => {
+        toast.dismiss();
         history.push("/chats");
-      }, 1000);
+      }, 800);
     } catch (error) {
-      // Extract backend Google login error message dynamically
+      toast.dismiss();
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
         "Google Sign-In failed!";
 
       toast.error(errorMessage, {
-        position: "top-center",
+        position: "top-right",
         autoClose: 3000,
         hideProgressBar: true,
         closeOnClick: true,
@@ -261,33 +297,57 @@ export default function LoginPage() {
   };
 
   const triggerGooglePrompt = () => {
-    if (isGoogleInitialized.current) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          toast.error("Google One-Tap was dismissed or not displayed. Try again.");
-        }
-      });
-    } else {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
+    toast.dismiss();
+    const hiddenBtn = googleButtonRef.current?.querySelector('div[role="button"], button, iframe');
+    if (hiddenBtn) {
+      hiddenBtn.click();
+      return;
+    }
+
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      if (!isGoogleInitialized.current) {
         try {
           window.google.accounts.id.initialize({
             client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
             callback: handleGoogleLogin,
             auto_select: false,
-            use_fedcm_for_prompt: true,
           });
           isGoogleInitialized.current = true;
-          window.google.accounts.id.prompt((notification) => {
-            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-              toast.error("Google One-Tap was dismissed or not displayed. Try again.");
-            }
-          });
+          if (googleButtonRef.current) {
+            window.google.accounts.id.renderButton(googleButtonRef.current, {
+              theme: "outline",
+              size: "large",
+              type: "standard"
+            });
+          }
         } catch (err) {
-          toast.error("Google Sign-In initialization failed.");
+          console.error("Google Sign-In initialization failed:", err);
         }
-      } else {
-        toast.error("Google Sign-In script is not loaded yet.");
       }
+
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            // Re-check hidden btn after prompt fallback
+            const btn = googleButtonRef.current?.querySelector('div[role="button"], button, iframe');
+            if (btn) {
+              btn.click();
+            } else {
+              toast.error("Please click the Google button again or allow popups.", {
+                position: "top-right",
+                autoClose: 3000
+              });
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Google prompt error:", e);
+      }
+    } else {
+      toast.error("Google Sign-In service is loading. Please try again.", {
+        position: "top-right",
+        autoClose: 3000
+      });
     }
   };
 
@@ -694,7 +754,10 @@ export default function LoginPage() {
                   </Button>
                 </motion.div>
 
-                {/* Google Sign In Button */}
+                {/* Hidden container for official Google rendered button */}
+                <div ref={googleButtonRef} style={{ display: 'none' }} id="google-hidden-btn" />
+
+                {/* Custom Google Sign In Button */}
                 <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                   <Button
                     fullWidth

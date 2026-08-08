@@ -63,16 +63,31 @@ const TAG_COLORS = {
   follow_up: { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
 };
 
+const parseUtcDate = (dateInput) => {
+  if (!dateInput) return new Date();
+  try {
+    if (typeof dateInput === 'string') {
+      let str = dateInput;
+      if (str.includes('T') && !str.endsWith('Z') && !str.includes('+')) {
+        str += 'Z';
+      }
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) return d;
+    } else if (typeof dateInput === 'number') {
+      const d = new Date(dateInput);
+      if (!isNaN(d.getTime())) return d;
+    } else if (Array.isArray(dateInput)) {
+      const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
+      return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+    }
+  } catch (e) {}
+  return new Date();
+};
+
 const formatTime = (dateInput) => {
   if (!dateInput) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   try {
-    let d;
-    if (typeof dateInput === 'string' || typeof dateInput === 'number') {
-      d = new Date(dateInput);
-    } else if (Array.isArray(dateInput)) {
-      const [year, month, day, hour, minute] = dateInput;
-      d = new Date(year, month - 1, day, hour, minute);
-    }
+    const d = parseUtcDate(dateInput);
     if (d && !isNaN(d.getTime())) {
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     }
@@ -80,7 +95,26 @@ const formatTime = (dateInput) => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
-const ScrollableChat = ({ messages, setMessages }) => {
+const getRelativeTime = (dateInput) => {
+  if (!dateInput) return "just now";
+  try {
+    const d = parseUtcDate(dateInput);
+    if (!d || isNaN(d.getTime())) return "just now";
+
+    const now = new Date();
+    const diffSec = Math.max(0, Math.floor((now - d) / 1000));
+    if (diffSec < 45) return "just now";
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    return `${Math.floor(diffHr / 24)}d ago`;
+  } catch (e) {
+    return "just now";
+  }
+};
+
+const ScrollableChat = ({ messages, setMessages, isTyping }) => {
   const user = useSelector(state => state.user)
 
   // ── Context-menu state
@@ -195,14 +229,18 @@ const ScrollableChat = ({ messages, setMessages }) => {
   const isViewOnce = (msg) => msg.content?.startsWith('[view-once]');
   const getViewOnceText = (msg) => msg.content?.replace('[view-once]', '').trim();
 
-  const senderId = (m) => m.sender?.id || m.sender?._id;
-  const loggedId = user?.id || user?._id;
+  const senderId = (m) => {
+    if (!m) return null;
+    if (typeof m.sender === 'string') return m.sender;
+    return m.sender?._id || m.sender?.id || m.senderId;
+  };
+  const loggedId = user?._id || user?.id || user?.userLogin?._id || user?.userLogin?.id;
 
   return (
     <div style={{ position: 'relative' }}>
       <ScrollableFeed>
         {messages && messages.map((m, i) => {
-          const isMe = senderId(m) === loggedId;
+          const isMe = Boolean(senderId(m) && loggedId && String(senderId(m)) === String(loggedId));
           const msgId = m._id || m.id;
           const viewOnce = isViewOnce(m);
           const revealed = revealedOnce.has(msgId);
@@ -215,8 +253,8 @@ const ScrollableChat = ({ messages, setMessages }) => {
               key={msgId}
               style={{
                 display: 'flex',
-                justifyContent: isMe ? 'flex-end' : 'flex-start',
-                alignItems: 'flex-end',
+                flexDirection: 'column',
+                alignItems: isMe ? 'flex-end' : 'flex-start',
                 width: '100%',
                 marginTop: isSameUser(messages, m, i, loggedId) ? 3 : 10,
                 marginBottom: 2,
@@ -268,8 +306,8 @@ const ScrollableChat = ({ messages, setMessages }) => {
                       overflowWrap: 'anywhere',
                       whiteSpace: 'pre-wrap',
                       boxShadow: isMe
-                        ? '0 8px 24px rgba(255, 0, 68, 0.32), 0 2px 6px rgba(0, 0, 0, 0.08)'
-                        : '0 4px 16px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(0, 0, 0, 0.04)',
+                        ? '0 4px 14px rgba(255, 42, 84, 0.18)'
+                        : '0 2px 10px rgba(15, 23, 42, 0.04)',
                       border: isMe ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
                       cursor: 'context-menu',
                       position: 'relative',
@@ -317,19 +355,15 @@ const ScrollableChat = ({ messages, setMessages }) => {
                         <span
                           style={{
                             fontSize: '0.66rem',
-                            opacity: isMe ? 0.9 : 0.7,
+                            opacity: isMe ? 0.92 : 0.7,
                             alignSelf: 'flex-end',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             color: isMe ? 'rgba(255, 255, 255, 0.92)' : '#64748B',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
                             paddingLeft: '6px'
                           }}
                         >
                           {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
-                          {isMe && <span style={{ fontSize: '0.72rem', letterSpacing: '-2px', marginLeft: '2px', color: '#FFFFFF' }}>✓✓</span>}
                         </span>
                       </div>
 
@@ -347,9 +381,79 @@ const ScrollableChat = ({ messages, setMessages }) => {
                   </span>
                 )}
               </motion.div>
+
+              {/* Instagram-style Transparent Seen / Sent Receipt below last sent message */}
+              {isMe && i === messages.length - 1 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 2 }}
+                  animate={{ opacity: 0.85, y: 0 }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    width: '100%',
+                    marginTop: '2px',
+                    marginRight: '6px'
+                  }}
+                >
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 500,
+                    color: (m.isRead || m.seen || m.read) ? '#0EA5E9' : '#64748B',
+                    fontFamily: "'Inter', sans-serif"
+                  }}>
+                    {(m.isRead || m.seen || m.read) ? 'Seen' : 'Sent'} • {getRelativeTime(m.createdAt || m.updatedAt || m.timestamp)}
+                  </span>
+                </motion.div>
+              )}
             </div>
           );
         })}
+
+        {/* Live Animated Typing Bubble Indicator on Left Side */}
+        {isTyping && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 6 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              width: '100%',
+              marginTop: '10px',
+              marginBottom: '6px'
+            }}
+          >
+            <div
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '18px 18px 18px 4px',
+                padding: '10px 16px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                border: '1px solid rgba(226, 232, 240, 0.9)',
+                boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)'
+              }}
+            >
+              {[0, 1, 2].map((dot) => (
+                <motion.span
+                  key={dot}
+                  animate={{ y: [0, -5, 0], opacity: [0.35, 1, 0.35] }}
+                  transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.18, ease: "easeInOut" }}
+                  style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    background: '#806C65',
+                    display: 'inline-block'
+                  }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
       </ScrollableFeed>
 
       {/* ── Context Menu */}

@@ -114,10 +114,91 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         };
     }, []);
 
+    const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+    const [qrScanInput, setQrScanInput] = useState('');
     const [qrTab, setQrTab] = useState('scan');
     const [scannedUsername, setScannedUsername] = useState('');
     const [scannedUser, setScannedUser] = useState(null);
     const [isScanning, setIsScanning] = useState(false);
+    const [cameraActive, setCameraActive] = useState(false);
+    const [cameraError, setCameraError] = useState('');
+    const videoRef = useRef(null);
+    const mediaStreamRef = useRef(null);
+
+    const startCamera = async () => {
+        setCameraError('');
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 640 } }
+                });
+                mediaStreamRef.current = stream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+                setCameraActive(true);
+            } else {
+                setCameraError('Camera access not supported by browser.');
+            }
+        } catch (err) {
+            console.error("Camera access error:", err);
+            setCameraError('Camera permission denied or camera not available.');
+            setCameraActive(false);
+        }
+    };
+
+    const stopCamera = () => {
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            mediaStreamRef.current = null;
+        }
+        setCameraActive(false);
+    };
+
+    const scanIntervalRef = useRef(null);
+
+    useEffect(() => {
+        if (isQrScannerOpen && qrTab === 'scan') {
+            startCamera();
+        } else {
+            stopCamera();
+        }
+        return () => {
+            stopCamera();
+        };
+    }, [isQrScannerOpen, qrTab]);
+
+    useEffect(() => {
+        if (isQrScannerOpen && qrTab === 'scan' && cameraActive && videoRef.current) {
+            let detector = null;
+            if ('BarcodeDetector' in window) {
+                try {
+                    detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'data_matrix', 'aztec', 'pdf417'] });
+                } catch (e) {}
+            }
+
+            scanIntervalRef.current = setInterval(async () => {
+                try {
+                    if (videoRef.current && videoRef.current.readyState >= 2) {
+                        if (detector) {
+                            const barcodes = await detector.detect(videoRef.current);
+                            if (barcodes && barcodes.length > 0) {
+                                const detectedVal = barcodes[0].rawValue;
+                                if (detectedVal && detectedVal.trim()) {
+                                    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+                                    setScannedUsername(detectedVal.trim());
+                                    handleScanQrCode(detectedVal.trim());
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }, 350);
+        }
+        return () => {
+            if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+        };
+    }, [isQrScannerOpen, qrTab, cameraActive]);
 
     const handleScanQrCode = async (inputVal) => {
         let clean = (inputVal || scannedUsername).trim();
@@ -288,8 +369,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             dispatch(setUserDetails(updatedUser));
         }
     };
-    const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
-    const [qrScanInput, setQrScanInput] = useState('');
+
     const [qrModalTab, setQrModalTab] = useState('my_pass');
     const [searchError, setSearchError] = useState('');
 
@@ -416,8 +496,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
             const dataChatId = data.id || data._id;
             const existingChats = chats || [];
-            if (!existingChats.find((c) => (c.id || c._id) === dataChatId)) {
-                dispatch(setChats([data, ...existingChats]));
+            if (!existingChats.find((c) => String(c.id || c._id) === String(dataChatId))) {
+                dispatch(setChats([data, ...existingChats.filter(c => String(c.id || c._id) !== String(dataChatId))]));
             }
             dispatch(setSelectedChat(data));
             console.log(data);
@@ -429,13 +509,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             if (!toast.isActive("failed-to-create-chat-toast")) {
                 toast.error('Failed to create chat!', {
                     toastId: "failed-to-create-chat-toast",
-                    position: "top-center",
+                    position: "top-right",
                     autoClose: 2000,
                     hideProgressBar: true,
-                    closeOnClick: false,
+                    closeOnClick: true,
                     pauseOnHover: false,
                     draggable: true,
-                    progress: undefined,
                     theme: 'colored'
                 });
             }
@@ -455,7 +534,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
         try {
             const fullChat = await accessChat(targetId);
-            toast.success(`Chat request sent to @${targetUser.username || targetUser.name}!`, {
+            setIsQrScannerOpen(false);
+            setScannedUser(null);
+            setScannedUsername('');
+            toast.success(`Chat connected with @${targetUser.username || targetUser.name}!`, {
                 position: 'top-center',
                 autoClose: 2500,
                 hideProgressBar: true
@@ -1535,8 +1617,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     {/* Animated Camera Viewfinder Frame */}
                                     <Box sx={{
-                                        width: '210px',
-                                        height: '210px',
+                                        width: '230px',
+                                        height: '230px',
                                         borderRadius: '24px',
                                         border: isScanning ? '3px solid #10B981' : '3px solid #E63946',
                                         background: '#09090B',
@@ -1547,8 +1629,51 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         justifyContent: 'center',
                                         boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.4)' : '0 12px 35px rgba(230, 57, 70, 0.2)',
                                         transition: 'all 0.3s ease',
-                                        mb: 4
+                                        mb: 3
                                     }}>
+                                        {/* Video Stream Element */}
+                                        <video
+                                            ref={videoRef}
+                                            autoPlay
+                                            playsInline
+                                            muted
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                display: cameraActive ? 'block' : 'none'
+                                            }}
+                                        />
+
+                                        {/* Fallback Overlay if Camera is Loading / Off */}
+                                        {!cameraActive && (
+                                            <Box textAlign="center" color="#FFFFFF" p={2}>
+                                                <QrCode2Icon style={{ fontSize: 46, color: isScanning ? '#10B981' : '#E63946', opacity: 0.85 }} />
+                                                <Text fontSize="0.75rem" fontWeight="800" color={cameraError ? '#EF4444' : '#A1A1AA'} m={0} mt={1}>
+                                                    {cameraError ? cameraError : 'Initializing Camera...'}
+                                                </Text>
+                                                {cameraError && (
+                                                    <button
+                                                        onClick={startCamera}
+                                                        style={{
+                                                            marginTop: '8px',
+                                                            background: '#E63946',
+                                                            color: '#FFF',
+                                                            border: 'none',
+                                                            padding: '4px 10px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 700,
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Retry Camera
+                                                    </button>
+                                                )}
+                                            </Box>
+                                        )}
+
+                                        {/* Scanning Line Overlay */}
                                         <Box sx={{
                                             position: 'absolute',
                                             top: 0, left: 0, right: 0,
@@ -1557,7 +1682,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 ? 'linear-gradient(90deg, transparent, #10B981, transparent)'
                                                 : 'linear-gradient(90deg, transparent, #FF4D6D, transparent)',
                                             boxShadow: isScanning ? '0 0 20px #10B981' : '0 0 15px #FF4D6D',
-                                            animation: isScanning ? 'scanLine 0.7s linear infinite' : 'scanLine 2s linear infinite'
+                                            animation: 'scanLine 1.8s linear infinite',
+                                            zIndex: 3
                                         }} />
                                         <style>{`
                                             @keyframes scanLine {
@@ -1566,12 +1692,6 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 100% { top: 0; }
                                             }
                                         `}</style>
-                                        <Box textAlign="center" color="#FFFFFF" p={3}>
-                                            <QrCode2Icon style={{ fontSize: 52, color: isScanning ? '#10B981' : '#E63946', opacity: 0.85, transition: 'all 0.3s ease' }} />
-                                            <Text fontSize="0.75rem" fontWeight="800" color={isScanning ? '#10B981' : '#A1A1AA'} m={0} mt={1}>
-                                                {isScanning ? '🔍 SCANNING BARCODE ENCRYPTION...' : 'Align QR barcode in frame'}
-                                            </Text>
-                                        </Box>
                                     </Box>
 
                                     {/* Barcode Input & Scan Trigger */}

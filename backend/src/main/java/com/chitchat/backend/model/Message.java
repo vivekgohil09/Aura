@@ -34,6 +34,7 @@ public class Message {
     private Chat chat;
 
     private String clientMessageId;
+    private boolean isRead = false;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Route, Switch, BrowserRouter as Router, useLocation } from "react-router-dom"
@@ -20,6 +21,10 @@ import AuraLandingPage from "./pages/AuraLandingPage";
 function LayoutWrapper() {
   const location = useLocation();
   const isChatRoute = location.pathname === '/' || location.pathname === '/chats' || location.pathname === '/sunset' || location.pathname === '/aura' || location.pathname === '/landing';
+
+  useEffect(() => {
+    toast.dismiss();
+  }, [location.pathname]);
 
   return (
     <>
@@ -62,6 +67,16 @@ export default function App() {
     const user = JSON.parse(localStorage.getItem("userInfo"));
     dispatch(setUserDetails(user));
 
+    // Keep Render backend server active (prevents free tier sleep)
+    const pingBackend = async () => {
+      try {
+        await axios.get('/api/health');
+      } catch (e) {}
+    };
+
+    pingBackend();
+    const keepAliveInterval = setInterval(pingBackend, 240000); // Ping every 4 minutes
+
     const handleUnload = () => {
       if (window.__auraSocket) {
         try {
@@ -74,6 +89,7 @@ export default function App() {
     window.addEventListener("beforeunload", handleUnload);
     window.addEventListener("pagehide", handleUnload);
     return () => {
+      clearInterval(keepAliveInterval);
       window.removeEventListener("beforeunload", handleUnload);
       window.removeEventListener("pagehide", handleUnload);
     };
@@ -83,11 +99,15 @@ export default function App() {
     <Router>
       <LayoutWrapper />
       <ToastContainer
-        position="bottom-right"
+        position="top-right"
         autoClose={3000}
-        limit={3}
+        hideProgressBar={true}
+        newestOnTop={true}
         closeOnClick={true}
+        pauseOnFocusLoss={false}
         draggable={true}
+        pauseOnHover={false}
+        theme="colored"
       />
     </Router>
   );

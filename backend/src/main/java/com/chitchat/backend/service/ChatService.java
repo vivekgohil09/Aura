@@ -126,4 +126,10 @@ public class ChatService {
         chat.getUsers().remove(userToRemove);
         return chatRepository.save(chat);
     }
+
+    public void deleteChat(String chatId, User currentUser) {
+        if (chatId != null && chatRepository.existsById(chatId)) {
+            chatRepository.deleteById(chatId);
+        }
+    }
 }
