@@ -67,10 +67,12 @@ const ChatPage = () => {
           senderPic: data.sender.pic || ""
         };
 
+        const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+
         try {
-          const storedNotifs = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+          const storedNotifs = JSON.parse(localStorage.getItem(storageKey) || "[]");
           if (!storedNotifs.some(n => n.senderId === senderId)) {
-            localStorage.setItem("aura_received_requests", JSON.stringify([notifItem, ...storedNotifs]));
+            localStorage.setItem(storageKey, JSON.stringify([notifItem, ...storedNotifs]));
           }
         } catch (e) {}
 
@@ -110,7 +112,10 @@ const ChatPage = () => {
   // ── Hydrate stored received requests into Redux state on page load ─────────────
   useEffect(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const myId = userInfo._id || userInfo.id;
+      const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+      const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
       if (stored.length > 0) {
         const existingNotifs = window.__auraNotifs || [];
         const merged = [...stored, ...existingNotifs.filter(n => !stored.some(s => s.senderId === n.senderId))];

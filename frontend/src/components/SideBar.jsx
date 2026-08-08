@@ -590,9 +590,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             const updatedNotifs = notification.filter(n => n !== notif);
             dispatch(setNotification(updatedNotifs));
             try {
-                const stored = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+                const myId = user?._id || user?.id;
+                const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+                const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
                 const filtered = stored.filter(n => n.senderId !== notif.senderId);
-                localStorage.setItem("aura_received_requests", JSON.stringify(filtered));
+                localStorage.setItem(storageKey, JSON.stringify(filtered));
             } catch (e) {}
 
             toast.success("Chat request accepted! Conversation added to list.", {
@@ -897,9 +899,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         const filtered = notification.filter((n) => n !== notif);
                                                         dispatch(setNotification(filtered));
                                                         try {
-                                                            const stored = JSON.parse(localStorage.getItem("aura_received_requests") || "[]");
+                                                            const myId = user?._id || user?.id;
+                                                            const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+                                                            const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
                                                             const rem = stored.filter(n => n.senderId !== notif.senderId);
-                                                            localStorage.setItem("aura_received_requests", JSON.stringify(rem));
+                                                            localStorage.setItem(storageKey, JSON.stringify(rem));
                                                         } catch (err) {}
                                                         toast.info("Chat request declined");
                                                     }}
