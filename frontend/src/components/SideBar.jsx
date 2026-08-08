@@ -630,7 +630,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}
-                        onClick={() => history.push("/")}
+                        onClick={() => history.push("/chats")}
                     >
                         <Box sx={{
                             width: '36px',
@@ -651,10 +651,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     </motion.div>
 
                     {/* Modern Light Grey Pill Search Bar */}
-                    <Tooltip label="Click or type to search users and open drawer" hasArrow placement="bottom-start">
+                    <Tooltip label="Click search icon or type to filter users" hasArrow placement="bottom-start">
                         <Box ref={searchContainerRef} style={{ flex: 1, maxWidth: '520px', position: 'relative' }}>
                             <Box
-                                onClick={onOpenDrawer}
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
