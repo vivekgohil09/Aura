@@ -10,12 +10,50 @@ import { Box, Text, Stack } from "@chakra-ui/layout";
 import { Button } from "@chakra-ui/button";
 import ChatLoading from "./ChatLoading";
 import { getSender, getPicture, getSenderUser } from '../config/ChatsLogic';
-import { Avatar, Tooltip, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, FormControl, Input, Progress, Spinner, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Badge } from '@chakra-ui/react';
+import { Avatar, Tooltip, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, FormControl, Input, Progress, Spinner, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Badge, Portal } from '@chakra-ui/react';
 import AddIcon from '@mui/icons-material/Add';
-import { Search, MoreVertical, Trash2, Pin, VolumeX, Sparkles, Lock, ShieldCheck, Users } from 'lucide-react';
+import { Search, MoreVertical, Trash2, Pin, VolumeX, Sparkles, Lock, ShieldCheck, Users, UserMinus } from 'lucide-react';
 import UserListItem from './UserListItem';
 import UserBadgeItem from './UserBadgeItem';
 import axios from 'axios';
+import { decompressData } from '../config/dataCompressor';
+
+const DecryptedLatestMessage = ({ msg }) => {
+  const [text, setText] = useState('...');
+  
+  useEffect(() => {
+    let isMounted = true;
+    if (!msg || !msg.content) {
+      if (isMounted) setText('No messages yet');
+      return;
+    }
+    let content = msg.content;
+    if (content.startsWith('[view-once]')) {
+      if (isMounted) setText('👁 View-once message');
+      return;
+    }
+    if (content.startsWith('[gz]') || content.startsWith('[enc]')) {
+      decompressData(content).then(res => {
+        if (!isMounted) return;
+        if (res.startsWith('data:image')) setText('📷 Photo message');
+        else if (res.startsWith('data:video') || res.includes('video/mp4') || res.includes('.mp4')) setText('🎥 Video message');
+        else if (res.startsWith('data:audio') || res.includes('audio/mp3') || res.includes('.mp3')) setText('🎙 Voice message');
+        else if (res.startsWith('data:application') || res.startsWith('data:text')) setText('📄 Document');
+        else setText(res);
+      }).catch(() => {
+        if (isMounted) setText('🔒 Encrypted message');
+      });
+    } else {
+      if (content.startsWith('data:video')) setText('🎥 Video message');
+      else if (content.startsWith('data:image')) setText('📷 Photo message');
+      else if (content.startsWith('data:audio')) setText('🎙 Voice message');
+      else setText(content);
+    }
+    return () => { isMounted = false; };
+  }, [msg]);
+
+  return <>{text}</>;
+};
 
 const MyChat = ({ fetchAgain, setFetchAgain }) => {
   const history = useHistory();
@@ -26,6 +64,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
   const selectedChat = useSelector(state => state.selectedChats);
   const chats = useSelector(state => state.chats);
   const notification = useSelector(state => state.notification) || [];
+  const userStatuses = useSelector(state => state.userStatuses) || {};
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [groupChatName, setGroupChatName] = useState("");
@@ -43,13 +82,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
   });
 
   const getFilteredChats = (chatList) => {
-    if (!Array.isArray(chatList)) return [];
-    try {
-      const deletedIds = JSON.parse(localStorage.getItem("aura_deleted_chats") || "[]");
-      return chatList.filter(c => !deletedIds.includes(String(c.id || c._id)));
-    } catch (e) {
-      return chatList;
-    }
+    return Array.isArray(chatList) ? chatList : [];
   };
 
   const handleDeleteChat = async (e, targetChat) => {
@@ -66,6 +99,49 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
     localStorage.setItem("aura_deleted_chats", JSON.stringify(updatedDeleted));
     setDeletedChatIds(updatedDeleted);
 
+    // Save clear timestamp so old messages are hidden
+    try {
+      const clearedChats = JSON.parse(localStorage.getItem("aura_cleared_chats") || "{}");
+      clearedChats[targetId] = Date.now();
+      localStorage.setItem("aura_cleared_chats", JSON.stringify(clearedChats));
+    } catch (e) {
+      localStorage.setItem("aura_cleared_chats", JSON.stringify({ [targetId]: Date.now() }));
+    }
+
+    // Do not remove from Redux so it stays in the 'Friends' tab
+    // dispatch(setChats(updatedChats));
+
+    const activeChatId = String(selectedChat?.id || selectedChat?._id);
+    if (activeChatId === targetId) {
+      dispatch(delSelectedChat());
+    }
+
+    try {
+      if (targetChat.isGroupChat) {
+        // Only delete group chats from backend (if you're admin) or just leave it locally deleted.
+        // For 1-on-1 chats, we do NOT delete from backend, so they stay in 'Friends' list!
+        const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+        await axios.delete(`/api/chat/${targetId}`, config);
+      }
+    } catch (err) { }
+
+    toast.success("Chat deleted!", {
+      position: "top-right",
+      autoClose: 3000,
+      closeOnClick: true,
+      theme: "colored"
+    });
+  };
+
+  const handleUnfriend = async (e, targetChat) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.confirm(`Are you sure you want to unfriend ${getSender(user, targetChat.users)}?`)) return;
+
+    const targetId = String(targetChat.id || targetChat._id);
+    
+    // Remove from Redux immediately so it disappears from Friends tab completely
     const updatedChats = (chats || []).filter(c => String(c.id || c._id) !== targetId);
     dispatch(setChats(updatedChats));
 
@@ -77,14 +153,15 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
     try {
       const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
       await axios.delete(`/api/chat/${targetId}`, config);
-    } catch (err) {}
-
-    toast.success("Chat deleted!", {
-      position: "top-right",
-      autoClose: 3000,
-      closeOnClick: true,
-      theme: "colored"
-    });
+      toast.success("Unfriended successfully", {
+        position: "top-right",
+        autoClose: 3000,
+        closeOnClick: true,
+        theme: "colored"
+      });
+    } catch (err) {
+      toast.error("Failed to unfriend");
+    }
   };
 
   const handleTogglePin = (e, chatId) => {
@@ -147,7 +224,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
             });
             dispatch(setNotification(merged));
           }
-        } catch (err) {}
+        } catch (err) { }
       } catch (e) { }
     };
 
@@ -382,7 +459,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         zIndex={1}
       >
         {/* 1. Conversations Label & Filter CTA */}
-        <Box px={4} pt={4} pb={2} d="flex" flexDir="column" gap={2.5}>
+        <Box px={4} pt={4} pb={2} d="flex" flexDir="column" gap={2.5} flexShrink={0}>
           <Box d="flex" alignItems="center" justifyContent="space-between">
             <Text fontWeight="900" fontSize="1.25rem" color="#0F172A" margin={0} letterSpacing="-0.02em" fontFamily="'Outfit', sans-serif">
               Conversations
@@ -402,18 +479,18 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                       fontSize: '0.8rem',
                       fontFamily: "'Outfit', sans-serif",
                       border: chatFilter === 'friends' ? 'none' : '1px solid rgba(212, 175, 55, 0.3)',
-                      height: '34px',
-                      minWidth: '34px',
+                      height: '36px',
+                      minWidth: '36px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '8px',
                       boxShadow: chatFilter === 'friends' ? '0 4px 14px rgba(212, 175, 55, 0.35)' : 'none',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <Users size={15} color={chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37'} />
-                    <span>Friends</span>
+                    <Users size={16} color={chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37'} />
+                    <span style={{ fontSize: '0.85rem' }}>Friends</span>
                   </Button>
                 </motion.div>
               </Tooltip>
@@ -421,14 +498,15 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 <Button
                   onClick={onOpen}
                   size="sm"
-                  leftIcon={<AddIcon style={{ fontSize: "14px", color: "#D4AF37" }} />}
+                  leftIcon={<AddIcon style={{ fontSize: "16px", color: "#D4AF37" }} />}
                   style={{
                     background: "rgba(212, 175, 55, 0.08)",
                     color: "#D4AF37",
                     borderRadius: "99px",
-                    padding: "6px 14px",
+                    padding: "0 16px",
+                    height: "36px",
                     fontWeight: 800,
-                    fontSize: "0.82rem",
+                    fontSize: "0.85rem",
                     fontFamily: "'Outfit', sans-serif",
                     letterSpacing: "0.02em",
                     border: "1px solid rgba(212, 175, 55, 0.3)",
@@ -475,6 +553,31 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 // Sort chats so pinned ones stay at top and filter by chatFilter ('friends' vs 'all')
                 const filteredList = uniqueChats.filter(c => {
                   if (chatFilter === 'friends') return !c.isGroupChat;
+                  
+                  const cId = String(c.id || c._id);
+                  const isDeletedLocally = deletedChatIds.includes(cId);
+                  
+                  // For 'all' filter, hide locally deleted chats UNLESS there's a new message
+                  if (isDeletedLocally) {
+                    try {
+                      const clearedChats = JSON.parse(localStorage.getItem("aura_cleared_chats") || "{}");
+                      const clearedAt = clearedChats[cId] || 0;
+                      const latestMsgTime = c.latestMessage ? new Date(c.latestMessage.createdAt || c.latestMessage.timestamp).getTime() : 0;
+                      
+                      // If a new message arrived AFTER it was cleared, it shouldn't be hidden
+                      if (latestMsgTime > clearedAt) {
+                         // Auto-restore it locally from deletedChatIds!
+                         setTimeout(() => {
+                           const newDeleted = deletedChatIds.filter(id => id !== cId);
+                           localStorage.setItem("aura_deleted_chats", JSON.stringify(newDeleted));
+                           setDeletedChatIds(newDeleted);
+                         }, 0);
+                         return true;
+                      }
+                    } catch (e) {}
+                    return false;
+                  }
+                  
                   return true;
                 });
 
@@ -495,44 +598,26 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                   const senderName = !chat.isGroupChat ? getSender(user, chat.users) : chat.chatName;
                   const senderPic = !chat.isGroupChat ? getPicture(user, chat.users) : "";
                   const targetUser = !chat.isGroupChat ? getSenderUser(user, chat.users) : null;
-                  const isTargetOnline = targetUser ? Boolean(targetUser.isOnline || targetUser.online) : false;
+                  const targetUserId = targetUser ? String(targetUser._id || targetUser.id || targetUser.publicId || '') : '';
+                  const statusObj = targetUserId && userStatuses[targetUserId] ? userStatuses[targetUserId] : null;
+                  const isTargetOnline = statusObj != null 
+                    ? statusObj.isOnline 
+                    : Boolean(targetUser?.isOnline || targetUser?.online);
+
+                  let clearedAt = 0;
+                  try {
+                    const clearedChats = JSON.parse(localStorage.getItem("aura_cleared_chats") || "{}");
+                    clearedAt = clearedChats[currentChatId] || 0;
+                  } catch(e) {}
+                  const latestMsgTime = chat.latestMessage ? new Date(chat.latestMessage.createdAt || chat.latestMessage.timestamp).getTime() : 0;
+                  const isLatestMsgVisible = latestMsgTime > clearedAt;
 
                   const unreadNotifs = notification.filter(n => {
                     const notifChatId = n.chat?.id || n.chat?._id || n.chatId;
                     return String(notifChatId) === currentChatId;
                   });
 
-                  let unreadCount = unreadNotifs.length;
-
-                  const formatLatestMessage = (msg) => {
-                    if (!msg || !msg.content) return 'No messages yet';
-                    let content = msg.content;
-                    if (content.startsWith('[gz]')) {
-                      // Attempt synchronous inline base64 decode check or fallback label
-                      try {
-                        const raw = atob(content.substring(4));
-                        if (raw.includes('[enc]')) {
-                          content = raw.split(':')[1] ? atob(raw.split(':')[1]) : '💬 Message';
-                        } else {
-                          content = raw;
-                        }
-                      } catch {
-                        content = '💬 Message';
-                      }
-                    } else if (content.startsWith('[enc]')) {
-                      try {
-                        const parts = content.substring(5).split(':');
-                        if (parts[1]) content = atob(parts[1]);
-                      } catch {
-                        content = '🔒 Encrypted message';
-                      }
-                    }
-                    if (content.startsWith('[view-once]')) return '👁 View-once message';
-                    if (content.startsWith('data:video')) return '🎥 Video message';
-                    if (content.startsWith('data:image')) return '📷 Photo message';
-                    if (content.startsWith('data:audio')) return '🎙 Voice message';
-                    return content;
-                  };
+                  let unreadCount = isLatestMsgVisible ? unreadNotifs.length : 0;
 
                   const formatDateTime = (dateStr) => {
                     if (!dateStr) return 'Now';
@@ -553,7 +638,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25, delay: index * 0.03 }}
-                      whileHover={{ scale: 1.01, x: 3 }}
+                      whileHover={{ scale: 1.01, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <Box
@@ -567,41 +652,54 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                           }
                         }}
                         cursor="pointer"
-                        bg={isSelected ? "linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)" : unreadCount > 0 ? "#FFFCF5" : "#FFFFFF"}
-                        px={3}
-                        py={2.5}
-                        borderRadius="16px"
+                        bg={isSelected ? "#F8FAFC" : unreadCount > 0 ? "rgba(245, 158, 11, 0.03)" : "#FFFFFF"}
+                        px={4}
+                        py={3}
+                        borderRadius="20px"
+                        position="relative"
                         style={{
-                          border: isSelected ? "1px solid rgba(212, 175, 55, 0.4)" : "1px solid rgba(226, 232, 240, 0.7)",
-                          borderLeft: isPinned ? "4px solid #D4AF37" : isSelected ? "4px solid #0F172A" : unreadCount > 0 ? "4px solid #F59E0B" : "1px solid rgba(226, 232, 240, 0.7)",
-                          boxShadow: isSelected ? "0 8px 24px rgba(212, 175, 55, 0.18)" : "0 2px 8px rgba(15, 23, 42, 0.03)",
-                          transition: "all 0.2s ease"
+                          border: isSelected ? "1.5px solid rgba(212, 175, 55, 0.5)" : unreadCount > 0 ? "1.5px solid rgba(245, 158, 11, 0.3)" : "1.5px solid transparent",
+                          boxShadow: isSelected ? "0 10px 25px rgba(212, 175, 55, 0.15)" : "0 2px 10px rgba(15, 23, 42, 0.02)",
+                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                        }}
+                        _hover={{
+                          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+                          bg: isSelected ? "#F8FAFC" : "#F8FAFC"
                         }}
                         d="flex"
                         alignItems="center"
-                        gap="12px"
+                        gap="14px"
                       >
+                        {/* Pinned indicator on the left side instead of border */}
+                        {isPinned && (
+                          <div style={{ position: "absolute", left: "0", top: "50%", transform: "translateY(-50%)", width: "4px", height: "40%", background: "#D4AF37", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }} />
+                        )}
+
                         <div style={{ position: "relative" }}>
                           <Avatar
                             size="md"
                             name={senderName}
                             src={senderPic}
-                            bg="#F1F5F9"
-                            color="#0F172A"
-                            fontWeight="800"
-                            style={{ border: isSelected ? "2px solid #D4AF37" : "2px solid #E2E8F0" }}
+                            bg="linear-gradient(135deg, #0F172A 0%, #1E293B 100%)"
+                            color="#FFFFFF"
+                            fontWeight="700"
+                            style={{ 
+                              border: isSelected ? "2px solid #D4AF37" : "2px solid transparent",
+                              boxShadow: "0 4px 10px rgba(0,0,0,0.08)"
+                            }}
                           />
                           {!chat.isGroupChat && (
                             <span
                               style={{
                                 position: "absolute",
-                                bottom: "1px",
-                                right: "1px",
-                                width: "10px",
-                                height: "10px",
-                                backgroundColor: isTargetOnline ? "#10B981" : "#9CA3AF",
+                                bottom: "2px",
+                                right: "2px",
+                                width: "12px",
+                                height: "12px",
+                                backgroundColor: isTargetOnline ? "#10B981" : "#94A3B8",
                                 borderRadius: "50%",
-                                border: "2px solid #FFFFFF"
+                                border: "2px solid #FFFFFF",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
                               }}
                             />
                           )}
@@ -610,7 +708,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                         <Box flex="1" overflow="hidden">
                           <Box d="flex" justifyContent="space-between" alignItems="center">
                             <Box d="flex" alignItems="center" gap={1.5} flex="1" overflow="hidden">
-                              <Text fontWeight={unreadCount > 0 ? "900" : "800"} fontSize="sm" color="#0F172A" isTruncated style={{ letterSpacing: "-0.01em", fontFamily: "'Outfit', sans-serif" }}>
+                              <Text fontWeight={unreadCount > 0 ? "900" : "700"} fontSize="0.95rem" color="#0F172A" isTruncated style={{ letterSpacing: "-0.01em", fontFamily: "'Outfit', sans-serif" }}>
                                 {senderName}
                               </Text>
                               {isPinned && (
@@ -643,12 +741,12 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                   {unreadCount} NEW
                                 </motion.span>
                               )}
-                              <Text fontSize="xs" fontWeight="600" color={unreadCount > 0 ? "#D4AF37" : "#94A3B8"}>
-                                {formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt)}
+                              <Text fontSize="0.7rem" fontWeight="600" color={unreadCount > 0 ? "#D4AF37" : "#94A3B8"}>
+                                {isLatestMsgVisible ? formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt) : ""}
                               </Text>
 
                               {/* Ultra-Clean Luxurious Three Dots Menu */}
-                              <Menu placement="bottom-end" isLazy>
+                              <Menu placement="bottom-end" isLazy strategy="fixed">
                                 <MenuButton
                                   as={motion.button}
                                   type="button"
@@ -672,72 +770,93 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                 >
                                   <MoreVertical size={16} />
                                 </MenuButton>
-                                <MenuList
+                                <Portal>
+                                  <MenuList
                                   bg="rgba(255, 255, 255, 0.96)"
                                   backdropFilter="blur(20px)"
-                                  borderRadius="16px"
-                                  p={1.5}
-                                  minW="170px"
+                                  borderRadius="20px"
+                                  p={2}
+                                  minW="200px"
                                   style={{
-                                    boxShadow: "0 12px 32px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(0,0,0,0.03)",
-                                    border: "1px solid rgba(226, 232, 240, 0.8)",
+                                    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(0,0,0,0.04)",
+                                    border: "1px solid rgba(226, 232, 240, 0.9)",
                                     zIndex: 9999
                                   }}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <MenuItem
                                     onClick={(e) => handleTogglePin(e, currentChatId)}
-                                    borderRadius="10px"
-                                    fontSize="0.82rem"
+                                    borderRadius="12px"
+                                    fontSize="0.9rem"
                                     fontWeight="600"
                                     color="#18181B"
-                                    py={2}
+                                    py={2.5}
+                                    px={3}
                                     _hover={{ bg: "rgba(37, 99, 235, 0.06)", color: "#2563EB" }}
                                   >
-                                    <Pin size={15} style={{ marginRight: "10px" }} />
+                                    <Pin size={17} style={{ marginRight: "12px" }} />
                                     {isPinned ? "Unpin Chat" : "Pin Chat"}
                                   </MenuItem>
 
                                   <MenuItem
                                     onClick={(e) => handleToggleMute(e, currentChatId)}
-                                    borderRadius="10px"
-                                    fontSize="0.82rem"
+                                    borderRadius="12px"
+                                    fontSize="0.9rem"
                                     fontWeight="600"
                                     color="#18181B"
-                                    py={2}
+                                    py={2.5}
+                                    px={3}
                                     _hover={{ bg: "rgba(113, 113, 122, 0.08)" }}
                                   >
-                                    <VolumeX size={15} style={{ marginRight: "10px" }} />
+                                    <VolumeX size={17} style={{ marginRight: "12px" }} />
                                     {isMuted ? "Unmute" : "Mute Notifications"}
                                   </MenuItem>
 
-                                  <MenuDivider my={1} borderColor="rgba(226, 232, 240, 0.8)" />
+
+
+                                  {!chat.isGroupChat && (
+                                    <MenuItem
+                                      onClick={(e) => handleUnfriend(e, chat)}
+                                      borderRadius="12px"
+                                      fontSize="0.9rem"
+                                      fontWeight="700"
+                                      color="#EF4444"
+                                      py={2.5}
+                                      px={3}
+                                      _hover={{ bg: "rgba(239, 68, 68, 0.08)", color: "#DC2626" }}
+                                    >
+                                      <UserMinus size={17} style={{ marginRight: "12px" }} />
+                                      Unfriend
+                                    </MenuItem>
+                                  )}
 
                                   <MenuItem
                                     onClick={(e) => handleDeleteChat(e, chat)}
-                                    borderRadius="10px"
-                                    fontSize="0.82rem"
+                                    borderRadius="12px"
+                                    fontSize="0.9rem"
                                     fontWeight="700"
                                     color="#EF4444"
-                                    py={2}
+                                    py={2.5}
+                                    px={3}
                                     _hover={{ bg: "rgba(239, 68, 68, 0.08)", color: "#DC2626" }}
                                   >
-                                    <Trash2 size={15} style={{ marginRight: "10px" }} />
+                                    <Trash2 size={17} style={{ marginRight: "12px" }} />
                                     Delete Chat
                                   </MenuItem>
                                 </MenuList>
+                                </Portal>
                               </Menu>
                             </Box>
                           </Box>
                           <Text
-                            fontSize="xs"
-                            fontWeight={unreadCount > 0 ? "700" : "400"}
-                            color={unreadCount > 0 ? "#E63946" : "#71717A"}
+                            fontSize="0.82rem"
+                            fontWeight={unreadCount > 0 ? "600" : "400"}
+                            color={unreadCount > 0 ? "#D4AF37" : "#64748B"}
                             isTruncated
                             mt={0.5}
                             style={{ fontStyle: chat.latestMessage?.content?.startsWith('[view-once]') ? 'italic' : 'normal' }}
                           >
-                            {formatLatestMessage(chat.latestMessage)}
+                            {isLatestMsgVisible ? <DecryptedLatestMessage msg={chat.latestMessage} /> : "No messages yet"}
                           </Text>
                         </Box>
                       </Box>

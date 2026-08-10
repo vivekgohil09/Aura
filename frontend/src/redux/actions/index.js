@@ -48,3 +48,23 @@ export const setNotification = (data) => {
         }
     }
 }
+
+export const setUserStatuses = (data) => {
+    return {
+        type: "SET_USER_STATUSES",
+        payload: {
+            data: data
+        }
+    }
+}
+
+export const updateUserStatus = (userId, isOnline, lastSeen) => {
+    return {
+        type: "UPDATE_USER_STATUS",
+        payload: {
+            userId,
+            isOnline,
+            lastSeen
+        }
+    }
+}

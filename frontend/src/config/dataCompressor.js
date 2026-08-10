@@ -2,27 +2,34 @@
 
 const ENCRYPTION_KEY_RAW = "AuraSecKey2026AES256GCM256BitSecurity!"; // Secret master salt key
 
-async function getDerivedKey() {
-    const enc = new TextEncoder();
-    const keyMaterial = await window.crypto.subtle.importKey(
-        "raw",
-        enc.encode(ENCRYPTION_KEY_RAW),
-        { name: "PBKDF2" },
-        false,
-        ["deriveKey"]
-    );
-    return window.crypto.subtle.deriveKey(
-        {
-            name: "PBKDF2",
-            salt: enc.encode("aura_salt_2026"),
-            iterations: 100000,
-            hash: "SHA-256"
-        },
-        keyMaterial,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["encrypt", "decrypt"]
-    );
+let cachedKeyPromise = null;
+export const decompressionCache = new Map();
+
+function getDerivedKey() {
+    if (cachedKeyPromise) return cachedKeyPromise;
+    cachedKeyPromise = (async () => {
+        const enc = new TextEncoder();
+        const keyMaterial = await window.crypto.subtle.importKey(
+            "raw",
+            enc.encode(ENCRYPTION_KEY_RAW),
+            { name: "PBKDF2" },
+            false,
+            ["deriveKey"]
+        );
+        return window.crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: enc.encode("aura_salt_2026"),
+                iterations: 100000,
+                hash: "SHA-256"
+            },
+            keyMaterial,
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+        );
+    })();
+    return cachedKeyPromise;
 }
 
 export const encryptMessage = async (text) => {
@@ -84,7 +91,9 @@ export const compressData = async (text) => {
             binary += String.fromCharCode(bytes[i]);
         }
         const b64 = btoa(binary);
-        return '[gz]' + b64;
+        const res = '[gz]' + b64;
+        decompressionCache.set(res, text);
+        return res;
     } catch (e) {
         return await encryptMessage(text);
     }
@@ -92,6 +101,9 @@ export const compressData = async (text) => {
 
 export const decompressData = async (text) => {
     if (!text || typeof text !== 'string') return text;
+    if (decompressionCache.has(text)) {
+        return decompressionCache.get(text);
+    }
     let payload = text;
     if (text.startsWith('[gz]')) {
         try {
@@ -111,7 +123,10 @@ export const decompressData = async (text) => {
         }
     }
     if (payload.startsWith('[enc]')) {
-        return await decryptMessage(payload);
+        const finalDecrypted = await decryptMessage(payload);
+        decompressionCache.set(text, finalDecrypted);
+        return finalDecrypted;
     }
+    decompressionCache.set(text, payload);
     return payload;
 };

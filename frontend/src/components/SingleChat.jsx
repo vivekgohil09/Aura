@@ -86,7 +86,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [scheduleModal, setScheduleModal] = useState(false);
     const [scheduledAt, setScheduledAt] = useState('');
     const [pendingScheduled, setPendingScheduled] = useState([]);
-    const [userStatuses, setUserStatuses] = useState({});
+    const userStatuses = useSelector(state => state.userStatuses) || {};
 
     const formatLastSeenDate = (lastSeenRaw) => {
         if (!lastSeenRaw) return "recently";
@@ -123,6 +123,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [incomingCall, setIncomingCall] = useState(null);
     const localVideoRef = React.useRef(null);
     const remoteVideoRef = React.useRef(null);
+    const peerConnectionRef = React.useRef(null);
+    const initWebRTCRef = React.useRef(null);
     const fileInputRef = React.useRef(null);
 
     const compressImage = (dataUrl, maxWidth = 800, quality = 0.7) => {
@@ -209,15 +211,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [isCameraOff, setIsCameraOff] = useState(false);
     const [isCallAccepted, setIsCallAccepted] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
+    const callDurationRef = React.useRef(0);
+    const isCallerRef = React.useRef(false);
 
     useEffect(() => {
         let interval = null;
         if (isVideoCallActive && isCallAccepted) {
             interval = setInterval(() => {
-                setCallDuration(prev => prev + 1);
+                setCallDuration(prev => {
+                    const next = prev + 1;
+                    callDurationRef.current = next;
+                    return next;
+                });
             }, 1000);
         } else {
             setCallDuration(0);
+            callDurationRef.current = 0;
         }
         return () => clearInterval(interval);
     }, [isVideoCallActive, isCallAccepted]);
@@ -263,6 +272,53 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         return `${m}:${s}`;
     };
 
+    useEffect(() => {
+        if (window.__auraCallToAccept && selectedChat) {
+            const call = window.__auraCallToAccept;
+            if (String(selectedChat._id || selectedChat.id) === String(call.chatId)) {
+                window.__auraCallToAccept = null;
+                startVideoCall(call.callType, true);
+            }
+        }
+    }, [selectedChat]);
+
+    initWebRTCRef.current = async (stream, isCaller, targetUserId) => {
+        const pc = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+        peerConnectionRef.current = pc;
+        
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+        pc.ontrack = (event) => {
+            if (remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = event.streams[0];
+            }
+        };
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate && socket) {
+                socket.emit("webrtc-signal", {
+                    targetUserId,
+                    fromUserId: user?._id || user?.id,
+                    signal: { type: 'ice', candidate: event.candidate }
+                });
+            }
+        };
+
+        if (isCaller) {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            if (socket) {
+                socket.emit("webrtc-signal", {
+                    targetUserId,
+                    fromUserId: user?._id || user?.id,
+                    signal: offer
+                });
+            }
+        }
+    };
+
     const startVideoCall = async (type = "video", accepted = false) => {
         // Prevent calling yourself
         if (selectedChat && !selectedChat.isGroupChat && Array.isArray(selectedChat.users) && selectedChat.users.length === 1) {
@@ -284,6 +340,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         setIsMuted(false);
         setIsCameraOff(false);
         setIsCallAccepted(accepted);
+        isCallerRef.current = !accepted;
         try {
             let stream;
             try {
@@ -330,6 +387,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     fromUser: user?.name || "User",
                     callType: type
                 });
+            } else if (socket && accepted && chatId) {
+                socket.emit("accept-call", { chatId, fromUserId: user?._id || user?.id });
+                const targetUser = getSenderUser(user, selectedChat.users);
+                if (targetUser) {
+                    initWebRTCRef.current(stream, false, targetUser._id || targetUser.id);
+                }
             }
         } catch (err) {
             toast.error("Camera/Microphone access required for Call");
@@ -481,8 +544,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     };
 
     const endVideoCall = () => {
+        if (isCallerRef.current) {
+            const dur = callDurationRef.current;
+            if (dur > 0) {
+                sendSystemMessage(`[call] ended ${formatCallDuration(dur)}`);
+            } else {
+                sendSystemMessage(`[call] cancelled`);
+            }
+        }
         if (localVideoRef.current && localVideoRef.current.srcObject) {
             localVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        }
+        if (peerConnectionRef.current) {
+            peerConnectionRef.current.close();
         }
         const chatId = selectedChat.id || selectedChat._id;
         if (socket) {
@@ -780,6 +854,30 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         }
     }
 
+    const sendSystemMessage = async (rawContent) => {
+        const chatId = selectedChat.id || selectedChat._id;
+        try {
+            const content = await compressData(rawContent);
+            const clientMsgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            if (stompService.connected) {
+                stompService.sendMessage(chatId, content, clientMsgId);
+            } else {
+                const config = {
+                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + getJwtToken() },
+                };
+                const { data } = await axios.post(`/api/message`, { content, chatId, clientMessageId: clientMsgId }, config);
+                if (socket) { socket.emit("new message", data); }
+                setMessages(prev => {
+                    if (prev.some(m => (m.clientMessageId && m.clientMessageId === clientMsgId) || m._id === data._id || m.id === data.id)) return prev;
+                    return [...prev, data];
+                });
+            }
+        } catch (error) {
+            console.error("Failed to send system message:", error);
+        }
+    };
+
     const sendScheduledMessage = async () => {
         if (!newMessage.trim() || !scheduledAt) {
             toast.warning('Enter a message and pick a time!', { autoClose: 2000, hideProgressBar: true });
@@ -819,8 +917,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             const chatId = selectedChat.id || selectedChat._id;
             const { data } = await axios.get(`/api/message/${chatId}`, config);
 
+            let clearedAt = 0;
+            try {
+                const clearedChats = JSON.parse(localStorage.getItem("aura_cleared_chats") || "{}");
+                clearedAt = clearedChats[chatId] || 0;
+            } catch(e) {}
+            
+            const filteredData = data.filter(m => {
+                const msgTime = new Date(m.createdAt || m.timestamp).getTime();
+                return msgTime > clearedAt;
+            });
 
-            setMessages(data);
+            setMessages(filteredData);
             setMessageloading(false);
             if (socket) {
                 socket.emit("join chat", chatId);
@@ -862,43 +970,64 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             if (globalSocket) {
                 socket = globalSocket;
                 socket.off("connected").on("connected", () => setSocketConnected(true));
-                socket.off("user status change").on("user status change", (data) => {
-                    if (data && data.userId) {
-                        const sId = String(data.userId);
-                        setUserStatuses(prev => ({
-                            ...prev,
-                            [sId]: {
-                                isOnline: Boolean(data.isOnline),
-                                lastSeen: data.lastSeen
-                            }
-                        }));
-                    }
-                });
                 socket.off("end-call").on("end-call", () => {
+                    if (isCallerRef.current) {
+                        const dur = callDurationRef.current;
+                        if (dur > 0) {
+                            sendSystemMessage(`[call] ended ${formatCallDuration(dur)}`);
+                        } else {
+                            sendSystemMessage(`[call] declined`);
+                        }
+                    }
                     if (localVideoRef.current && localVideoRef.current.srcObject) {
                         localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
+                    }
+                    if (peerConnectionRef.current) {
+                        peerConnectionRef.current.close();
                     }
                     setIsVideoCallActive(false);
                     setIsCallAccepted(false);
                     setIncomingCall(null);
                 });
-                socket.off("accept-call").on("accept-call", () => setIsCallAccepted(true));
+                socket.off("accept-call").on("accept-call", () => {
+                    setIsCallAccepted(true);
+                    if (localVideoRef.current && localVideoRef.current.srcObject && selectedChatRef.current && user) {
+                        const targetUser = getSenderUser(user, selectedChatRef.current.users);
+                        if (targetUser && initWebRTCRef.current) {
+                            initWebRTCRef.current(localVideoRef.current.srcObject, true, targetUser._id || targetUser.id);
+                        }
+                    }
+                });
+                socket.off("webrtc-signal").on("webrtc-signal", async (data) => {
+                    const myId = String(user?._id || user?.id);
+                    if (String(data.targetUserId) !== myId) return;
+                    const pc = peerConnectionRef.current;
+                    if (!pc) return;
+                    
+                    try {
+                        if (data.signal.type === 'offer') {
+                            await pc.setRemoteDescription(new RTCSessionDescription(data.signal));
+                            const answer = await pc.createAnswer();
+                            await pc.setLocalDescription(answer);
+                            socket.emit("webrtc-signal", {
+                                targetUserId: data.fromUserId,
+                                fromUserId: myId,
+                                signal: answer
+                            });
+                        } else if (data.signal.type === 'answer') {
+                            await pc.setRemoteDescription(new RTCSessionDescription(data.signal));
+                        } else if (data.signal.type === 'ice') {
+                            await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                        }
+                    } catch (e) {
+                        console.error("WebRTC Signal Error", e);
+                    }
+                });
             } else if (!socket) {
                 try {
                     socket = io(ENDPOINT, { transports: ["websocket", "polling"] });
                     socket.emit("setup", userInfo);
                     socket.on("connected", () => setSocketConnected(true));
-                    socket.on("user status change", (data) => {
-                        if (data && data.userId) {
-                            setUserStatuses(prev => ({
-                                ...prev,
-                                [data.userId]: {
-                                    isOnline: Boolean(data.isOnline),
-                                    lastSeen: data.lastSeen
-                                }
-                            }));
-                        }
-                    });
                     window.__auraSocket = socket;
                 } catch (e) {}
             }
@@ -966,14 +1095,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             {selectedChat ? (
                 <>
                     <Box
-                        pb={3}
+                        pb={2.5}
                         pt={1}
                         px={3}
                         w="100%"
                         d="flex"
                         justifyContent="space-between"
                         alignItems="center"
-                        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", marginBottom: "10px" }}
+                        flexShrink={0}
+                        position="sticky"
+                        top={0}
+                        zIndex={50}
+                        bg="rgba(255, 255, 255, 0.95)"
+                        style={{
+                            backdropFilter: "blur(20px)",
+                            WebkitBackdropFilter: "blur(20px)",
+                            borderBottom: "1.5px solid rgba(212, 175, 55, 0.2)",
+                            marginBottom: "6px"
+                        }}
                     >
                         {!selectedChat.isGroupChat ? (() => {
                             const targetUser = getSenderUser(user, selectedChat.users);
@@ -1048,39 +1187,41 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className='d-flex align-items-center gap-1.5 gap-sm-2' style={{ flexShrink: 0 }}>
+                                    <div className='d-flex align-items-center' style={{ gap: '10px', flexShrink: 0 }}>
                                         <Tooltip label="Voice Call" hasArrow placement="bottom-end">
-                                            <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
+                                            <motion.div whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}>
                                                 <IconButton
                                                     size="sm"
                                                     onClick={() => startVideoCall("voice")}
-                                                    icon={<Phone size={18} color="#D4AF37" />}
+                                                    icon={<Phone size={19} color="#D4AF37" />}
                                                     aria-label="Voice Call"
                                                     style={{
-                                                        background: "rgba(212, 175, 55, 0.08)",
+                                                        background: "rgba(212, 175, 55, 0.1)",
                                                         borderRadius: "12px",
-                                                        border: "1px solid rgba(212, 175, 55, 0.3)",
-                                                        width: "38px",
-                                                        height: "38px",
-                                                        boxShadow: "0 2px 8px rgba(212, 175, 55, 0.1)"
+                                                        border: "1.5px solid rgba(212, 175, 55, 0.35)",
+                                                        width: "40px",
+                                                        height: "40px",
+                                                        minWidth: "40px",
+                                                        boxShadow: "0 2px 8px rgba(212, 175, 55, 0.12)"
                                                     }}
                                                 />
                                             </motion.div>
                                         </Tooltip>
                                         <Tooltip label="Video Call" hasArrow placement="bottom-end">
-                                            <motion.div whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.92 }}>
+                                            <motion.div whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}>
                                                 <IconButton
                                                     size="sm"
                                                     onClick={() => startVideoCall("video")}
-                                                    icon={<Video size={18} color="#FFFFFF" />}
+                                                    icon={<Video size={19} color="#FFFFFF" />}
                                                     aria-label="Video Call"
                                                     style={{
-                                                        background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                                                        background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
                                                         borderRadius: "12px",
-                                                        border: "1.5px solid rgba(212, 175, 55, 0.4)",
-                                                        width: "38px",
-                                                        height: "38px",
-                                                        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.2)"
+                                                        border: "none",
+                                                        width: "40px",
+                                                        height: "40px",
+                                                        minWidth: "40px",
+                                                        boxShadow: "0 4px 14px rgba(212, 175, 55, 0.35)"
                                                     }}
                                                 />
                                             </motion.div>
@@ -1184,17 +1325,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     <Box
                         d="flex"
                         flexDir="column"
-                        justifyContent="flex-end"
-                        p={3.5}
+                        justifyContent="space-between"
+                        p={{ base: 2, sm: 3.5 }}
                         bg="linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)"
                         style={{
                             border: "1px solid #E2E8F0",
                             boxShadow: "inset 0 2px 12px rgba(15, 23, 42, 0.03)",
-                            borderRadius: "24px"
+                            borderRadius: "20px"
                         }}
                         w="100%"
-                        h="100%"
-                        overflowY="hidden"
+                        flex="1"
+                        h="0"
+                        minH="0"
+                        overflow="hidden"
                     >
                         {/* Messages Here */} 
                         {messageLoading ? (
@@ -1209,9 +1352,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                 margin="auto"
                             />
                         ) : (
-                            <div>
-                            <ScrollableChat messages={messages} setMessages={setMessages} isTyping={istyping} />
-                            </div>
+                            <Box flex="1" overflowY="auto" minH="0" pr={1}>
+                                <ScrollableChat messages={messages} setMessages={setMessages} isTyping={istyping} />
+                            </Box>
                         )}
                         {/* Video & Voice Call Modal Overlay */}
                         {isVideoCallActive && (
@@ -2307,97 +2450,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 </Box>
             )}
 
-            {/* Incoming Call Popup Modal with Framer Motion Ringing Special Effects */}
-            {incomingCall && (
-                <Portal>
-                    <Modal isOpen={true} onClose={() => setIncomingCall(null)} isCentered>
-                        <ModalOverlay backdropFilter="blur(20px)" bg="rgba(24, 24, 27, 0.75)" />
-                        <ModalContent borderRadius="32px" bg="linear-gradient(145deg, #18181B 0%, #09090B 100%)" border="1.5px solid rgba(230, 57, 70, 0.3)" p={6} style={{ boxShadow: "0 30px 70px rgba(230, 57, 70, 0.3)", maxWidth: "400px" }}>
-                            <ModalBody display="flex" flexDirection="column" alignItems="center" py={6} position="relative">
-                                {/* Pulsing Ringing Waves */}
-                                <motion.div
-                                    animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0.05, 0.6] }}
-                                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                                    style={{
-                                        position: "absolute",
-                                        top: "40px",
-                                        width: "110px",
-                                        height: "110px",
-                                        borderRadius: "50%",
-                                        background: "rgba(230, 57, 70, 0.35)"
-                                    }}
-                                />
-                                <motion.div
-                                    animate={{ scale: [1, 1.85, 1], opacity: [0.35, 0, 0.35] }}
-                                    transition={{ duration: 1.8, repeat: Infinity, delay: 0.4, ease: "easeInOut" }}
-                                    style={{
-                                        position: "absolute",
-                                        top: "40px",
-                                        width: "110px",
-                                        height: "110px",
-                                        borderRadius: "50%",
-                                        background: "rgba(230, 57, 70, 0.2)"
-                                    }}
-                                />
-
-                                <motion.div animate={{ rotate: [0, -8, 8, -8, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                                    <Avatar size="2xl" name={incomingCall.fromUser} bg="#FFE3E6" color="#E63946" fontWeight="800" fontSize="2.2rem" style={{ border: "4px solid #E63946", boxShadow: "0 0 35px rgba(230, 57, 70, 0.6)", position: "relative", zIndex: 2 }} />
-                                </motion.div>
-
-                                <Text color="#FFFFFF" fontSize="1.45rem" fontWeight="800" mt={5} fontFamily="'Outfit', sans-serif">
-                                    {incomingCall.fromUser}
-                                </Text>
-                                <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.2, repeat: Infinity }}>
-                                    <Text color="#F87171" fontSize="0.92rem" fontWeight="700" mt={1}>
-                                        {incomingCall.callType === "video" ? "📹 Incoming HD Video Call..." : "🎙️ Incoming HD Voice Call..."}
-                                    </Text>
-                                </motion.div>
-
-                                <Box display="flex" gap={4} mt={7} width="100%">
-                                    <motion.div style={{ flex: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                        <Button
-                                            onClick={() => {
-                                                if (socket) socket.emit("end-call", { chatId: incomingCall.chatId });
-                                                setIncomingCall(null);
-                                            }}
-                                            width="100%"
-                                            height="48px"
-                                            borderRadius="16px"
-                                            bg="#EF4444"
-                                            color="#FFF"
-                                            leftIcon={<CallEndIcon />}
-                                            fontWeight="800"
-                                            boxShadow="0 6px 20px rgba(239, 68, 68, 0.4)"
-                                        >
-                                            Decline
-                                        </Button>
-                                    </motion.div>
-                                    <motion.div style={{ flex: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                        <Button
-                                            onClick={async () => {
-                                                const type = incomingCall.callType || "video";
-                                                setIncomingCall(null);
-                                                if (socket) socket.emit("accept-call", { chatId: incomingCall.chatId });
-                                                await startVideoCall(type, true);
-                                            }}
-                                            width="100%"
-                                            height="48px"
-                                            borderRadius="16px"
-                                            bg="linear-gradient(135deg, #10B981 0%, #059669 100%)"
-                                            color="#FFF"
-                                            leftIcon={<CallIcon />}
-                                            fontWeight="800"
-                                            boxShadow="0 6px 20px rgba(16, 185, 129, 0.45)"
-                                        >
-                                            Accept Call
-                                        </Button>
-                                    </motion.div>
-                                </Box>
-                            </ModalBody>
-                        </ModalContent>
-                    </Modal>
-                </Portal>
-            )}
+            {/* Incoming Call Popup Modal logic removed — ChatPage handles this globally now */}
         </>
     )
 }

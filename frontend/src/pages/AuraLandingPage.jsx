@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Feather, MessageCircle, Video, ShieldCheck, Zap, Globe, ArrowRight, Sparkles, Star, Lock } from 'lucide-react';
 import * as THREE from 'three';
@@ -34,11 +34,29 @@ function ThreeVFXBackground() {
     const knot = new THREE.Mesh(geometry, material);
     scene.add(knot);
 
+    // Add an outer Icosahedron wireframe
+    const icosaGeo = new THREE.IcosahedronGeometry(12, 1);
+    const icosaMat = new THREE.MeshStandardMaterial({
+      color: 0x38BDF8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.08,
+    });
+    const icosahedron = new THREE.Mesh(icosaGeo, icosaMat);
+    scene.add(icosahedron);
+
+    // Add a glowing Torus ring
+    const ringGeo = new THREE.TorusGeometry(8, 0.02, 16, 100);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xD4AF37, transparent: true, opacity: 0.25 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    scene.add(ring);
+
     // Floating particles VFX (golden & diamond dust)
-    const particleCount = 240;
+    const particleCount = 400; // Increased particle count
     const posArray = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 38;
+      posArray[i] = (Math.random() - 0.5) * 45; // Wider spread
     }
     const particleGeo = new THREE.BufferGeometry();
     particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
@@ -46,7 +64,7 @@ function ThreeVFXBackground() {
       size: 0.09,
       color: 0xE2C044,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.6,
       blending: THREE.AdditiveBlending,
     });
     const particles = new THREE.Points(particleGeo, particleMat);
@@ -71,7 +89,15 @@ function ThreeVFXBackground() {
       const elapsedTime = clock.getElapsedTime();
       knot.rotation.x = elapsedTime * 0.12;
       knot.rotation.y = elapsedTime * 0.18;
+      
+      icosahedron.rotation.x = elapsedTime * 0.05;
+      icosahedron.rotation.y = elapsedTime * 0.08;
+      
+      ring.rotation.y = elapsedTime * 0.1;
+      ring.rotation.z = elapsedTime * -0.05;
+
       particles.rotation.y = elapsedTime * 0.04;
+      particles.rotation.x = elapsedTime * 0.02;
 
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
@@ -113,30 +139,49 @@ function ThreeVFXBackground() {
   );
 }
 
-// ── Golden Luxury Light Sparkle ──
-function GoldSparkle({ delay = 0, left = 50 }) {
+// ── Full Page Floating Sparkles VFX ──
+function FullPageVFX() {
+  const [sparkles, setSparkles] = useState([]);
+
+  useEffect(() => {
+    // Generate static random positions once so they don't re-render chaotically
+    const arr = Array.from({ length: 35 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 3 + Math.random() * 4,
+      size: 3 + Math.random() * 5
+    }));
+    setSparkles(arr);
+  }, []);
+
   return (
-    <motion.div
-      initial={{ y: 0, opacity: 0, scale: 0 }}
-      animate={{
-        y: [-20, -100, -180],
-        x: [0, (Math.random() - 0.5) * 50, (Math.random() - 0.5) * 100],
-        opacity: [0, 0.85, 0],
-        scale: [0, 1.2, 0.2],
-      }}
-      transition={{ duration: 2.5 + Math.random(), delay, repeat: Infinity, ease: 'easeOut' }}
-      style={{
-        position: 'absolute',
-        bottom: 0,
-        left: `${left}%`,
-        width: 5 + Math.random() * 4,
-        height: 5 + Math.random() * 4,
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #F6D365 0%, #FDA085 100%)',
-        boxShadow: '0 0 10px 3px rgba(212, 175, 55, 0.5)',
-        pointerEvents: 'none',
-      }}
-    />
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
+      {sparkles.map(s => (
+        <motion.div
+          key={s.id}
+          initial={{ y: 0, opacity: 0, scale: 0 }}
+          animate={{
+            y: [0, -150, -300],
+            x: [0, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 150],
+            opacity: [0, 0.7, 0],
+            scale: [0, 1.3, 0.2],
+          }}
+          transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, ease: 'easeOut' }}
+          style={{
+            position: 'absolute',
+            top: `${s.top}%`,
+            left: `${s.left}%`,
+            width: s.size,
+            height: s.size,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #F6D365 0%, #FDA085 100%)',
+            boxShadow: '0 0 12px 3px rgba(212, 175, 55, 0.4)',
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -216,94 +261,115 @@ const FEATURES = [
 function FeatureCard({ feature, index }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: '-80px' });
+  
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - left - width / 2);
+    mouseY.set(e.clientY - top - height / 2);
+  };
+  
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+  
+  const rotateX = useSpring(useTransform(mouseY, [-200, 200], [10, -10]), { damping: 20, stiffness: 150 });
+  const rotateY = useSpring(useTransform(mouseX, [-200, 200], [-10, 10]), { damping: 20, stiffness: 150 });
+  const spotlightX = useSpring(useTransform(mouseX, [-200, 200], [0, 100]), { damping: 30, stiffness: 200 });
+  const spotlightY = useSpring(useTransform(mouseY, [-200, 200], [0, 100]), { damping: 30, stiffness: 200 });
+  const background = useMotionTemplate`radial-gradient(circle at ${spotlightX}% ${spotlightY}%, ${feature.accent}20 0%, transparent 60%)`;
 
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 60, scale: 0.92 }}
       animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 60, scale: 0.92 }}
-      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -8, scale: 1.02 }}
-      style={{ position: 'relative', cursor: 'default' }}
+      transition={{ duration: 0.8, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        position: 'relative',
+        cursor: 'default',
+        perspective: 1200,
+        height: '100%',
+      }}
     >
       <LuxuryGlow active={isInView} />
 
-      {isInView && (
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, overflow: 'visible', zIndex: 10, pointerEvents: 'none' }}>
-          {feature.embers.map((left, i) => (
-            <GoldSparkle key={i} delay={i * 0.28} left={left} />
-          ))}
-        </div>
-      )}
-
-      <div style={{
+      <motion.div style={{
         position: 'relative',
         zIndex: 1,
-        background: 'rgba(255, 255, 255, 0.92)',
+        height: '100%',
+        background: 'rgba(15, 23, 42, 0.75)',
         backdropFilter: 'blur(30px)',
         WebkitBackdropFilter: 'blur(30px)',
         borderRadius: '28px',
         padding: '38px 34px',
-        border: `1px solid ${isInView ? 'rgba(212, 175, 55, 0.35)' : 'rgba(226, 232, 240, 0.8)'}`,
+        border: `1px solid rgba(255, 255, 255, 0.1)`,
         boxShadow: isInView
-          ? `0 20px 50px ${feature.glow}, 0 10px 25px rgba(0, 0, 0, 0.03)`
-          : '0 8px 30px rgba(0, 0, 0, 0.03)',
-        transition: 'border-color 0.6s ease, box-shadow 0.6s ease',
+          ? `0 25px 60px -10px ${feature.glow}, 0 10px 25px rgba(0, 0, 0, 0.2)`
+          : '0 8px 30px rgba(0, 0, 0, 0.1)',
+        rotateX,
+        rotateY,
+        transformStyle: 'preserve-3d',
         overflow: 'hidden',
       }}>
-        <div style={{
-          position: 'absolute', top: 0, left: '15%', right: '15%',
-          height: '2px',
-          background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.8), transparent)',
-          borderRadius: '2px'
+        {/* Spotlight Follow effect */}
+        <motion.div style={{
+          position: 'absolute', inset: 0, background, zIndex: 0, pointerEvents: 'none'
         }} />
-
-        <motion.div
-          animate={isInView ? { rotate: [0, -4, 4, 0] } : {}}
-          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+        
+        {/* Holographic glowing edge */}
+        <motion.div 
+          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+          transition={{ duration: 5, ease: 'linear', repeat: Infinity }}
           style={{
-            width: 64, height: 64,
-            borderRadius: '20px',
-            background: `linear-gradient(135deg, ${feature.accent}15, ${feature.accent}05)`,
-            border: `1.5px solid ${feature.accent}33`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: '22px',
-            color: feature.accent,
-            boxShadow: `0 8px 24px ${feature.accent}22`,
-          }}
-        >
-          {feature.icon}
-        </motion.div>
-
-        <h3 style={{
-          fontFamily: "'Outfit', sans-serif",
-          fontWeight: 800,
-          fontSize: '1.35rem',
-          color: '#0F172A',
-          marginBottom: '12px',
-          letterSpacing: '-0.02em',
-        }}>{feature.title}</h3>
-
-        <p style={{
-          fontFamily: "'Inter', sans-serif",
-          color: '#64748B',
-          fontSize: '0.94rem',
-          lineHeight: 1.65,
-          margin: 0,
-        }}>{feature.desc}</p>
-
-        <motion.div
-          animate={isInView ? { scaleX: [0, 1] } : { scaleX: 0 }}
-          transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            position: 'absolute', bottom: 0, left: '10%', right: '10%',
-            height: '2px',
-            background: `linear-gradient(90deg, transparent, ${feature.accent}, transparent)`,
-            borderRadius: '2px',
-            transformOrigin: 'center',
+            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+            background: `linear-gradient(90deg, transparent, ${feature.accent}40, transparent)`,
+            backgroundSize: '200% 200%',
+            opacity: 0.3,
           }}
         />
-      </div>
+
+        <div style={{ position: 'relative', zIndex: 1, transform: 'translateZ(30px)' }}>
+          <motion.div
+            animate={isInView ? { rotate: [0, -4, 4, 0] } : {}}
+            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+            style={{
+              width: 68, height: 68,
+              borderRadius: '20px',
+              background: `linear-gradient(135deg, ${feature.accent}30, ${feature.accent}05)`,
+              border: `1.5px solid ${feature.accent}66`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '26px',
+              color: feature.accent,
+              boxShadow: `0 8px 32px ${feature.accent}44`,
+            }}
+          >
+            {feature.icon}
+          </motion.div>
+
+          <h3 style={{
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 800,
+            fontSize: '1.4rem',
+            color: '#F8FAFC',
+            marginBottom: '12px',
+            letterSpacing: '-0.02em',
+          }}>{feature.title}</h3>
+
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            color: '#CBD5E1',
+            fontSize: '0.98rem',
+            lineHeight: 1.65,
+            margin: 0,
+          }}>{feature.desc}</p>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -335,6 +401,9 @@ export default function AuraLandingPage() {
     }}>
       {/* Three.js Interactive VFX Canvas */}
       <ThreeVFXBackground />
+      
+      {/* Full Page Floating Sparkles VFX */}
+      <FullPageVFX />
 
       {/* ── STICKY GLASSMORPHIC NAVIGATION HEADER ── */}
       <motion.header
@@ -462,50 +531,88 @@ export default function AuraLandingPage() {
           pointerEvents: 'none',
         }} />
 
-        {/* Top pill badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
-            padding: '8px 20px',
-            borderRadius: '99px',
-            color: '#D4AF37',
-            fontSize: '0.82rem',
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            marginBottom: '28px',
-            boxShadow: '0 4px 20px rgba(212, 175, 55, 0.15)',
-          }}
-        >
-          <Sparkles size={16} color="#D4AF37" /> PREMIER WHITE EDITION &bull; 3D VFX
-        </motion.div>
 
-        {/* Floating Feather Icon */}
-        <motion.div style={{ y: featherY, rotate: featherRotate }}>
+
+        {/* Floating Premium Feature Badges Group */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px', marginBottom: '36px', flexWrap: 'wrap' }}
+        >
+          {/* Chat Icon Badge */}
           <motion.div
             animate={{
-              y: [0, -12, 0],
-              rotate: [-5, 5, -5],
-              scale: [1, 1.05, 1],
+              y: [0, -10, 0],
             }}
-            transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
-            whileHover={{ scale: 1.15, rotate: 12 }}
+            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut', delay: 0 }}
+            whileHover={{ scale: 1.08 }}
             style={{
-              display: 'inline-flex',
-              marginBottom: '20px',
-              filter: 'drop-shadow(0 15px 30px rgba(212, 175, 55, 0.35))',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 22px',
+              borderRadius: '99px',
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              boxShadow: '0 8px 32px rgba(212, 175, 55, 0.1)',
               cursor: 'default',
             }}
           >
-            <Feather size={72} color="#D4AF37" strokeWidth={1.2} />
+            <MessageCircle size={18} color="#D4AF37" strokeWidth={2} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>SECURE CHAT</span>
+          </motion.div>
+
+          {/* Video Icon Badge */}
+          <motion.div
+            animate={{
+              y: [0, -15, 0],
+            }}
+            transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut', delay: 0.3 }}
+            whileHover={{ scale: 1.08 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 22px',
+              borderRadius: '99px',
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              boxShadow: '0 12px 40px rgba(212, 175, 55, 0.15)',
+              cursor: 'default',
+            }}
+          >
+            <Video size={18} color="#D4AF37" strokeWidth={2} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>HD CALLS</span>
+          </motion.div>
+
+          {/* Security Icon Badge */}
+          <motion.div
+            animate={{
+              y: [0, -8, 0],
+            }}
+            transition={{ repeat: Infinity, duration: 3.8, ease: 'easeInOut', delay: 0.6 }}
+            whileHover={{ scale: 1.08 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 22px',
+              borderRadius: '99px',
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              boxShadow: '0 8px 32px rgba(212, 175, 55, 0.1)',
+              cursor: 'default',
+            }}
+          >
+            <ShieldCheck size={18} color="#D4AF37" strokeWidth={2} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>P2P PRIVACY</span>
           </motion.div>
         </motion.div>
 

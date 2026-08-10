@@ -6,7 +6,7 @@ import MyChat from "../components/MyChat";
 import ChatBox from "../components/ChatBox";
 import { Box, Modal, ModalOverlay, ModalContent, ModalBody, Avatar, Text, Flex, Button } from "@chakra-ui/react";
 import { useSelector, useDispatch } from "react-redux";
-import { setUserDetails } from "../redux/actions";
+import { setUserDetails, setNotification, updateUserStatus } from "../redux/actions";
 import { useDisclosure } from '@chakra-ui/hooks';
 import { io } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -100,6 +100,11 @@ const ChatPage = () => {
       });
       globalSocket.on("connected", () => console.log("Global socket connected"));
       globalSocket.on("connect_error", err => console.error("Socket error:", err.message));
+      globalSocket.on("user status change", (data) => {
+        if (data && data.userId) {
+          dispatch(updateUserStatus(data.userId, Boolean(data.isOnline), data.lastSeen));
+        }
+      });
     } else {
       window.__auraSocket = globalSocket;
     }
@@ -250,15 +255,13 @@ const ChatPage = () => {
   }, [globalSocket, notification, chats]);
 
   const acceptCall = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-      if (globalSocket && incomingCall?.chatId) {
-        globalSocket.emit("accept-call", { chatId: incomingCall.chatId });
+    if (incomingCall?.chatId) {
+      const chatToOpen = chats.find(c => String(c._id || c.id) === String(incomingCall.chatId));
+      if (chatToOpen) {
+        dispatch(setSelectedChat(chatToOpen));
       }
+      window.__auraCallToAccept = incomingCall;
       setIncomingCall(null);
-    } catch {
-      alert("Camera/Microphone permission required to accept call.");
     }
   };
 
@@ -282,14 +285,15 @@ const ChatPage = () => {
   return (
     <div style={{
       width: "100%",
-      height: "100vh",
-      maxHeight: "100vh",
+      height: "100dvh",
+      maxHeight: "100dvh",
       overflow: "hidden",
       background: "#F8FAFC",
       color: "#0F172A",
       display: "flex",
       flexDirection: "column",
-      position: "relative"
+      position: "fixed",
+      inset: 0
     }}>
       <AmbientVFXBackground />
       {(user || localStorage.getItem("userInfo")) && <SideBar onOpenDrawer={onOpenDrawer} />}
@@ -298,9 +302,11 @@ const ChatPage = () => {
         d="flex" 
         justifyContent="space-between" 
         w="100%" 
-        h="calc(100vh - 64px)"
-        p={{ base: "8px", sm: "12px", md: "16px" }}
-        gap={{ base: "8px", sm: "12px", md: "16px" }}
+        flex="1"
+        h="0"
+        minH="0"
+        p={{ base: "4px", sm: "10px", md: "16px" }}
+        gap={{ base: "4px", sm: "10px", md: "16px" }}
         overflow="hidden"
         style={{ boxSizing: "border-box" }}
       >
@@ -327,7 +333,8 @@ const ChatPage = () => {
                   background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
                   borderRadius: "28px",
                   padding: "48px 40px 40px",
-                  width: "340px",
+                  width: "90%",
+                  maxWidth: "340px",
                   textAlign: "center",
                   border: "1px solid rgba(255,255,255,0.1)",
                   boxShadow: "0 0 60px rgba(220,20,60,0.4), 0 30px 80px rgba(0,0,0,0.8)"

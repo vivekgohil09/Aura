@@ -9,24 +9,82 @@ import axios from 'axios';
 import { getJwtToken } from '../config/getJwt';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { decompressData } from '../config/dataCompressor';
+import { decompressData, decompressionCache } from '../config/dataCompressor';
 
-const DecompressedContent = ({ content, isMe }) => {
-  const [text, setText] = useState(content);
+const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, viewCountdown, revealViewOnce }) => {
+  const isEncrypted = typeof content === 'string' && (content.startsWith('[gz]') || content.startsWith('[enc]'));
+  const cachedVal = isEncrypted ? decompressionCache.get(content) : content;
+  const [text, setText] = useState(cachedVal !== undefined ? cachedVal : '');
 
   useEffect(() => {
     let isMounted = true;
-    if (content && typeof content === 'string' && content.startsWith('[gz]')) {
+    if (isEncrypted && cachedVal === undefined) {
       decompressData(content).then(res => {
-        if (isMounted) setText(res);
+        if (isMounted) setText(res || '');
+      }).catch(() => {
+        if (isMounted) setText(content);
       });
-    } else {
+    } else if (!isEncrypted) {
       setText(content);
     }
     return () => { isMounted = false; };
-  }, [content]);
+  }, [content, isEncrypted, cachedVal]);
 
   if (!text) return null;
+
+  if (text.startsWith('[view-once]')) {
+    const viewOnceText = text.replace('[view-once]', '').trim();
+    return expiredOnce && expiredOnce.has(msgId) ? (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.825rem', opacity: 0.85, fontStyle: 'italic' }}>
+        🚫 Opened • View-once expired
+      </span>
+    ) : (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {revealedOnce && revealedOnce.has(msgId) ? (
+          <>
+            <span>{viewOnceText}</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '6px' }}>
+              ⏱ {(viewCountdown && viewCountdown[msgId]) ?? 5}s
+            </span>
+          </>
+        ) : (
+          <button
+            onClick={() => revealViewOnce && revealViewOnce(msgId)}
+            style={{
+              background: isMe ? 'rgba(255,255,255,0.22)' : 'rgba(255,42,84,0.08)',
+              border: 'none', borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
+              fontSize: 12, fontWeight: 700, color: isMe ? '#fff' : '#FF2A54',
+              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0
+            }}
+          >
+            👁 Click to View (Once)
+          </button>
+        )}
+      </span>
+    );
+  }
+
+  if (text.startsWith('[call] ')) {
+    const callText = text.replace('[call] ', '');
+    let icon = '📞';
+    let bgColor = isMe ? 'rgba(255,255,255,0.1)' : '#F3F4F6';
+    let textColor = isMe ? '#FFFFFF' : '#111827';
+    
+    if (callText.includes('declined') || callText.includes('cancelled') || callText.includes('missed')) {
+       icon = '🚫';
+       bgColor = isMe ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2';
+       textColor = isMe ? '#FCA5A5' : '#EF4444';
+    } else if (callText.includes('ended')) {
+       icon = '✅';
+    }
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: bgColor, borderRadius: '12px', border: `1px solid ${isMe ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}` }}>
+         <span style={{ fontSize: '18px' }}>{icon}</span>
+         <span style={{ fontSize: '0.9rem', fontWeight: 600, color: textColor, textTransform: 'capitalize' }}>Call {callText}</span>
+      </div>
+    );
+  }
 
   if (text.startsWith('data:image')) {
     return <img src={text} alt="Attachment" style={{ maxWidth: '280px', maxHeight: '280px', borderRadius: '16px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.08)' }} />;
@@ -114,12 +172,43 @@ const getRelativeTime = (dateInput) => {
   }
 };
 
+const getDateLabel = (dateInput) => {
+  if (!dateInput) return null;
+  const d = parseUtcDate(dateInput);
+  if (!d || isNaN(d.getTime())) return null;
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
+};
+
+const shouldShowDateDivider = (messages, index) => {
+  if (index === 0) return true;
+  const currentMsg = messages[index];
+  const prevMsg = messages[index - 1];
+  
+  const d1 = parseUtcDate(currentMsg.createdAt || currentMsg.timestamp);
+  const d2 = parseUtcDate(prevMsg.createdAt || prevMsg.timestamp);
+  
+  if (!d1 || !d2 || isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
+  return d1.toDateString() !== d2.toDateString();
+};
+
 const ScrollableChat = ({ messages, setMessages, isTyping }) => {
   const user = useSelector(state => state.user)
 
   // ── Context-menu state
   const [ctxMenu, setCtxMenu] = useState(null); // { x, y, msg }
   const ctxRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // ── Edit state
   const [editingId, setEditingId] = useState(null);
@@ -226,8 +315,6 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
   const isBookmarked = (msg) => bookmarks.some(b => b.id === (msg._id || msg.id));
 
   // ── 4. Schedule message (display-only — scheduling happens at input level; here we show badge)
-  const isViewOnce = (msg) => msg.content?.startsWith('[view-once]');
-  const getViewOnceText = (msg) => msg.content?.replace('[view-once]', '').trim();
 
   const senderId = (m) => {
     if (!m) return null;
@@ -242,16 +329,32 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
         {messages && messages.map((m, i) => {
           const isMe = Boolean(senderId(m) && loggedId && String(senderId(m)) === String(loggedId));
           const msgId = m._id || m.id;
-          const viewOnce = isViewOnce(m);
-          const revealed = revealedOnce.has(msgId);
           const editing = editingId === msgId;
           const bmked = isBookmarked(m);
           const tag = bookmarks.find(b => b.id === msgId)?.tag;
 
           return (
-            <div
-              key={msgId}
-              style={{
+            <React.Fragment key={msgId + '-wrap'}>
+              {shouldShowDateDivider(messages, i) && (
+                <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0 16px 0', width: '100%' }}>
+                  <span style={{
+                    background: 'rgba(0, 0, 0, 0.05)',
+                    color: '#475569',
+                    padding: '4px 16px',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    letterSpacing: '0.04em',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    textTransform: 'uppercase'
+                  }}>
+                    {getDateLabel(m.createdAt || m.timestamp)}
+                  </span>
+                </div>
+              )}
+              <div
+                key={msgId}
+                style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: isMe ? 'flex-end' : 'flex-start',
@@ -307,10 +410,6 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
                       wordBreak: 'normal',
                       overflowWrap: 'anywhere',
                       whiteSpace: 'pre-wrap',
-                      boxShadow: isMe
-                        ? '0 4px 14px rgba(255, 42, 84, 0.18)'
-                        : '0 2px 10px rgba(15, 23, 42, 0.04)',
-                      border: isMe ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
                       cursor: 'context-menu',
                       position: 'relative',
                       fontFamily: "'Outfit', 'Inter', -apple-system, sans-serif",
@@ -320,39 +419,15 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
                         <div style={{ flex: 1 }}>
-                          {/* View-once message */}
-                          {viewOnce ? (
-                            expiredOnce.has(msgId) ? (
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.825rem', opacity: 0.85, fontStyle: 'italic' }}>
-                                🚫 Opened • View-once expired
-                              </span>
-                            ) : (
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {revealed ? (
-                                  <>
-                                    <span>{getViewOnceText(m)}</span>
-                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '6px' }}>
-                                      ⏱ {viewCountdown[msgId] ?? 5}s
-                                    </span>
-                                  </>
-                                ) : (
-                                  <button
-                                    onClick={() => revealViewOnce(msgId)}
-                                    style={{
-                                      background: isMe ? 'rgba(255,255,255,0.22)' : 'rgba(255,42,84,0.08)',
-                                      border: 'none', borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
-                                      fontSize: 12, fontWeight: 700, color: isMe ? '#fff' : '#FF2A54',
-                                      display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0
-                                    }}
-                                  >
-                                    👁 Click to View (Once)
-                                  </button>
-                                )}
-                              </span>
-                            )
-                          ) : (
-                            <DecompressedContent content={m.content} isMe={isMe} />
-                          )}
+                          <DecompressedContent 
+                            content={m.content} 
+                            isMe={isMe} 
+                            msgId={msgId}
+                            expiredOnce={expiredOnce}
+                            revealedOnce={revealedOnce}
+                            viewCountdown={viewCountdown}
+                            revealViewOnce={revealViewOnce}
+                          />
                         </div>
                         <span
                           style={{
@@ -409,6 +484,7 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
                 </motion.div>
               )}
             </div>
+            </React.Fragment>
           );
         })}
 
@@ -456,6 +532,7 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
             </div>
           </motion.div>
         )}
+        <div ref={messagesEndRef} />
       </ScrollableFeed>
 
       {/* ── Context Menu */}

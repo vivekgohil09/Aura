@@ -23,6 +23,7 @@ import { Search, Feather } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
 import Stack from '@mui/material/Stack';
+import { stompService } from '../config/stompService';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Progress } from '@chakra-ui/react'
 import { Badge } from '@chakra-ui/react';
@@ -77,6 +78,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         isOpen: isOpenDrawer,
         onOpen: internalOnOpenDrawer,
         onClose: onCloseDrawer
+    } = useDisclosure()
+    const {
+        isOpen: isNotifOpen,
+        onOpen: onNotifOpen,
+        onClose: onNotifClose
     } = useDisclosure()
 
     const onOpenDrawer = externalOnOpenDrawer || internalOnOpenDrawer;
@@ -589,7 +595,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     if (!existingChats.some(c => (c._id || c.id) === fullChatId)) {
                         dispatch(setChats([fullChat, ...existingChats]));
                     }
-                    dispatch(setSelectedChat(fullChat));
+                    // Do NOT auto open mychat when accepting request
 
                     // Emit acceptance back to the original sender via WebSockets
                     if (window.__auraSocket) {
@@ -616,6 +622,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 autoClose: 3000,
                 hideProgressBar: true
             });
+
+            // Auto close notification drawer/menu after 2 seconds when accepted
+            setTimeout(() => {
+                onNotifClose();
+            }, 2000);
         } catch (err) {
             toast.error("Error accepting chat request");
         }
@@ -627,9 +638,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 d="flex"
                 justifyContent="space-between"
                 alignItems="center"
-                bg="rgba(255, 255, 255, 0.85)"
-                position="relative"
+                bg="rgba(255, 255, 255, 0.9)"
+                position="sticky"
+                top="0"
                 zIndex={100}
+                flexShrink={0}
                 px={{ base: 2, sm: 4, md: 6 }}
                 py={2.5}
                 style={{
@@ -785,7 +798,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
                 <div className="d-flex align-items-center gap-2">
                     {/* Notification Bell Menu */}
-                    <Menu>
+                    <Menu isOpen={isNotifOpen} onOpen={onNotifOpen} onClose={onNotifClose}>
                         <MenuButton
                             as={motion.button}
                             whileHover={{ scale: 1.05 }}
@@ -884,14 +897,18 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Text fontSize="0.82rem" fontWeight="700" color="#0F172A" margin={0}>
                                                 📩 Chat Request from @{notif.senderUsername || notif.senderName}
                                             </Text>
-                                            <Box d="flex" gap={2} mt={1.5}>
+                                            <Box display="flex" alignItems="center" gap="10px" mt={2}>
                                                 <Button
                                                     size="xs"
+                                                    h="30px"
+                                                    px={3}
                                                     style={{
                                                         background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
                                                         color: "#FFFFFF",
                                                         borderRadius: "99px",
-                                                        fontWeight: 800
+                                                        fontWeight: 800,
+                                                        fontSize: "0.75rem",
+                                                        boxShadow: "0 2px 8px rgba(212, 175, 55, 0.3)"
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -902,11 +919,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 </Button>
                                                 <Button
                                                     size="xs"
+                                                    h="30px"
+                                                    px={3}
                                                     style={{
                                                         background: "#F1F5F9",
                                                         color: "#64748B",
                                                         borderRadius: "99px",
-                                                        fontWeight: 700
+                                                        fontWeight: 700,
+                                                        fontSize: "0.75rem",
+                                                        border: "1px solid #E2E8F0"
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -2262,6 +2283,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     localStorage.removeItem("chats");
                                     dispatch(delSelectedChat());
                                     dispatch(delChats());
+                                    
+                                    // DISCONNECT WEBSOCKETS TO PREVENT MEMORY/SECURITY LEAKS
+                                    stompService.disconnect();
+                                    if (window.__auraSocket) {
+                                        window.__auraSocket.disconnect();
+                                        window.__auraSocket = null;
+                                    }
+                                    
                                     history.push("/login");
                                 }}
                                 style={{

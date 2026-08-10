@@ -139,6 +139,10 @@ public class SocketIOServerConfig {
             server.getBroadcastOperations().sendEvent("end-call", data);
         });
 
+        server.addEventListener("webrtc-signal", Object.class, (client, data, ackSender) -> {
+            server.getBroadcastOperations().sendEvent("webrtc-signal", data);
+        });
+
         // ── Direct Browser Close / Unload Event ─────────────────────────────
         server.addEventListener("leave-app", Object.class, (client, data, ackSender) -> {
             String sessionId = client.getSessionId().toString();

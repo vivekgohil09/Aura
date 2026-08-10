@@ -21,7 +21,7 @@ const UserListItem = ({ user, handleFunction }) => {
     });
 
     const isMe = Boolean(
-        (loggedUserId && targetUserId && String(loggedUserId) === String(targetUserId)) || 
+        (loggedUserId && targetUserId && String(loggedUserId) === String(targetUserId)) ||
         (loggedInUser?.email && user?.email && loggedInUser.email.toLowerCase() === user.email.toLowerCase())
     );
 
@@ -42,7 +42,7 @@ const UserListItem = ({ user, handleFunction }) => {
                     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
                     body: JSON.stringify({ targetUserId: String(targetUserId) })
                 });
-            } catch (e) {}
+            } catch (e) { }
         }
         if (handleFunction) handleFunction(user);
     };
