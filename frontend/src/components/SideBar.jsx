@@ -751,18 +751,26 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     position="absolute"
                                     top="52px"
                                     left="0"
-                                    w="100%"
-                                    maxW="100%"
+                                    w={{ base: "320px", sm: "380px" }}
                                     bg="rgba(255, 255, 255, 0.98)"
-                                    borderRadius="22px"
-                                    border="1.5px solid rgba(212, 175, 55, 0.3)"
-                                    boxShadow="0 25px 60px rgba(15, 23, 42, 0.15), 0 0 25px rgba(212, 175, 55, 0.1)"
-                                    backdropFilter="blur(24px)"
+                                    borderRadius="24px"
+                                    border="1.5px solid rgba(212, 175, 55, 0.35)"
+                                    boxShadow="0 25px 60px rgba(15, 23, 42, 0.16), 0 0 30px rgba(212, 175, 55, 0.12)"
+                                    backdropFilter="blur(28px)"
+                                    WebkitBackdropFilter="blur(28px)"
                                     zIndex="99999"
-                                    p={2}
-                                    maxH="360px"
+                                    p={2.5}
+                                    maxH="380px"
                                     overflowY="auto"
                                 >
+                                    <Box px={2} py={1} mb={1} display="flex" alignItems="center" justifyContent="space-between" borderBottom="1px solid #F1F5F9">
+                                        <Text fontSize="0.68rem" fontWeight="900" color="#D4AF37" letterSpacing="0.1em" textTransform="uppercase" margin={0}>
+                                            ✦ Search Results ({searchResult.length})
+                                        </Text>
+                                        <Text fontSize="0.68rem" fontWeight="700" color="#94A3B8" margin={0} cursor="pointer" onClick={() => setSearch("")}>
+                                            Close ✕
+                                        </Text>
+                                    </Box>
                                     {searchResult.map((u) => (
                                         <Box key={u.id || u._id}>
                                             <UserListItem user={u} handleFunction={() => sendChatRequest(u)} />
