@@ -764,13 +764,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     overflowY="auto"
                                 >
                                     {searchResult.map((u) => (
-                                        <Box
-                                            key={u.id || u._id}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                sendChatRequest(u);
-                                            }}
-                                        >
+                                        <Box key={u.id || u._id}>
                                             <UserListItem user={u} handleFunction={() => sendChatRequest(u)} />
                                         </Box>
                                     ))}
