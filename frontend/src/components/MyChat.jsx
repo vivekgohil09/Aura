@@ -741,7 +741,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                   {unreadCount} NEW
                                 </motion.span>
                               )}
-                              <Text fontSize="0.7rem" fontWeight="600" color={unreadCount > 0 ? "#D4AF37" : "#94A3B8"}>
+                              <Text fontSize="0.72rem" fontWeight="700" color={unreadCount > 0 ? "#D4AF37" : "#64748B"}>
                                 {isLatestMsgVisible ? formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt) : ""}
                               </Text>
 
@@ -850,8 +850,8 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                           </Box>
                           <Text
                             fontSize="0.82rem"
-                            fontWeight={unreadCount > 0 ? "600" : "400"}
-                            color={unreadCount > 0 ? "#D4AF37" : "#64748B"}
+                            color={unreadCount > 0 ? "#0F172A" : "#475569"}
+                            fontWeight={unreadCount > 0 ? "700" : "500"}
                             isTruncated
                             mt={0.5}
                             style={{ fontStyle: chat.latestMessage?.content?.startsWith('[view-once]') ? 'italic' : 'normal' }}
@@ -862,15 +862,29 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                       </Box>
                     </motion.div>
                   );
-                });
-              })()}
+                })
+              ) : (
+                <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" py={12} px={4} textAlign="center">
+                  <Sparkles size={32} color="#D4AF37" style={{ marginBottom: "12px", opacity: 0.8 }} />
+                  <Text fontWeight="800" fontSize="1.05rem" color="#0F172A" mb={1} fontFamily="'Outfit', sans-serif">
+                    No active conversations yet
+                  </Text>
+                  <Text fontSize="0.82rem" color="#64748B" maxW="240px" fontFamily="'Inter', sans-serif">
+                    Search a user or create a group to start messaging!
+                  </Text>
+                </Box>
+              )}
+
+              {/* Subtle Security Encryption Badge */}
+              {chats && chats.length > 0 && (
+                <Box d="flex" alignItems="center" justifyContent="center" gap={1.5} py={6} opacity={0.75}>
+                  <Lock size={12} color="#94A3B8" />
+                  <Text fontSize="0.72rem" fontWeight="600" color="#94A3B8" letterSpacing="0.02em" fontFamily="'Inter', sans-serif">
+                    End-to-end encrypted chats
+                  </Text>
+                </Box>
+              )}
             </Stack>
-          ) : (
-            <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" h="70%" p={4} textAlign="center">
-              <Text fontWeight="800" fontSize="sm" color="#0F172A" mb={1} fontFamily="'Outfit', sans-serif">No active conversations yet</Text>
-              <Text fontSize="xs" color="#94A3B8" fontFamily="'Inter', sans-serif">Search a user or create a group to start messaging!</Text>
-            </Box>
-          )}
         </Box>
       </Box>
     </>
