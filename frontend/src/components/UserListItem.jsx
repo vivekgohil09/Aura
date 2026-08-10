@@ -51,42 +51,56 @@ const UserListItem = ({ user, handleFunction }) => {
         <Box
             onClick={handleAddClick}
             cursor="pointer"
-            bg={isMe ? "rgba(212, 175, 55, 0.08)" : "#FFFFFF"}
+            bg={isMe ? "linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(245, 158, 11, 0.03) 100%)" : "#FFFFFF"}
             _hover={{
-                background: isMe ? "rgba(212, 175, 55, 0.16)" : "#FFFDF8",
+                background: isMe ? "rgba(212, 175, 55, 0.14)" : "#FFFDF8",
                 color: "#0F172A",
-                transform: "translateX(4px)",
-                borderColor: "#D4AF37"
+                transform: "translateY(-1px)",
+                borderColor: "#D4AF37",
+                boxShadow: "0 6px 20px rgba(212, 175, 55, 0.15)"
             }}
-            transition="all 0.2s cubic-bezier(0.22, 1, 0.36, 1)"
+            transition="all 0.22s cubic-bezier(0.16, 1, 0.3, 1)"
             w="100%"
             d="flex"
             alignItems="center"
             color="#0F172A"
-            px={3}
+            px={3.5}
             py={2.5}
             my={1.5}
-            borderRadius="16px"
+            borderRadius="18px"
             border={isMe ? "1.5px solid rgba(212, 175, 55, 0.4)" : "1px solid rgba(226, 232, 240, 0.8)"}
-            boxShadow="0 2px 8px rgba(15, 23, 42, 0.03)"
+            boxShadow="0 2px 10px rgba(15, 23, 42, 0.03)"
         >
-            <Avatar
-                mr={3}
-                size="md"
-                cursor="pointer"
-                name={user?.name || "Aura User"}
-                src={user?.pic && !user.pic.includes("icon-library.com") && !user.pic.includes("flaticon.com") ? user.pic : undefined}
-                bg="#0F172A !important"
-                color="#D4AF37 !important"
-                fontWeight="900"
-                style={{
-                    width: "44px",
-                    height: "44px",
-                    border: "2px solid #D4AF37",
-                    boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+            <Box
+                sx={{
+                    position: 'relative',
+                    width: '46px',
+                    height: '46px',
+                    minWidth: '46px',
+                    borderRadius: '50%',
+                    padding: '2px',
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                    mr: 3,
+                    boxShadow: '0 4px 12px rgba(212, 175, 55, 0.25)',
                     flexShrink: 0
                 }}
-            />
+            >
+                <Avatar
+                    size="full"
+                    name={user?.name || "Aura User"}
+                    src={user?.pic && typeof user.pic === 'string' && user.pic.length > 5 && !user.pic.includes("icon-library.com") && !user.pic.includes("flaticon.com") ? user.pic : undefined}
+                    bg="#0F172A !important"
+                    color="#D4AF37 !important"
+                    fontWeight="900"
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        border: '2px solid #FFFFFF',
+                        backgroundColor: '#0F172A'
+                    }}
+                />
+            </Box>
             <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                 <Box style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
                     <Text fontWeight="800" fontSize="sm" color="#0F172A" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Outfit', sans-serif" }}>
