@@ -861,8 +861,9 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                         </Box>
                       </Box>
                     </motion.div>
-                  );
-                })
+                    );
+                  });
+                })()
               ) : (
                 <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" py={12} px={4} textAlign="center">
                   <Sparkles size={32} color="#D4AF37" style={{ marginBottom: "12px", opacity: 0.8 }} />
