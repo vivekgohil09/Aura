@@ -280,7 +280,8 @@ function FeatureCard({ feature, index }) {
   const rotateY = useSpring(useTransform(mouseX, [-200, 200], [-10, 10]), { damping: 20, stiffness: 150 });
   const spotlightX = useSpring(useTransform(mouseX, [-200, 200], [0, 100]), { damping: 30, stiffness: 200 });
   const spotlightY = useSpring(useTransform(mouseY, [-200, 200], [0, 100]), { damping: 30, stiffness: 200 });
-  const background = useMotionTemplate`radial-gradient(circle at ${spotlightX}% ${spotlightY}%, ${feature.accent}20 0%, transparent 60%)`;
+  const accentGlow = useMotionValue(`${feature.accent}20`);
+  const background = useMotionTemplate`radial-gradient(circle at ${spotlightX}% ${spotlightY}%, ${accentGlow} 0%, transparent 60%)`;
 
   return (
     <motion.div
