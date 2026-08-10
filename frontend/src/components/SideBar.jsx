@@ -568,6 +568,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         try {
             const senderId = notif.senderId || (notif.chat ? (notif.chat._id || notif.chat.id) : null);
             if (senderId) {
+                // Call Option A DB respond endpoint if requestId exists
+                if (notif.requestId) {
+                    try {
+                        const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+                        await axios.post(`/api/chat/request/respond?requestId=${notif.requestId}&action=ACCEPT`, {}, config);
+                    } catch (e) {}
+                }
+
                 const fullChat = await accessChat(senderId);
                 if (fullChat) {
                     const existingChats = chats || [];
@@ -863,7 +871,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         }
                                     }}
                                 >
-                                    {notif.isChatRequest || notif.type === 'chat-request' ? (
+                                    {notif.isRequest || notif.isChatRequest || notif.type === 'chat-request' ? (
                                         <Box w="100%">
                                             <Text fontSize="0.82rem" fontWeight="700" color="#0F172A" margin={0}>
                                                 📩 Chat Request from @{notif.senderUsername || notif.senderName}
