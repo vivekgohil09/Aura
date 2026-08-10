@@ -85,19 +85,38 @@ function ThreeVFXBackground() {
     let animationFrameId;
     const clock = new THREE.Clock();
 
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    const onMouseMove = (e) => {
+      mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
+      mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
+    };
+    window.addEventListener('mousemove', onMouseMove);
+
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
-      knot.rotation.x = elapsedTime * 0.12;
-      knot.rotation.y = elapsedTime * 0.18;
+
+      targetX += (mouseX - targetX) * 0.05;
+      targetY += (mouseY - targetY) * 0.05;
+
+      knot.rotation.x = elapsedTime * 0.12 + targetY * 2;
+      knot.rotation.y = elapsedTime * 0.18 + targetX * 2;
       
-      icosahedron.rotation.x = elapsedTime * 0.05;
-      icosahedron.rotation.y = elapsedTime * 0.08;
+      icosahedron.rotation.x = elapsedTime * 0.05 - targetY * 1.5;
+      icosahedron.rotation.y = elapsedTime * 0.08 + targetX * 1.5;
       
-      ring.rotation.y = elapsedTime * 0.1;
+      ring.rotation.y = elapsedTime * 0.1 + targetX * 3;
       ring.rotation.z = elapsedTime * -0.05;
 
-      particles.rotation.y = elapsedTime * 0.04;
-      particles.rotation.x = elapsedTime * 0.02;
+      particles.rotation.y = elapsedTime * 0.04 + targetX * 1.2;
+      particles.rotation.x = elapsedTime * 0.02 + targetY * 1.2;
+
+      camera.position.x += (targetX * 6 - camera.position.x) * 0.05;
+      camera.position.y += (-targetY * 6 - camera.position.y) * 0.05;
+      camera.lookAt(scene.position);
 
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
@@ -114,6 +133,7 @@ function ThreeVFXBackground() {
     window.addEventListener('resize', handleResize);
 
     return () => {
+      window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
       if (container.contains(renderer.domElement)) {
@@ -181,6 +201,71 @@ function FullPageVFX() {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+// ── Floating Ambient Aurora Glow Orbs VFX ──
+function AuroraGlowOrbs() {
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+      {/* Golden Aura Glow Orb Left */}
+      <motion.div
+        animate={{
+          x: [0, 80, -40, 0],
+          y: [0, -100, 60, 0],
+          scale: [1, 1.25, 0.9, 1],
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: '15%',
+          left: '10%',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.14) 0%, rgba(245, 158, 11, 0.04) 50%, transparent 70%)',
+          filter: 'blur(70px)',
+        }}
+      />
+      {/* Cyan Cyber Glow Orb Right */}
+      <motion.div
+        animate={{
+          x: [0, -90, 50, 0],
+          y: [0, 90, -80, 0],
+          scale: [1, 1.3, 0.85, 1],
+        }}
+        transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: '40%',
+          right: '5%',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.03) 50%, transparent 70%)',
+          filter: 'blur(90px)',
+        }}
+      />
+      {/* Soft Rose Gold Glow Orb Bottom Left */}
+      <motion.div
+        animate={{
+          x: [0, 60, -60, 0],
+          y: [0, -60, 80, 0],
+          scale: [0.9, 1.2, 1, 0.9],
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          bottom: '10%',
+          left: '20%',
+          width: '550px',
+          height: '550px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(244, 114, 182, 0.08) 0%, rgba(212, 175, 55, 0.03) 50%, transparent 70%)',
+          filter: 'blur(80px)',
+        }}
+      />
     </div>
   );
 }
@@ -403,6 +488,9 @@ export default function AuraLandingPage() {
       {/* Three.js Interactive VFX Canvas */}
       <ThreeVFXBackground />
       
+      {/* Floating Ambient Aurora Glow Orbs VFX */}
+      <AuroraGlowOrbs />
+
       {/* Full Page Floating Sparkles VFX */}
       <FullPageVFX />
 
