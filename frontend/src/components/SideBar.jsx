@@ -19,7 +19,7 @@ import { Input } from "@chakra-ui/input";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
-import { Search } from 'lucide-react';
+import { Search, Feather } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
 import Stack from '@mui/material/Stack';
@@ -619,57 +619,49 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 px={{ base: 2, sm: 4, md: 6 }}
                 py={2.5}
                 style={{
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                    borderBottom: "1px solid rgba(0, 0, 0, 0.05)"
+                    backdropFilter: "blur(24px)",
+                    WebkitBackdropFilter: "blur(24px)",
+                    borderBottom: "1.5px solid rgba(212, 175, 55, 0.25)",
+                    boxShadow: "0 8px 30px rgba(15, 23, 42, 0.04)"
                 }}
             >
                 <div className="d-flex align-items-center gap-2 gap-sm-3" style={{ flex: 1, minWidth: 0 }}>
-                    {/* Brand Logo - Unified Premier Gold & Obsidian Theme */}
+                    {/* Brand Logo */}
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flexShrink: 0 }}
-                        onClick={() => history.push("/chats")}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}
+                        onClick={() => history.push("/")}
                     >
                         <Box sx={{
                             width: '38px',
                             height: '38px',
-                            borderRadius: '13px',
+                            borderRadius: '12px',
                             background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 8px 20px rgba(212, 175, 55, 0.35)',
+                            boxShadow: '0 6px 18px rgba(212, 175, 55, 0.35)',
                             position: 'relative'
                         }}>
-                            <span style={{ fontSize: '1.2rem', color: '#FFFFFF', lineHeight: 1 }}>🪶</span>
+                            <Feather size={20} color="#FFFFFF" strokeWidth={2.2} />
                         </Box>
                         <Box display={{ base: "none", sm: "block" }}>
-                            <h2 style={{
-                                fontSize: "1.4rem",
-                                fontWeight: 900,
-                                letterSpacing: "-0.03em",
-                                lineHeight: 1,
-                                margin: 0,
-                                background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                fontFamily: "'Outfit', sans-serif"
-                            }}>AURA</h2>
+                            <h2 className="gradient-text m-0" style={{ fontSize: "1.35rem", fontWeight: 900, letterSpacing: "-0.035em", lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>AURA</h2>
                         </Box>
                     </motion.div>
 
                     {/* Modern Light Grey Pill Search Bar */}
-                    <Tooltip label="Click search icon or type to filter users" hasArrow placement="bottom-start">
+                    <Tooltip label="Click or type to search users and open drawer" hasArrow placement="bottom-start">
                         <Box ref={searchContainerRef} style={{ flex: 1, maxWidth: '520px', position: 'relative' }}>
                             <Box
+                                onClick={onOpenDrawer}
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '10px',
-                                    background: '#F4F4F5',
-                                    border: '1px solid #E4E4E7',
+                                    background: '#F8FAFC',
+                                    border: '1.5px solid rgba(226, 232, 240, 0.9)',
                                     borderRadius: '99px',
                                     px: 3,
                                     height: '42px',
@@ -677,12 +669,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     transition: 'all 0.25s ease',
                                     '&:focus-within': {
                                         background: '#FFFFFF',
-                                        borderColor: '#E63946',
-                                        boxShadow: '0 6px 20px rgba(230, 57, 70, 0.15)',
+                                        borderColor: '#D4AF37',
+                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.18)',
                                     }
                                 }}
                             >
-                                <Search size={16} color="#A1A1AA" style={{ transition: 'all 0.2s' }} />
+                                <Search size={16} color="#94A3B8" style={{ transition: 'all 0.2s' }} />
                                 <input
                                     type="text"
                                     placeholder="Search users by @username..."
@@ -702,8 +694,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         outline: 'none',
                                         background: 'transparent',
                                         fontSize: '0.875rem',
-                                        color: '#18181B',
-                                        fontWeight: 500,
+                                        color: '#0F172A',
+                                        fontWeight: 600,
+                                        fontFamily: "'Inter', sans-serif"
                                     }}
                                 />
                                 <Tooltip label="Scan QR Code to Add User" hasArrow placement="top">
@@ -716,7 +709,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             setIsQrScannerOpen(true);
                                         }}
                                         style={{
-                                            background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                             color: '#FFFFFF',
                                             border: 'none',
                                             borderRadius: '50%',
@@ -728,7 +721,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            boxShadow: '0 3px 10px rgba(230, 57, 70, 0.35)',
+                                            boxShadow: '0 3px 12px rgba(212, 175, 55, 0.4)',
                                             touchAction: 'manipulation',
                                             WebkitTapHighlightColor: 'transparent'
                                         }}
@@ -746,12 +739,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     left="0"
                                     w="100%"
                                     maxW="100%"
-                                    bg="#FFFFFF"
+                                    bg="rgba(255, 255, 255, 0.98)"
                                     borderRadius="22px"
-                                    border="1.5px solid rgba(230, 57, 70, 0.15)"
-                                    boxShadow="0 25px 60px rgba(0, 0, 0, 0.18)"
+                                    border="1.5px solid rgba(212, 175, 55, 0.3)"
+                                    boxShadow="0 25px 60px rgba(15, 23, 42, 0.15), 0 0 25px rgba(212, 175, 55, 0.1)"
+                                    backdropFilter="blur(24px)"
                                     zIndex="99999"
-                                    p={2.5}
+                                    p={2}
                                     maxH="360px"
                                     overflowY="auto"
                                 >
@@ -794,14 +788,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
                             }}
                         >
-                            <BellIcon fontSize="1.3rem" color="#18181B" />
+                            <BellIcon fontSize="1.3rem" color="#0F172A" />
                             {notification && notification.length > 0 && (
                                 <span
                                     style={{
                                         position: 'absolute',
                                         top: '-4px',
                                         right: '-4px',
-                                        background: 'linear-gradient(135deg, #E63946 0%, #d62839 100%)',
+                                        background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                         color: '#FFFFFF',
                                         fontSize: '0.65rem',
                                         fontWeight: 800,
@@ -813,7 +807,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         justifyContent: 'center',
                                         padding: '0 4px',
                                         border: '2px solid #FFFFFF',
-                                        boxShadow: '0 3px 8px rgba(230, 57, 70, 0.4)'
+                                        boxShadow: '0 3px 8px rgba(212, 175, 55, 0.4)'
                                     }}
                                 >
                                     {notification.length}
@@ -827,20 +821,20 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             minW="300px"
                             maxW="360px"
                             style={{
-                                boxShadow: "0 18px 45px rgba(0, 0, 0, 0.14)",
-                                border: "1px solid rgba(0, 0, 0, 0.08)",
+                                boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
+                                border: "1.5px solid rgba(212, 175, 55, 0.25)",
                                 zIndex: 9999
                             }}
                         >
-                            <Box px={3} py={2} borderBottom="1px solid #F4F4F5" display="flex" alignItems="center" justifyContent="space-between">
-                                <Text fontWeight="800" fontSize="0.88rem" color="#18181B" margin={0}>
+                            <Box px={3} py={2} borderBottom="1px solid #F1F5F9" display="flex" alignItems="center" justifyContent="space-between">
+                                <Text fontWeight="800" fontSize="0.88rem" color="#0F172A" margin={0} fontFamily="'Outfit', sans-serif">
                                     Notifications ({notification.length})
                                 </Text>
                                 {notification.length > 0 && (
                                     <Text
                                         fontSize="0.75rem"
+                                        color="#D4AF37"
                                         fontWeight="700"
-                                        color="#E63946"
                                         cursor="pointer"
                                         onClick={() => dispatch(setNotification([]))}
                                     >
@@ -848,45 +842,40 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     </Text>
                                 )}
                             </Box>
-                            {!notification.length && (
-                                <MenuItem bg="#FFFFFF" cursor="default" _hover={{ bg: "#FFFFFF" }}>
-                                    <Text fontSize="0.82rem" color="#A1A1AA" m={0} py={2} textAlign="center" w="100%">
-                                        🔔 No new notifications or chat requests
+                            {(!notification || notification.length === 0) && (
+                                <Box p={4} textAlign="center">
+                                    <Text fontSize="0.82rem" color="#94A3B8" margin={0} fontFamily="'Inter', sans-serif">
+                                        No new notifications
                                     </Text>
-                                </MenuItem>
+                                </Box>
                             )}
-                            {notification.map((notif, index) => (
+                            {notification && notification.map((notif, idx) => (
                                 <MenuItem
-                                    key={notif._id || notif.id || index}
+                                    key={idx}
                                     bg="#FFFFFF"
-                                    borderRadius="14px"
+                                    _hover={{ bg: "#F8FAFC" }}
+                                    borderRadius="12px"
                                     my={1}
-                                    _hover={{ bg: "rgba(230, 57, 70, 0.04)" }}
                                     onClick={() => {
-                                        if (notif.isChatRequest) {
-                                            acceptChatRequest(notif);
-                                        } else if (notif.chat) {
+                                        if (notif.chat) {
                                             dispatch(setSelectedChat(notif.chat));
                                             dispatch(setNotification(notification.filter((n) => n !== notif)));
                                         }
                                     }}
                                 >
-                                    {notif.isChatRequest ? (
+                                    {notif.isChatRequest || notif.type === 'chat-request' ? (
                                         <Box w="100%">
-                                            <Box display="flex" alignItems="center" gap={2} mb={1}>
-                                                <Avatar size="xs" name={notif.senderName} src={notif.senderPic} />
-                                                <Text fontSize="0.82rem" fontWeight="700" color="#18181B" margin={0}>
-                                                    Chat Request from @{notif.senderUsername || notif.senderName}
-                                                </Text>
-                                            </Box>
-                                            <Box display="flex" gap={2} mt={2}>
+                                            <Text fontSize="0.82rem" fontWeight="700" color="#0F172A" margin={0}>
+                                                📩 Chat Request from @{notif.senderUsername || notif.senderName}
+                                            </Text>
+                                            <Box d="flex" gap={2} mt={1.5}>
                                                 <Button
                                                     size="xs"
                                                     style={{
-                                                        background: "linear-gradient(135deg, #E63946 0%, #D62839 100%)",
+                                                        background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
                                                         color: "#FFFFFF",
                                                         borderRadius: "99px",
-                                                        fontWeight: 700
+                                                        fontWeight: 800
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -898,8 +887,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 <Button
                                                     size="xs"
                                                     style={{
-                                                        background: "#F4F4F5",
-                                                        color: "#71717A",
+                                                        background: "#F1F5F9",
+                                                        color: "#64748B",
                                                         borderRadius: "99px",
                                                         fontWeight: 700
                                                     }}
@@ -922,7 +911,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             </Box>
                                         </Box>
                                     ) : (
-                                        <Text fontSize="0.82rem" fontWeight="600" color="#18181B" margin={0}>
+                                        <Text fontSize="0.82rem" fontWeight="600" color="#0F172A" margin={0}>
                                             {notif.chat?.isGroupChat
                                                 ? `💬 New message in ${notif.chat.chatName}`
                                                 : `💬 New message from ${notif.senderName || 'user'}`}
@@ -936,46 +925,53 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     <Menu>
                         <MenuButton
                             as={Button}
-                            rightIcon={<ChevronDownIcon color="#111827" />}
+                            rightIcon={<ChevronDownIcon color="#0F172A" />}
                             bg="#FFFFFF"
-                            border="1px solid #E5E7EB"
-                            borderRadius="12px"
+                            border="1.5px solid rgba(226, 232, 240, 0.9)"
+                            borderRadius="14px"
                             px={2}
                             py={1}
-                            h="40px"
-                            _hover={{ bg: "#F3F4F6", borderColor: "#9CA3AF" }}
-                            _active={{ bg: "#E5E7EB" }}
-                            style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}
+                            h="42px"
+                            _hover={{ bg: "#F8FAFC", borderColor: "#D4AF37" }}
+                            _active={{ bg: "#F1F5F9" }}
+                            style={{ boxShadow: "0 2px 10px rgba(15, 23, 42, 0.04)" }}
                         >
-                            <Avatar size="sm" cursor="pointer" name={user && user.name} src={(!user?.pic || user?.pic.includes("icon-library.com")) ? "https://cdn-icons-png.flaticon.com/512/149/149071.png" : user.pic} bg="#111827" color="#FFFFFF" />
+                            <Avatar size="sm" cursor="pointer" name={user && user.name} src={(!user?.pic || user?.pic.includes("icon-library.com")) ? "https://cdn-icons-png.flaticon.com/512/149/149071.png" : user.pic} bg="#0F172A" color="#D4AF37" fontWeight="800" style={{ border: "2px solid #D4AF37" }} />
                         </MenuButton>
                         <MenuList
                             bg="#FFFFFF"
-                            borderColor="#FFDAC8"
-                            color="#1E1B18"
-                            borderRadius="18px"
+                            borderColor="rgba(212, 175, 55, 0.3)"
+                            color="#0F172A"
+                            borderRadius="20px"
                             p={1.5}
-                            style={{ boxShadow: "0 12px 36px rgba(224, 122, 95, 0.12)", border: "1px solid #FFDAC8" }}
+                            style={{
+                                boxShadow: "0 16px 45px rgba(15, 23, 42, 0.12)",
+                                border: "1.5px solid rgba(212, 175, 55, 0.3)"
+                            }}
                         >
                             <MenuItem
                                 bg="#FFFFFF"
-                                color="#1E1B18"
-                                borderRadius="12px"
-                                _hover={{ bg: "#FDF3F0", color: "#E07A5F" }}
+                                color="#0F172A"
+                                borderRadius="14px"
+                                fontFamily="'Outfit', sans-serif"
+                                fontWeight="700"
+                                _hover={{ bg: "rgba(212, 175, 55, 0.08)", color: "#D4AF37" }}
                                 onClick={onOpen}
-                                style={{ transition: "all 0.15s ease" }}
+                                style={{ transition: "all 0.15s ease", padding: "10px 14px" }}
                             >
-                                <i className="fa fa-user me-3" style={{ color: "#E07A5F" }} aria-hidden="true"></i> Profile
+                                <i className="fa fa-user me-3" style={{ color: "#D4AF37" }} aria-hidden="true"></i> Profile
                             </MenuItem>
                             <MenuItem
                                 bg="#FFFFFF"
-                                color="#1E1B18"
-                                borderRadius="12px"
-                                _hover={{ bg: "#FFF0EE", color: "#DC2626" }}
+                                color="#0F172A"
+                                borderRadius="14px"
+                                fontFamily="'Outfit', sans-serif"
+                                fontWeight="700"
+                                _hover={{ bg: "#FEF2F2", color: "#EF4444" }}
                                 onClick={() => setIsLogoutConfirmOpen(true)}
-                                style={{ transition: "all 0.15s ease" }}
+                                style={{ transition: "all 0.15s ease", padding: "10px 14px" }}
                             >
-                                <i className="fas fa-sign-out-alt me-3" style={{ color: "#DC2626" }}></i> Logout
+                                <i className="fas fa-sign-out-alt me-3" style={{ color: "#EF4444" }}></i> Logout
                             </MenuItem>
                         </MenuList>
                     </Menu>
@@ -985,26 +981,27 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 isOpen={isOpenDrawer}
                 placement='left'
                 onClose={onCloseDrawer}
+                size="md"
             >
-                <DrawerOverlay style={{ backdropFilter: "blur(10px)", background: "rgba(48, 54, 51, 0.25)" }} />
-                <DrawerContent style={{ background: "#FFFFFF", color: "#303633", borderRight: "1px solid #ECE9E1", boxShadow: "0 20px 50px rgba(57, 115, 107, 0.12)" }}>
+                <DrawerOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(15, 23, 42, 0.35)" }} />
+                <DrawerContent style={{ background: "#FFFFFF", color: "#0F172A", borderRight: "1.5px solid rgba(212, 175, 55, 0.25)", boxShadow: "0 25px 60px rgba(15, 23, 42, 0.15)", maxWidth: "440px" }}>
                     {loadingChat && (<Progress size='xs' height='3px' colorScheme='teal' isIndeterminate />)}
-                    <DrawerHeader style={{ borderBottom: "1px solid #ECE9E1", padding: "18px 24px" }}>
+                    <DrawerHeader style={{ borderBottom: "1px solid #F1F5F9", padding: "20px 24px" }}>
                         <div className='d-flex justify-content-between align-items-center'>
-                            <div className="d-flex align-items-center gap-2">
+                            <div className="d-flex align-items-center gap-2.5">
                                 <Box sx={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '10px',
-                                    background: 'linear-gradient(135deg, #FFF0F2 0%, #FFF9FA 100%)',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    border: '1px solid #FFE3E6'
+                                    border: '1px solid rgba(212, 175, 55, 0.3)'
                                 }}>
-                                    <span style={{ fontSize: '1rem', color: '#E63946' }}>🔍</span>
+                                    <Search size={18} color="#D4AF37" />
                                 </Box>
-                                <h3 className="m-0" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#303633" }}>Add User by Username</h3>
+                                <h3 className="m-0" style={{ fontSize: "1.25rem", fontWeight: 900, color: "#0F172A", fontFamily: "'Outfit', sans-serif" }}>Add User by Username</h3>
                             </div>
                         </div>
                     </DrawerHeader>
@@ -1013,29 +1010,33 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         <form onSubmit={handleSearch}>
                             <Box d="flex" flexDirection="column" gap={3} py={2}>
                                 <div style={{ position: 'relative', width: '100%' }}>
-                                    <Search size={18} color="#E63946" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
+                                    <Search size={18} color="#D4AF37" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
                                     <Input
                                         placeholder="Enter exact @username (e.g. @vicky123)"
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        bg="#FCFBF8"
-                                        color="#303633"
+                                        bg="#FFFFFF"
+                                        color="#0F172A"
                                         pl="42px"
                                         h="46px"
-                                        _focus={{ borderColor: "#E63946", bg: "#FFFFFF", boxShadow: "0 4px 15px rgba(230, 57, 70, 0.15)" }}
-                                        borderRadius="14px"
-                                        style={{ border: "1px solid #E5E1D8", fontSize: "0.95rem" }}
+                                        fontWeight="600"
+                                        fontFamily="'Inter', sans-serif"
+                                        _focus={{ borderColor: "#D4AF37", bg: "#FFFFFF", boxShadow: "0 4px 15px rgba(212, 175, 55, 0.18)" }}
+                                        borderRadius="16px"
+                                        style={{ border: "1.5px solid rgba(226, 232, 240, 0.9)", fontSize: "0.92rem" }}
                                     />
                                 </div>
                                 <Button
                                     type="submit"
                                     width="100%"
-                                    h="44px"
-                                    borderRadius="12px"
-                                    bg="linear-gradient(135deg, #E63946 0%, #d62839 100%)"
+                                    h="46px"
+                                    borderRadius="16px"
+                                    bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
                                     color="#FFFFFF"
-                                    fontWeight="700"
-                                    _hover={{ bg: "#d62839" }}
+                                    fontWeight="800"
+                                    fontFamily="'Outfit', sans-serif"
+                                    boxShadow="0 4px 15px rgba(212, 175, 55, 0.35)"
+                                    _hover={{ opacity: 0.95 }}
                                     isLoading={loading}
                                 >
                                     🔍 Search Username
@@ -1093,14 +1094,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             </Drawer>
             {/* ── MY PROFILE MODAL (CLASSY ULTRA-AESTHETIC DESIGN WITH FRAMER MOTION) ── */}
             <Modal size="md" isOpen={isOpen} onClose={onClose} isCentered>
-                <ModalOverlay style={{ backdropFilter: "blur(24px)", background: "rgba(10, 10, 12, 0.65)" }} />
+                <ModalOverlay style={{ backdropFilter: "blur(24px)", background: "rgba(15, 23, 42, 0.45)" }} />
                 <ModalContent style={{
-                    background: "rgba(255, 255, 255, 0.85)",
-                    backdropFilter: "blur(40px)",
-                    color: "#18181B",
-                    border: "1px solid rgba(255, 255, 255, 0.4)",
+                    background: "#FFFFFF",
+                    color: "#0F172A",
+                    border: "1.5px solid rgba(212, 175, 55, 0.3)",
                     borderRadius: "32px",
-                    boxShadow: "0 40px 100px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+                    boxShadow: "0 40px 100px rgba(15, 23, 42, 0.2)",
                     overflow: "hidden"
                 }}>
                     <motion.div
@@ -1108,33 +1108,31 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     >
-                        {/* ── LUXURIOUS MESH GRADIENT COVER BANNER ── */}
+                        {/* ── LUXURIOUS AMBIENT BANNER ── */}
                         <Box sx={{
-                            height: '140px',
+                            height: '110px',
                             width: '100%',
-                            background: 'radial-gradient(circle at 100% 0%, rgba(230, 57, 70, 0.15) 0%, transparent 50%), radial-gradient(circle at 0% 100%, rgba(230, 57, 70, 0.1) 0%, transparent 50%), #FFFFFF',
+                            background: 'linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(255, 255, 255, 0) 100%), #FFFFFF',
                             position: 'relative',
                             display: 'flex',
                             alignItems: 'flex-start',
                             justifyContent: 'space-between',
-                            p: 4,
-                            px: 5,
-                            borderBottom: '1px solid rgba(0, 0, 0, 0.03)'
+                            p: 3.5,
+                            px: 4,
+                            borderBottom: '1px solid rgba(212, 175, 55, 0.2)'
                         }}>
                             <Badge
                                 sx={{
-                                    bg: 'rgba(0, 0, 0, 0.05)',
-                                    backdropFilter: 'blur(12px)',
-                                    color: '#18181B',
-                                    borderRadius: '12px',
-                                    px: 3.5,
-                                    py: 1.2,
-                                    fontSize: '0.72rem',
-                                    fontWeight: 800,
+                                    bg: 'rgba(212, 175, 55, 0.12)',
+                                    color: '#D4AF37',
+                                    borderRadius: '99px',
+                                    px: 3,
+                                    py: 1,
+                                    fontSize: '0.7rem',
+                                    fontWeight: 900,
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.12em',
-                                    border: '1px solid rgba(0, 0, 0, 0.05)',
-                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)'
+                                    letterSpacing: '0.1em',
+                                    border: '1px solid rgba(212, 175, 55, 0.35)'
                                 }}
                             >
                                 ✦ Aura Profile
@@ -1146,21 +1144,20 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         size="sm"
                                         onClick={() => setIsQrScannerOpen(true)}
                                         style={{
-                                            background: 'rgba(230, 57, 70, 0.08)',
-                                            backdropFilter: 'blur(10px)',
-                                            color: '#E63946',
-                                            borderRadius: '20px',
-                                            padding: '6px 16px',
+                                            background: 'rgba(212, 175, 55, 0.1)',
+                                            color: '#D4AF37',
+                                            borderRadius: '99px',
+                                            padding: '6px 14px',
                                             fontSize: '0.78rem',
-                                            fontWeight: 700,
-                                            border: '1px solid rgba(230, 57, 70, 0.15)',
+                                            fontWeight: 800,
+                                            fontFamily: "'Outfit', sans-serif",
+                                            border: '1px solid rgba(212, 175, 55, 0.35)',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '6px',
-                                            boxShadow: '0 4px 12px rgba(230, 57, 70, 0.05)'
+                                            gap: '6px'
                                         }}
                                     >
-                                        <QrCode2Icon style={{ fontSize: 16 }} />
+                                        <QrCode2Icon style={{ fontSize: 15 }} />
                                         Profile QR
                                     </Button>
                                 </motion.div>
@@ -1172,18 +1169,17 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             width: '32px',
                                             height: '32px',
                                             borderRadius: '50%',
-                                            bg: 'rgba(0, 0, 0, 0.04)',
-                                            backdropFilter: 'blur(10px)',
-                                            color: '#71717A',
+                                            bg: '#F8FAFC',
+                                            color: '#64748B',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
-                                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                                            border: '1px solid #E2E8F0',
                                             transition: 'all 0.2s ease',
                                             '&:hover': {
-                                                bg: 'rgba(0, 0, 0, 0.08)',
-                                                color: '#18181B'
+                                                bg: '#E2E8F0',
+                                                color: '#0F172A'
                                             }
                                         }}
                                     >
@@ -1193,34 +1189,32 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             </Box>
                         </Box>
 
-                        <ModalBody className="text-center pb-8 pt-0 px-8">
+                        <ModalBody className="text-center pb-6 pt-0 px-6">
                             {/* ── OVERLAY AVATAR HERO ── */}
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 5, position: 'relative', marginTop: '-55px' }}>
-                                <Box sx={{
-                                    position: 'relative',
-                                    display: 'inline-block'
-                                }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4, position: 'relative', marginTop: '-48px' }}>
+                                <Box sx={{ position: 'relative', display: 'inline-block' }}>
                                     <Tooltip label="Click to preview picture" hasArrow placement="top">
-                                        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
+                                        <motion.div whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 300 }}>
                                             <Box sx={{
-                                                padding: '6px',
+                                                padding: '4px',
                                                 borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, rgba(230, 57, 70, 0.2) 0%, rgba(255, 255, 255, 0.8) 100%)',
-                                                backdropFilter: 'blur(10px)',
-                                                boxShadow: '0 8px 32px rgba(230, 57, 70, 0.15)'
+                                                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                boxShadow: '0 0 0 3px #FFFFFF, 0 0 0 5px rgba(212, 175, 55, 0.4), 0 10px 25px rgba(212, 175, 55, 0.3)'
                                             }}>
                                                 <Avatar
                                                     size="2xl"
                                                     name={user && user.name}
                                                     src={user && user.pic}
-                                                    bg="#F4F4F5"
-                                                    color="#E63946"
+                                                    bg="#0F172A !important"
+                                                    color="#D4AF37 !important"
+                                                    fontWeight="900"
                                                     onClick={() => setIsPreviewPicOpen(true)}
                                                     style={{
-                                                        width: '110px',
-                                                        height: '110px',
+                                                        width: '98px',
+                                                        height: '98px',
                                                         border: "3px solid #FFFFFF",
-                                                        cursor: 'pointer'
+                                                        cursor: 'pointer',
+                                                        backgroundColor: '#0F172A'
                                                     }}
                                                 />
                                             </Box>
@@ -1234,322 +1228,333 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 onClick={() => setIsAvatarStudioOpen(true)}
                                                 sx={{
                                                     position: 'absolute',
-                                                    bottom: '4px',
-                                                    right: '4px',
-                                                    bg: '#FFFFFF',
-                                                    color: '#E63946',
+                                                    bottom: '2px',
+                                                    right: '2px',
+                                                    bg: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                    color: '#FFFFFF',
                                                     borderRadius: '50%',
-                                                    width: '36px',
-                                                    height: '36px',
+                                                    width: '34px',
+                                                    height: '34px',
                                                     cursor: 'pointer',
-                                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                                    boxShadow: '0 4px 14px rgba(212, 175, 55, 0.4)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     transition: 'all 0.2s ease',
-                                                    border: '1px solid rgba(230, 57, 70, 0.15)',
-                                                    '&:hover': {
-                                                        bg: '#FFF0F2'
-                                                    }
+                                                    border: '2.5px solid #FFFFFF'
                                                 }}
                                             >
-                                                <CameraAltIcon style={{ fontSize: 16 }} />
+                                                <CameraAltIcon style={{ fontSize: 15 }} />
                                             </Box>
                                         </motion.div>
                                     </Tooltip>
                                 </Box>
 
                                 {/* User Hero Titles */}
-                                <h3 style={{ margin: '16px 0 4px', fontSize: "1.5rem", fontWeight: 800, color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>
+                                <h3 style={{ margin: '14px 0 2px', fontSize: "1.45rem", fontWeight: 900, color: "#0F172A", fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>
                                     {user?.name || "Aura User"}
                                 </h3>
-                                <Text sx={{
-                                    color: '#71717A',
-                                    fontSize: '0.9rem',
-                                    fontWeight: 500,
-                                    letterSpacing: '0.01em',
-                                    margin: 0
+                                <span style={{
+                                    background: 'rgba(212, 175, 55, 0.1)',
+                                    color: '#D4AF37',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 800,
+                                    padding: '3px 14px',
+                                    borderRadius: '99px',
+                                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                                    fontFamily: "'Inter', sans-serif"
                                 }}>
                                     @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
-                                </Text>
+                                </span>
                             </Box>
 
                             {/* ── PROFILE DETAILS EDITABLE CARDS ── */}
-                            <VStack spacing={4} width="100%" mb={6}>
+                            <VStack spacing={3} width="100%" mb={5}>
                                 {/* 1. DISPLAY NAME CARD */}
-                                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ duration: 0.2 }} style={{ width: '100%' }}>
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 2.5,
+                                    px: 3.5,
+                                    borderRadius: '18px',
+                                    background: '#FFFFFF',
+                                    border: '1.5px solid #F1F5F9',
+                                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.02)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        borderColor: 'rgba(212, 175, 55, 0.4)',
+                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)'
+                                    }
+                                }}>
                                     <Box sx={{
-                                        width: '100%',
-                                        p: 3,
-                                        px: 4,
-                                        borderRadius: '20px',
-                                        background: 'rgba(255, 255, 255, 0.6)',
-                                        border: '1px solid rgba(0, 0, 0, 0.04)',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '12px',
+                                        background: 'rgba(212, 175, 55, 0.1)',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: 4,
-                                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.02)'
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                        border: '1px solid rgba(212, 175, 55, 0.3)'
                                     }}>
-                                        <Box sx={{
-                                            width: '42px',
-                                            height: '42px',
-                                            borderRadius: '12px',
-                                            background: 'linear-gradient(135deg, rgba(230,57,70,0.05) 0%, rgba(230,57,70,0.01) 100%)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                            border: '1px solid rgba(230,57,70,0.05)'
-                                        }}>
-                                            <PersonOutlineIcon style={{ color: '#E63946', fontSize: 20 }} />
-                                        </Box>
-                                        <span style={{ flexGrow: 1, textAlign: 'left' }}>
-                                            <strong style={{ color: '#A1A1AA', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '2px' }}>Display Name</strong>
-                                            {isEditingName ? (
-                                                <Input
-                                                    value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                    autoFocus
-                                                    size="sm"
-                                                    mt={1}
-                                                    borderRadius="8px"
-                                                    border="1.5px solid rgba(230, 57, 70, 0.4)"
-                                                    focusBorderColor="#E63946"
-                                                    bg="#FFFFFF"
-                                                    fontWeight="600"
-                                                />
-                                            ) : (
-                                                <span style={{ fontWeight: 700, color: '#18181B', fontSize: '1rem' }}>{user && user.name}</span>
-                                            )}
-                                        </span>
-                                        {isEditingName ? (
-                                            <Box display="flex" gap={1.5}>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={handleSaveName}
-                                                    style={{ background: '#E63946', color: '#FFF', borderRadius: '10px', minW: '32px', padding: '0 10px', boxShadow: '0 4px 10px rgba(230,57,70,0.2)' }}
-                                                >
-                                                    <CheckIcon fontSize="12px" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => setIsEditingName(false)}
-                                                    style={{ background: '#F4F4F5', color: '#71717A', borderRadius: '10px', minW: '32px', padding: '0 10px' }}
-                                                >
-                                                    <CloseIcon fontSize="10px" />
-                                                </Button>
-                                            </Box>
-                                        ) : (
-                                            <Tooltip label="Edit Name" hasArrow placement="top">
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => { setEditName(user?.name || ''); setIsEditingName(true); }}
-                                                    style={{ background: 'transparent', color: '#A1A1AA', borderRadius: '12px', padding: '0', minW: '36px', height: '36px' }}
-                                                    _hover={{ background: 'rgba(0,0,0,0.04)', color: '#18181B' }}
-                                                >
-                                                    <EditIcon fontSize="14px" />
-                                                </Button>
-                                            </Tooltip>
-                                        )}
+                                        <PersonOutlineIcon style={{ color: '#D4AF37', fontSize: 19 }} />
                                     </Box>
-                                </motion.div>
+                                    <span style={{ flexGrow: 1, textAlign: 'left' }}>
+                                        <strong style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Display Name</strong>
+                                        {isEditingName ? (
+                                            <Input
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                autoFocus
+                                                size="sm"
+                                                mt={1}
+                                                borderRadius="10px"
+                                                border="1.5px solid #D4AF37"
+                                                focusBorderColor="#D4AF37"
+                                                bg="#FFFFFF"
+                                                color="#0F172A"
+                                                fontWeight="700"
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif" }}>{user && user.name}</span>
+                                        )}
+                                    </span>
+                                    {isEditingName ? (
+                                        <Box display="flex" gap={1.5}>
+                                            <Button
+                                                size="sm"
+                                                onClick={handleSaveName}
+                                                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                            >
+                                                <CheckIcon fontSize="12px" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => setIsEditingName(false)}
+                                                style={{ background: '#F1F5F9', color: '#64748B', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                            >
+                                                <CloseIcon fontSize="10px" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Tooltip label="Edit Name" hasArrow placement="top">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => { setEditName(user?.name || ''); setIsEditingName(true); }}
+                                                style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                            >
+                                                <EditIcon fontSize="14px" />
+                                            </Button>
+                                        </Tooltip>
+                                    )}
+                                </Box>
 
                                 {/* 2. UNIQUE USERNAME CARD */}
-                                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ duration: 0.2 }} style={{ width: '100%' }}>
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 2.5,
+                                    px: 3.5,
+                                    borderRadius: '18px',
+                                    background: '#FFFFFF',
+                                    border: '1.5px solid #F1F5F9',
+                                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.02)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        borderColor: 'rgba(212, 175, 55, 0.4)',
+                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)'
+                                    }
+                                }}>
                                     <Box sx={{
-                                        width: '100%',
-                                        p: 3,
-                                        px: 4,
-                                        borderRadius: '20px',
-                                        background: 'rgba(255, 255, 255, 0.6)',
-                                        border: '1px solid rgba(0, 0, 0, 0.04)',
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '12px',
+                                        background: 'rgba(212, 175, 55, 0.1)',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: 4,
-                                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.02)'
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                        border: '1px solid rgba(212, 175, 55, 0.3)'
                                     }}>
-                                        <Box sx={{
-                                            width: '42px',
-                                            height: '42px',
-                                            borderRadius: '12px',
-                                            background: 'linear-gradient(135deg, rgba(230,57,70,0.05) 0%, rgba(230,57,70,0.01) 100%)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                            border: '1px solid rgba(230,57,70,0.05)'
-                                        }}>
-                                            <AlternateEmailIcon style={{ color: '#E63946', fontSize: 19 }} />
-                                        </Box>
-                                        <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                            <strong style={{ color: '#A1A1AA', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '2px' }}>Username</strong>
-                                            {isEditingUsername ? (
-                                                <Input
-                                                    value={editUsername}
-                                                    onChange={(e) => setEditUsername(e.target.value)}
-                                                    autoFocus
-                                                    size="sm"
-                                                    mt={1}
-                                                    borderRadius="8px"
-                                                    border="1.5px solid rgba(230, 57, 70, 0.4)"
-                                                    focusBorderColor="#E63946"
-                                                    bg="#FFFFFF"
-                                                    fontWeight="600"
-                                                    placeholder="e.g. vicky123"
-                                                />
-                                            ) : (
-                                                <span style={{ fontWeight: 600, color: '#18181B', fontSize: '0.95rem' }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
-                                            )}
-                                        </span>
-                                        {isEditingUsername ? (
-                                            <Box display="flex" gap={1.5}>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={handleSaveUsername}
-                                                    style={{ background: '#E63946', color: '#FFF', borderRadius: '10px', minW: '32px', padding: '0 10px', boxShadow: '0 4px 10px rgba(230,57,70,0.2)' }}
-                                                >
-                                                    <CheckIcon fontSize="12px" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => setIsEditingUsername(false)}
-                                                    style={{ background: '#F4F4F5', color: '#71717A', borderRadius: '10px', minW: '32px', padding: '0 10px' }}
-                                                >
-                                                    <CloseIcon fontSize="10px" />
-                                                </Button>
-                                            </Box>
-                                        ) : (
-                                            <Box display="flex" gap={1}>
-                                                <Tooltip label="Edit Username" hasArrow placement="top">
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => { setEditUsername(user?.username || ''); setIsEditingUsername(true); }}
-                                                        style={{ background: 'transparent', color: '#A1A1AA', borderRadius: '12px', padding: '0', minW: '36px', height: '36px' }}
-                                                        _hover={{ background: 'rgba(0,0,0,0.04)', color: '#18181B' }}
-                                                    >
-                                                        <EditIcon fontSize="14px" />
-                                                    </Button>
-                                                </Tooltip>
-                                                <Tooltip label="Copy Username" hasArrow placement="top">
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            const uName = user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user');
-                                                            navigator.clipboard.writeText(`@${uName}`);
-                                                            toast.success('Username copied!', { autoClose: 3000, hideProgressBar: true });
-                                                        }}
-                                                        style={{ background: 'transparent', color: '#A1A1AA', borderRadius: '12px', padding: '0', minW: '36px', height: '36px' }}
-                                                        _hover={{ background: 'rgba(0,0,0,0.04)', color: '#18181B' }}
-                                                    >
-                                                        <ContentCopyIcon style={{ fontSize: 14 }} />
-                                                    </Button>
-                                                </Tooltip>
-                                            </Box>
-                                        )}
+                                        <AlternateEmailIcon style={{ color: '#D4AF37', fontSize: 19 }} />
                                     </Box>
-                                </motion.div>
-
-                                {/* 3. EMAIL ADDRESS CARD */}
-                                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ duration: 0.2 }} style={{ width: '100%' }}>
-                                    <Box sx={{
-                                        width: '100%',
-                                        p: 3,
-                                        px: 4,
-                                        borderRadius: '20px',
-                                        background: 'rgba(255, 255, 255, 0.6)',
-                                        border: '1px solid rgba(0, 0, 0, 0.04)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.02)'
-                                    }}>
-                                        <Box sx={{
-                                            width: '42px',
-                                            height: '42px',
-                                            borderRadius: '12px',
-                                            background: 'linear-gradient(135deg, rgba(230,57,70,0.05) 0%, rgba(230,57,70,0.01) 100%)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                            border: '1px solid rgba(230,57,70,0.05)'
-                                        }}>
-                                            <EmailIcon style={{ color: '#E63946', fontSize: 20 }} />
-                                        </Box>
-                                        <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                            <strong style={{ color: '#A1A1AA', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '2px' }}>Email Address</strong>
-                                            {isEditingEmail ? (
-                                                <Input
-                                                    value={editEmail}
-                                                    onChange={(e) => setEditEmail(e.target.value)}
-                                                    autoFocus
-                                                    size="sm"
-                                                    mt={1}
-                                                    borderRadius="8px"
-                                                    border="1.5px solid rgba(230, 57, 70, 0.4)"
-                                                    focusBorderColor="#E63946"
-                                                    bg="#FFFFFF"
-                                                    fontWeight="600"
-                                                />
-                                            ) : (
-                                                <span style={{ fontWeight: 600, color: '#18181B', fontSize: '0.95rem' }}>{user && user.email}</span>
-                                            )}
-                                        </span>
-                                        {isEditingEmail ? (
-                                            <Box display="flex" gap={1.5}>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={handleSaveEmail}
-                                                    style={{ background: '#E63946', color: '#FFF', borderRadius: '10px', minW: '32px', padding: '0 10px', boxShadow: '0 4px 10px rgba(230,57,70,0.2)' }}
-                                                >
-                                                    <CheckIcon fontSize="12px" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => setIsEditingEmail(false)}
-                                                    style={{ background: '#F4F4F5', color: '#71717A', borderRadius: '10px', minW: '32px', padding: '0 10px' }}
-                                                >
-                                                    <CloseIcon fontSize="10px" />
-                                                </Button>
-                                            </Box>
+                                    <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
+                                        <strong style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Username</strong>
+                                        {isEditingUsername ? (
+                                            <Input
+                                                value={editUsername}
+                                                onChange={(e) => setEditUsername(e.target.value)}
+                                                autoFocus
+                                                size="sm"
+                                                mt={1}
+                                                borderRadius="10px"
+                                                border="1.5px solid #D4AF37"
+                                                focusBorderColor="#D4AF37"
+                                                bg="#FFFFFF"
+                                                color="#0F172A"
+                                                fontWeight="700"
+                                                placeholder="e.g. vicky123"
+                                            />
                                         ) : (
-                                            <Tooltip label="Edit Email" hasArrow placement="top">
+                                            <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif" }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                        )}
+                                    </span>
+                                    {isEditingUsername ? (
+                                        <Box display="flex" gap={1.5}>
+                                            <Button
+                                                size="sm"
+                                                onClick={handleSaveUsername}
+                                                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                            >
+                                                <CheckIcon fontSize="12px" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => setIsEditingUsername(false)}
+                                                style={{ background: '#F1F5F9', color: '#64748B', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                            >
+                                                <CloseIcon fontSize="10px" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Box display="flex" gap={0.5}>
+                                            <Tooltip label="Edit Username" hasArrow placement="top">
                                                 <Button
                                                     size="sm"
-                                                    onClick={() => { setEditEmail(user?.email || ''); setIsEditingEmail(true); }}
-                                                    style={{ background: 'transparent', color: '#A1A1AA', borderRadius: '12px', padding: '0', minW: '36px', height: '36px' }}
-                                                    _hover={{ background: 'rgba(0,0,0,0.04)', color: '#18181B' }}
+                                                    onClick={() => { setEditUsername(user?.username || ''); setIsEditingUsername(true); }}
+                                                    style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                    _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
                                                 >
                                                     <EditIcon fontSize="14px" />
                                                 </Button>
                                             </Tooltip>
-                                        )}
+                                            <Tooltip label="Copy Username" hasArrow placement="top">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const uName = user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user');
+                                                        navigator.clipboard.writeText(`@${uName}`);
+                                                        toast.success('Username copied!', { autoClose: 3000, hideProgressBar: true });
+                                                    }}
+                                                    style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                    _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                                >
+                                                    <ContentCopyIcon style={{ fontSize: 14 }} />
+                                                </Button>
+                                            </Tooltip>
+                                        </Box>
+                                    )}
+                                </Box>
+
+                                {/* 3. EMAIL ADDRESS CARD */}
+                                <Box sx={{
+                                    width: '100%',
+                                    p: 2.5,
+                                    px: 3.5,
+                                    borderRadius: '18px',
+                                    background: '#FFFFFF',
+                                    border: '1.5px solid #F1F5F9',
+                                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.02)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        borderColor: 'rgba(212, 175, 55, 0.4)',
+                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)'
+                                    }
+                                }}>
+                                    <Box sx={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '12px',
+                                        background: 'rgba(212, 175, 55, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                        border: '1px solid rgba(212, 175, 55, 0.3)'
+                                    }}>
+                                        <EmailIcon style={{ color: '#D4AF37', fontSize: 19 }} />
                                     </Box>
-                                </motion.div>
+                                    <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
+                                        <strong style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Email Address</strong>
+                                        {isEditingEmail ? (
+                                            <Input
+                                                value={editEmail}
+                                                onChange={(e) => setEditEmail(e.target.value)}
+                                                autoFocus
+                                                size="sm"
+                                                mt={1}
+                                                borderRadius="10px"
+                                                border="1.5px solid #D4AF37"
+                                                focusBorderColor="#D4AF37"
+                                                bg="#FFFFFF"
+                                                color="#0F172A"
+                                                fontWeight="700"
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif" }}>{user && user.email}</span>
+                                        )}
+                                    </span>
+                                    {isEditingEmail ? (
+                                        <Box display="flex" gap={1.5}>
+                                            <Button
+                                                size="sm"
+                                                onClick={handleSaveEmail}
+                                                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                            >
+                                                <CheckIcon fontSize="12px" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => setIsEditingEmail(false)}
+                                                style={{ background: '#F1F5F9', color: '#64748B', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                            >
+                                                <CloseIcon fontSize="10px" />
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Tooltip label="Edit Email" hasArrow placement="top">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => { setEditEmail(user?.email || ''); setIsEditingEmail(true); }}
+                                                style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                            >
+                                                <EditIcon fontSize="14px" />
+                                            </Button>
+                                        </Tooltip>
+                                    )}
+                                </Box>
                             </VStack>
 
                             {/* ── MODAL FOOTER ACTION PILL BUTTON ── */}
-                            <Box display="flex" gap={3} justifyContent="center" width="100%" mt={2}>
-                                <motion.div style={{ width: '100%' }} whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.95 }}>
+                            <Box display="flex" gap={3} justifyContent="center" width="100%" mt={1}>
+                                <motion.div style={{ width: '100%' }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}>
                                     <MDBBtn
                                         onClick={onClose}
                                         style={{
                                             width: '100%',
-                                            background: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)',
+                                            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                                             color: '#FFFFFF',
                                             fontWeight: 800,
-                                            height: '50px',
-                                            borderRadius: '99px',
-                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                            fontSize: '0.95rem',
-                                            fontFamily: "'Outfit', 'Inter', sans-serif",
+                                            height: '46px',
+                                            borderRadius: '16px',
+                                            border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                                            fontSize: '0.9rem',
+                                            fontFamily: "'Outfit', sans-serif",
                                             letterSpacing: '0.02em',
-                                            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+                                            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
                                             textTransform: 'none',
                                             cursor: 'pointer',
                                             touchAction: 'manipulation',
-                                            WebkitTapHighlightColor: 'transparent',
-                                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            WebkitTapHighlightColor: 'transparent'
                                         }}
                                     >
                                         Close Profile
@@ -1563,14 +1568,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
             {/* ── DIGITAL VIP QR PASS MODAL (ULTRA-CLEAN PRISTINE LIGHT GLASS DESIGN) ── */}
             <Modal isOpen={isQrScannerOpen} onClose={() => setIsQrScannerOpen(false)} size="md" isCentered>
-                <ModalOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(10, 10, 12, 0.45)" }} />
+                <ModalOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(15, 23, 42, 0.45)" }} />
                 <ModalContent style={{
                     borderRadius: '32px',
-                    background: 'rgba(255, 255, 255, 0.92)',
-                    backdropFilter: 'blur(40px)',
-                    color: '#18181B',
-                    border: '1px solid rgba(255, 255, 255, 0.8)',
-                    boxShadow: '0 30px 80px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.9)',
+                    background: '#FFFFFF',
+                    color: '#0F172A',
+                    border: '1.5px solid rgba(212, 175, 55, 0.3)',
+                    boxShadow: '0 30px 80px rgba(15, 23, 42, 0.2)',
                     overflow: 'hidden'
                 }}>
                     <motion.div
@@ -1583,22 +1587,24 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            p: 5,
-                            pb: 2
+                            p: 4,
+                            px: 5,
+                            pb: 2,
+                            borderBottom: '1px solid #F1F5F9'
                         }}>
                             <Badge
                                 sx={{
-                                    bg: 'rgba(230, 57, 70, 0.06)',
-                                    color: '#E63946',
-                                    borderRadius: '14px',
+                                    bg: 'rgba(212, 175, 55, 0.12)',
+                                    color: '#D4AF37',
+                                    borderRadius: '99px',
                                     px: 3.5,
                                     py: 1.2,
-                                    fontSize: '0.75rem',
-                                    fontWeight: 800,
+                                    fontSize: '0.72rem',
+                                    fontWeight: 900,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.12em',
-                                    border: '1px solid rgba(230, 57, 70, 0.12)',
-                                    boxShadow: '0 2px 8px rgba(230, 57, 70, 0.04)'
+                                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                                    boxShadow: '0 2px 8px rgba(212, 175, 55, 0.08)'
                                 }}
                             >
                                 ✦ AURA BARCODE SCANNER
@@ -1634,11 +1640,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             {/* Mode Tab Switcher */}
                             <Box sx={{
                                 display: 'flex',
-                                background: '#F4F4F5',
+                                background: '#F8FAFC',
                                 borderRadius: '99px',
                                 p: 1,
                                 mb: 4,
-                                border: '1px solid #E4E4E7'
+                                border: '1.5px solid #F1F5F9'
                             }}>
                                 <button
                                     type="button"
@@ -1649,11 +1655,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         borderRadius: '99px',
                                         border: 'none',
                                         background: qrTab === 'scan' ? '#FFFFFF' : 'transparent',
-                                        color: qrTab === 'scan' ? '#E63946' : '#71717A',
+                                        color: qrTab === 'scan' ? '#D4AF37' : '#64748B',
                                         fontWeight: 800,
                                         fontSize: '0.82rem',
+                                        fontFamily: "'Outfit', sans-serif",
                                         cursor: 'pointer',
-                                        boxShadow: qrTab === 'scan' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                                        boxShadow: qrTab === 'scan' ? '0 4px 12px rgba(212, 175, 55, 0.15)' : 'none',
                                         transition: 'all 0.2s ease'
                                     }}
                                 >
@@ -1668,11 +1675,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         borderRadius: '99px',
                                         border: 'none',
                                         background: qrTab === 'myQr' ? '#FFFFFF' : 'transparent',
-                                        color: qrTab === 'myQr' ? '#E63946' : '#71717A',
+                                        color: qrTab === 'myQr' ? '#D4AF37' : '#64748B',
                                         fontWeight: 800,
                                         fontSize: '0.82rem',
+                                        fontFamily: "'Outfit', sans-serif",
                                         cursor: 'pointer',
-                                        boxShadow: qrTab === 'myQr' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                                        boxShadow: qrTab === 'myQr' ? '0 4px 12px rgba(212, 175, 55, 0.15)' : 'none',
                                         transition: 'all 0.2s ease'
                                     }}
                                 >
@@ -1687,14 +1695,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         width: '230px',
                                         height: '230px',
                                         borderRadius: '24px',
-                                        border: isScanning ? '3px solid #10B981' : '3px solid #E63946',
-                                        background: '#09090B',
+                                        border: isScanning ? '3px solid #10B981' : '3px solid #D4AF37',
+                                        background: '#0F172A',
                                         position: 'relative',
                                         overflow: 'hidden',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.4)' : '0 12px 35px rgba(230, 57, 70, 0.2)',
+                                        boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.3)' : '0 12px 35px rgba(212, 175, 55, 0.25)',
                                         transition: 'all 0.3s ease',
                                         mb: 3
                                     }}>
@@ -1715,8 +1723,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         {/* Fallback Overlay if Camera is Loading / Off */}
                                         {!cameraActive && (
                                             <Box textAlign="center" color="#FFFFFF" p={2}>
-                                                <QrCode2Icon style={{ fontSize: 46, color: isScanning ? '#10B981' : '#E63946', opacity: 0.85 }} />
-                                                <Text fontSize="0.75rem" fontWeight="800" color={cameraError ? '#EF4444' : '#A1A1AA'} m={0} mt={1}>
+                                                <QrCode2Icon style={{ fontSize: 46, color: isScanning ? '#10B981' : '#D4AF37', opacity: 0.85 }} />
+                                                <Text fontSize="0.75rem" fontWeight="800" color={cameraError ? '#EF4444' : '#94A3B8'} m={0} mt={1}>
                                                     {cameraError ? cameraError : 'Initializing Camera...'}
                                                 </Text>
                                                 {cameraError && (
@@ -1724,13 +1732,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         onClick={startCamera}
                                                         style={{
                                                             marginTop: '8px',
-                                                            background: '#E63946',
+                                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                                             color: '#FFF',
                                                             border: 'none',
-                                                            padding: '4px 10px',
-                                                            borderRadius: '6px',
+                                                            padding: '4px 12px',
+                                                            borderRadius: '8px',
                                                             fontSize: '0.7rem',
-                                                            fontWeight: 700,
+                                                            fontWeight: 800,
                                                             cursor: 'pointer'
                                                         }}
                                                     >
@@ -1747,8 +1755,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             height: '4px',
                                             background: isScanning
                                                 ? 'linear-gradient(90deg, transparent, #10B981, transparent)'
-                                                : 'linear-gradient(90deg, transparent, #FF4D6D, transparent)',
-                                            boxShadow: isScanning ? '0 0 20px #10B981' : '0 0 15px #FF4D6D',
+                                                : 'linear-gradient(90deg, transparent, #D4AF37, transparent)',
+                                            boxShadow: isScanning ? '0 0 20px #10B981' : '0 0 18px #D4AF37',
                                             animation: 'scanLine 1.8s linear infinite',
                                             zIndex: 3
                                         }} />
@@ -1766,9 +1774,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         <Box sx={{
                                             display: 'flex',
                                             alignItems: 'center',
-                                            background: '#F4F4F5',
+                                            background: '#F8FAFC',
                                             borderRadius: '99px',
-                                            border: '1px solid #E4E4E7',
+                                            border: '1.5px solid #F1F5F9',
                                             p: '4px 6px 4px 14px',
                                             mb: 2
                                         }}>
@@ -1786,8 +1794,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     outline: 'none',
                                                     background: 'transparent',
                                                     fontSize: '0.85rem',
-                                                    fontWeight: 600,
-                                                    color: '#18181B'
+                                                    fontWeight: 700,
+                                                    color: '#0F172A',
+                                                    fontFamily: "'Inter', sans-serif"
                                                 }}
                                             />
                                             <motion.button
@@ -1796,15 +1805,16 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={() => handleScanQrCode(scannedUsername)}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #E63946 0%, #D62839 100%)',
+                                                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                                     color: '#FFFFFF',
                                                     border: 'none',
                                                     borderRadius: '99px',
                                                     padding: '8px 16px',
                                                     fontSize: '0.78rem',
                                                     fontWeight: 800,
+                                                    fontFamily: "'Outfit', sans-serif",
                                                     cursor: 'pointer',
-                                                    boxShadow: '0 3px 10px rgba(230, 57, 70, 0.3)'
+                                                    boxShadow: '0 3px 10px rgba(212, 175, 55, 0.35)'
                                                 }}
                                             >
                                                 {isScanning ? 'Scanning...' : 'Scan Barcode'}
@@ -1853,39 +1863,40 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
                                         <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
                                             <Box sx={{
-                                                padding: '5px',
+                                                padding: '4px',
                                                 borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, rgba(230, 57, 70, 0.25) 0%, rgba(255, 255, 255, 0.9) 100%)',
-                                                boxShadow: '0 8px 25px rgba(230, 57, 70, 0.12)'
+                                                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                boxShadow: '0 8px 25px rgba(212, 175, 55, 0.25)'
                                             }}>
                                                 <Avatar
                                                     size="lg"
                                                     name={user && user.name}
                                                     src={user && user.pic}
-                                                    bg="#E63946"
-                                                    color="#FFFFFF"
+                                                    bg="#0F172A !important"
+                                                    color="#D4AF37 !important"
+                                                    fontWeight="900"
                                                     style={{
                                                         width: '80px',
                                                         height: '80px',
-                                                        border: "3px solid #FFFFFF"
+                                                        border: "3px solid #FFFFFF",
+                                                        backgroundColor: '#0F172A'
                                                     }}
                                                 />
                                             </Box>
                                         </motion.div>
-                                        <h4 style={{ margin: '10px 0 2px', fontSize: '1.3rem', fontWeight: 800, color: '#18181B', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>
+                                        <h4 style={{ margin: '10px 0 2px', fontSize: '1.3rem', fontWeight: 900, color: '#0F172A', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>
                                             {user?.name || "Aura User"}
                                         </h4>
                                         <Badge
                                             sx={{
-                                                bg: 'rgba(230, 57, 70, 0.06)',
-                                                color: '#E63946',
-                                                borderRadius: '20px',
+                                                bg: 'rgba(212, 175, 55, 0.12)',
+                                                color: '#D4AF37',
+                                                borderRadius: '99px',
                                                 px: 3.5,
                                                 py: 0.8,
                                                 fontSize: '0.8rem',
                                                 fontWeight: 800,
-                                                border: '1px solid rgba(230, 57, 70, 0.12)',
-                                                boxShadow: '0 2px 8px rgba(230, 57, 70, 0.03)'
+                                                border: '1px solid rgba(212, 175, 55, 0.3)'
                                             }}
                                         >
                                             @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
@@ -1903,8 +1914,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             p: 4,
                                             borderRadius: '28px',
                                             background: '#FFFFFF',
-                                            border: '1px solid rgba(0, 0, 0, 0.04)',
-                                            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.04)',
+                                            border: '1.5px solid #F1F5F9',
+                                            boxShadow: '0 12px 35px rgba(15, 23, 42, 0.04)',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
@@ -1913,9 +1924,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Box sx={{
                                                 p: 3,
                                                 borderRadius: '22px',
-                                                background: 'linear-gradient(135deg, rgba(230, 57, 70, 0.03) 0%, #FFFFFF 100%)',
-                                                border: '1.5px solid rgba(230, 57, 70, 0.1)',
-                                                boxShadow: '0 6px 20px rgba(230, 57, 70, 0.04)',
+                                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, #FFFFFF 100%)',
+                                                border: '1.5px solid rgba(212, 175, 55, 0.2)',
+                                                boxShadow: '0 6px 20px rgba(212, 175, 55, 0.08)',
                                                 mb: 2
                                             }}>
                                                 <img
@@ -1924,8 +1935,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     style={{ width: '155px', height: '155px', borderRadius: '14px', display: 'block' }}
                                                 />
                                             </Box>
-                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#71717A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <QrCode2Icon style={{ fontSize: 16, color: '#E63946' }} /> Scan QR to quickly connect or view profile
+                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <QrCode2Icon style={{ fontSize: 16, color: '#D4AF37' }} /> Scan QR to quickly connect or view profile
                                             </p>
                                         </Box>
                                     </motion.div>
@@ -1944,20 +1955,21 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         style={{
                                             width: '100%',
                                             background: '#FFFFFF',
-                                            color: '#E63946',
+                                            color: '#D4AF37',
                                             fontWeight: 800,
                                             height: '46px',
                                             borderRadius: '16px',
-                                            border: '1px solid rgba(230, 57, 70, 0.15)',
+                                            border: '1.5px solid rgba(212, 175, 55, 0.3)',
                                             fontSize: '0.88rem',
+                                            fontFamily: "'Outfit', sans-serif",
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             gap: '7px',
-                                            boxShadow: '0 4px 12px rgba(230, 57, 70, 0.05)'
+                                            boxShadow: '0 4px 12px rgba(212, 175, 55, 0.08)'
                                         }}
                                     >
-                                        <ContentCopyIcon style={{ fontSize: 15 }} /> Copy Handle
+                                        <ContentCopyIcon style={{ fontSize: 15, color: '#D4AF37' }} /> Copy Handle
                                     </Button>
                                 </motion.div>
                                 <motion.div style={{ flex: 1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -1965,14 +1977,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         onClick={() => setIsQrScannerOpen(false)}
                                         style={{
                                             width: '100%',
-                                            background: '#18181B',
+                                            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                                             color: '#FFFFFF',
                                             fontWeight: 800,
                                             height: '46px',
                                             borderRadius: '16px',
-                                            border: 'none',
-                                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                                            border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                                            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
                                             fontSize: '0.88rem',
+                                            fontFamily: "'Outfit', sans-serif",
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -2174,38 +2187,38 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 onClose={() => setIsLogoutConfirmOpen(false)}
                 isCentered
             >
-                <ModalOverlay backdropFilter="blur(8px)" bg="rgba(0, 0, 0, 0.4)" />
+                <ModalOverlay backdropFilter="blur(20px)" bg="rgba(15, 23, 42, 0.45)" />
                 <ModalContent
-                    borderRadius="28px"
-                    border="1px solid #ECE9E1"
-                    bg="#FAF8F5"
+                    borderRadius="32px"
+                    border="1.5px solid rgba(212, 175, 55, 0.3)"
+                    bg="#FFFFFF"
                     p={4}
                     style={{
-                        boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
+                        boxShadow: "0 25px 70px rgba(15, 23, 42, 0.2)",
                         maxWidth: "420px",
                         margin: "12px"
                     }}
                 >
-                    <ModalBody className="text-center py-4">
+                    <ModalBody className="text-center py-5 px-4">
                         <Box
                             mx="auto"
-                            w="50px"
-                            h="50px"
-                            borderRadius="50%"
-                            bg="#FFF0EE"
+                            w="58px"
+                            h="58px"
+                            borderRadius="20px"
+                            bg="linear-gradient(135deg, rgba(212, 175, 55, 0.14) 0%, rgba(245, 158, 11, 0.05) 100%)"
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
-                            color="#DC2626"
+                            color="#D4AF37"
                             mb={4}
-                            style={{ boxShadow: "0 4px 12px rgba(220, 38, 38, 0.15)" }}
+                            style={{ border: "1px solid rgba(212, 175, 55, 0.3)", boxShadow: "0 6px 20px rgba(212, 175, 55, 0.15)" }}
                         >
-                            <i className="fas fa-sign-out-alt" style={{ fontSize: "20px" }}></i>
+                            <i className="fas fa-sign-out-alt" style={{ fontSize: "22px" }}></i>
                         </Box>
-                        <Text fontSize="1.35rem" fontWeight="800" color="#303633" mb={2}>
+                        <Text fontSize="1.35rem" fontWeight="900" color="#0F172A" mb={2} fontFamily="'Outfit', sans-serif">
                             Confirm Log Out
                         </Text>
-                        <Text fontSize="0.9rem" color="#707772" mb={6}>
+                        <Text fontSize="0.9rem" color="#64748B" mb={6} fontFamily="'Inter', sans-serif" lineHeight="1.5">
                             Are you sure you want to end your current session? You will need to log in again to access your conversations.
                         </Text>
                         <Box display="flex" gap={3} justifyContent="center" width="100%">
@@ -2213,13 +2226,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 onClick={() => setIsLogoutConfirmOpen(false)}
                                 style={{
                                     flex: 1,
-                                    background: '#EAEBE9',
-                                    color: '#707772',
-                                    fontWeight: 600,
-                                    height: '46px',
-                                    borderRadius: '12px',
+                                    background: '#F1F5F9',
+                                    color: '#64748B',
+                                    fontWeight: 800,
+                                    height: '48px',
+                                    borderRadius: '16px',
                                     textTransform: 'none',
-                                    boxShadow: 'none'
+                                    boxShadow: 'none',
+                                    fontFamily: "'Outfit', sans-serif"
                                 }}
                             >
                                 Cancel
@@ -2236,13 +2250,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 }}
                                 style={{
                                     flex: 1,
-                                    background: '#DC2626',
+                                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                                     color: '#FFFFFF',
-                                    fontWeight: 600,
-                                    height: '46px',
-                                    borderRadius: '12px',
+                                    fontWeight: 800,
+                                    height: '48px',
+                                    borderRadius: '16px',
+                                    border: '1.5px solid rgba(212, 175, 55, 0.4)',
                                     textTransform: 'none',
-                                    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)'
+                                    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
+                                    fontFamily: "'Outfit', sans-serif"
                                 }}
                             >
                                 Yes, Logout

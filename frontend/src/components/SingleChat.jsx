@@ -60,7 +60,7 @@ import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CallIcon from '@mui/icons-material/Call';
-import { Phone, Video, Info, MoreVertical, Eye, Clock, Smile } from 'lucide-react';
+import { Phone, Video, Info, MoreVertical, Eye, Clock, Smile, Feather } from 'lucide-react';
 
 const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const history = useHistory();
@@ -989,20 +989,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             return (
                                 <>
                                     <div className='d-flex align-items-center' style={{ gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden', marginRight: '8px' }}>
-                                        <Box display={{ base: "inline-block", md: "none" }} style={{ flexShrink: 0 }}>
-                                            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                                        <Box display={{ base: "flex", md: "none" }} mr={2}>
+                                            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}>
                                                 <IconButton
                                                     size="sm"
-                                                    icon={<ArrowBackIcon color="#E63946" fontSize="20px" />}
                                                     onClick={() => dispatch(delSelectedChat())}
-                                                    aria-label="Back to conversations"
+                                                    icon={<ArrowBackIcon style={{ fontSize: "18px", color: "#0F172A" }} />}
+                                                    aria-label="Back to chat list"
                                                     style={{
-                                                        background: "#FFF0F2",
+                                                        background: "#F8FAFC",
                                                         borderRadius: "12px",
-                                                        border: "1px solid #FFE3E6",
+                                                        border: "1px solid #E2E8F0",
                                                         width: "38px",
                                                         height: "38px",
-                                                        boxShadow: "0 2px 8px rgba(230, 57, 70, 0.1)"
+                                                        boxShadow: "0 2px 6px rgba(15, 23, 42, 0.04)"
                                                     }}
                                                 />
                                             </motion.div>
@@ -1013,10 +1013,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 cursor="pointer" 
                                                 src={getPicture(user, selectedChat.users)} 
                                                 name={getSender(user, selectedChat.users)} 
-                                                bg="#FFE3E6"
-                                                color="#E63946"
-                                                fontWeight="700"
-                                                style={{ border: "2px solid #FFE3E6" }}
+                                                bg="#0F172A !important"
+                                                color="#D4AF37 !important"
+                                                fontWeight="800"
+                                                style={{ border: "2px solid #D4AF37" }}
                                             />
                                             <span 
                                                 style={{
@@ -1032,7 +1032,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             />
                                         </div>
                                         <div className="d-flex flex-column justify-content-center" style={{ minWidth: 0, overflow: 'hidden' }}>
-                                            <p className="fw-bold fs-6 m-0" style={{ color: "#18181B", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                            <p className="fw-bold fs-6 m-0" style={{ color: "#0F172A", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                 {getSender(user, selectedChat.users)}
                                             </p>
                                             {isTargetOnline ? (
@@ -1041,7 +1041,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     Online
                                                 </span>
                                             ) : (
-                                                <span style={{ fontSize: "0.72rem", color: "#71717A", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                <span style={{ fontSize: "0.72rem", color: "#64748B", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                     <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block", flexShrink: 0 }}></span>
                                                     Last seen {formatLastSeenDate(targetLastSeen)}
                                                 </span>
@@ -1054,15 +1054,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 <IconButton
                                                     size="sm"
                                                     onClick={() => startVideoCall("voice")}
-                                                    icon={<Phone size={18} color="#E63946" />}
+                                                    icon={<Phone size={18} color="#D4AF37" />}
                                                     aria-label="Voice Call"
                                                     style={{
-                                                        background: "#FFFFFF",
+                                                        background: "rgba(212, 175, 55, 0.08)",
                                                         borderRadius: "12px",
-                                                        border: "1px solid #F1F1F4",
+                                                        border: "1px solid rgba(212, 175, 55, 0.3)",
                                                         width: "38px",
                                                         height: "38px",
-                                                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
+                                                        boxShadow: "0 2px 8px rgba(212, 175, 55, 0.1)"
                                                     }}
                                                 />
                                             </motion.div>
@@ -1075,12 +1075,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     icon={<Video size={18} color="#FFFFFF" />}
                                                     aria-label="Video Call"
                                                     style={{
-                                                        background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
+                                                        background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
                                                         borderRadius: "12px",
-                                                        border: "none",
+                                                        border: "1.5px solid rgba(212, 175, 55, 0.4)",
                                                         width: "38px",
                                                         height: "38px",
-                                                        boxShadow: "0 4px 14px rgba(230, 57, 70, 0.3)"
+                                                        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.2)"
                                                     }}
                                                 />
                                             </motion.div>
@@ -1943,7 +1943,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     }}
                                     aria-label="Send Message"
                                     style={{
-                                        background: "linear-gradient(135deg, #FF2A54 0%, #E60044 100%)",
+                                        background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
                                         borderRadius: "16px",
                                         width: "40px",
                                         height: "40px",
@@ -1951,15 +1951,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
-                                        boxShadow: "0 6px 20px rgba(255, 42, 84, 0.38)",
                                         border: "none",
                                         cursor: "pointer",
-                                        marginBottom: '1px',
-                                        touchAction: 'manipulation',
+                                        boxShadow: "0 4px 16px rgba(212, 175, 55, 0.4)",
+                                        color: "#FFFFFF",
+                                        flexShrink: 0,
                                         WebkitTapHighlightColor: 'transparent'
                                     }}
                                 >
-                                    <SendIcon style={{ fontSize: "18px", color: "#FFFFFF", marginLeft: "2px" }} />
+                                    <SendIcon style={{ fontSize: "19px" }} />
                                 </motion.button>
                             </div>
 
@@ -2216,92 +2216,92 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                         style={{ width: "100%", maxWidth: "520px" }}
                     >
                         <Box 
+                            d="flex"
+                            flexDir="column"
+                            alignItems="center"
+                            justifyContent="center"
                             p={{ base: 6, sm: 8 }} 
-                            borderRadius="32px" 
-                            bg="#FFFFFF" 
-                            border="1.5px solid #FFDAC8"
-                            className="vfx-pulse-glow"
-                            style={{ boxShadow: "0 25px 60px rgba(255, 107, 107, 0.12)", position: "relative" }}
+                            position="relative"
                         >
-                            <Box sx={{
-                                width: '84px',
-                                height: '84px',
-                                borderRadius: '28px',
-                                background: '#111827',
-                                border: '1px solid #E5E7EB',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                margin: '0 auto 1.5rem auto',
-                                boxShadow: '0 12px 30px rgba(17, 24, 39, 0.25)'
-                            }}>
-                                <span style={{ fontSize: '2.6rem', color: '#FFFFFF' }}>🪶</span>
-                            </Box>
+                            {/* Floating Concentric Glowing Rings & Badge */}
+                            <div style={{ position: "relative", marginBottom: "1.75rem" }}>
+                                <motion.div
+                                    animate={{ scale: [1, 1.25, 1], opacity: [0.35, 0.6, 0.35] }}
+                                    transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+                                    style={{
+                                        position: "absolute",
+                                        inset: "-20px",
+                                        borderRadius: "50%",
+                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(245, 158, 11, 0.05) 70%, transparent 100%)",
+                                        filter: "blur(18px)"
+                                    }}
+                                />
+                                <motion.div
+                                    animate={{ y: [0, -8, 0] }}
+                                    transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                                >
+                                    <Box sx={{
+                                        width: '84px',
+                                        height: '84px',
+                                        borderRadius: '28px',
+                                        background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 15px 35px rgba(212, 175, 55, 0.4)',
+                                        border: '3px solid #FFFFFF',
+                                        position: 'relative',
+                                        zIndex: 2
+                                    }}>
+                                        <Feather size={40} color="#FFFFFF" strokeWidth={2.2} />
+                                    </Box>
+                                </motion.div>
+                            </div>
 
                             <h2 style={{
-                                fontSize: "2.5rem",
-                                fontWeight: 800,
-                                color: "#111827",
+                                fontSize: "2rem",
+                                fontWeight: 900,
+                                color: "#0F172A",
                                 marginBottom: "0.5rem",
-                                letterSpacing: "-0.03em"
+                                letterSpacing: "-0.03em",
+                                fontFamily: "'Outfit', sans-serif"
                             }}>
-                                Welcome to <span className="gradient-text">AURA</span>
+                                No Chat Selected
                             </h2>
 
                             <p style={{
-                                color: "#5C5248",
-                                fontSize: "0.98rem",
+                                color: "#94A3B8",
+                                fontSize: "0.95rem",
                                 lineHeight: 1.6,
-                                marginBottom: "1.75rem"
+                                marginBottom: "2rem",
+                                fontFamily: "'Inter', sans-serif",
+                                maxWidth: "340px"
                             }}>
-                                Experience next-generation messaging, crystal-clear 4K WebRTC video calling, and instant P2P security.
+                                Choose a chat from your list or search a friend by username to start messaging.
                             </p>
 
-                            {/* Ultra Attractive Feature Badges */}
-                            <Box d="flex" justifyContent="center" gap={2} mb={4} flexWrap="wrap">
-                                <span style={{
-                                    fontSize: "0.75rem",
-                                    fontWeight: 700,
-                                    color: "#FF6B6B",
-                                    background: "#FFEADF",
-                                    border: "1px solid #FFDAC8",
-                                    padding: "6px 14px",
-                                    borderRadius: "99px"
-                                }}>📹 4K HD Video Calls</span>
-                                <span style={{
-                                    fontSize: "0.75rem",
-                                    fontWeight: 700,
-                                    color: "#FF8E53",
-                                    background: "#FFF4EE",
-                                    border: "1px solid #FFDAC8",
-                                    padding: "6px 14px",
-                                    borderRadius: "99px"
-                                }}>🔒 End-to-End P2P</span>
-                                <span style={{
-                                    fontSize: "0.75rem",
-                                    fontWeight: 700,
-                                    color: "#1E1B18",
-                                    background: "#FFEADF",
-                                    border: "1px solid #FFDAC8",
-                                    padding: "6px 14px",
-                                    borderRadius: "99px"
-                                }}>⚡ 0ms Socket Sync</span>
-                            </Box>
-
-                            <Button
-                                onClick={onOpenDrawer}
-                                size="lg"
-                                className="btn-primary-aura"
-                                leftIcon={<SearchIcon />}
-                                style={{
-                                    borderRadius: '16px',
-                                    padding: '0 28px',
-                                    height: '48px',
-                                    fontSize: '0.95rem'
-                                }}
-                            >
-                                Start Messaging
-                            </Button>
+                            <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                    onClick={onOpenDrawer}
+                                    size="lg"
+                                    leftIcon={<SearchIcon style={{ color: "#FFFFFF" }} />}
+                                    style={{
+                                        background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
+                                        color: "#FFFFFF",
+                                        borderRadius: '99px',
+                                        padding: '0 32px',
+                                        height: '48px',
+                                        fontSize: '0.92rem',
+                                        fontWeight: 800,
+                                        fontFamily: "'Outfit', sans-serif",
+                                        border: "none",
+                                        boxShadow: "0 10px 25px rgba(212, 175, 55, 0.35)",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Search & Start Chat
+                                </Button>
+                            </motion.div>
                         </Box>
                     </motion.div>
                 </Box>

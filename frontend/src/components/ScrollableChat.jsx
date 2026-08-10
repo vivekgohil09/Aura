@@ -294,9 +294,11 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
                       display: 'inline-block',
                       width: 'auto',
                       background: isMe
-                        ? 'linear-gradient(135deg, #FF2A54 0%, #E60044 100%)'
-                        : 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
+                        ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
+                        : '#FFFFFF',
                       color: isMe ? '#FFFFFF' : '#0F172A',
+                      border: isMe ? '1.5px solid rgba(212, 175, 55, 0.45)' : '1.5px solid #F1F5F9',
+                      boxShadow: isMe ? '0 4px 18px rgba(15, 23, 42, 0.15)' : '0 2px 10px rgba(15, 23, 42, 0.03)',
                       borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
                       padding: '12px 18px',
                       fontSize: '0.94rem',

@@ -17,6 +17,63 @@ const ENDPOINT = window.location.hostname === "localhost" || window.location.hos
   : "https://aura-vdcq.onrender.com";
 let globalSocket = null;
 
+// ── Modern Minimal White Luxury Ambient VFX Background Component (ChatPage) ──
+function AmbientVFXBackground() {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 0,
+        overflow: 'hidden',
+        background: '#F8FAFC'
+      }}
+    >
+      {/* Top Left Golden Ambient Glow */}
+      <motion.div
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.35, 0.55, 0.35],
+          x: [0, 20, 0],
+          y: [0, -15, 0]
+        }}
+        transition={{ repeat: Infinity, duration: 9, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: '-120px',
+          left: '-80px',
+          width: '520px',
+          height: '520px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(245, 158, 11, 0.05) 55%, transparent 75%)',
+          filter: 'blur(50px)'
+        }}
+      />
+      {/* Bottom Right Champagne Soft Radial */}
+      <motion.div
+        animate={{
+          scale: [1, 1.18, 1],
+          opacity: [0.3, 0.5, 0.3],
+          x: [0, -25, 0],
+          y: [0, 20, 0]
+        }}
+        transition={{ repeat: Infinity, duration: 11, ease: 'easeInOut', delay: 1 }}
+        style={{
+          position: 'absolute',
+          bottom: '-140px',
+          right: '-100px',
+          width: '580px',
+          height: '580px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(212, 175, 55, 0.04) 60%, transparent 80%)',
+          filter: 'blur(60px)'
+        }}
+      />
+    </Box>
+  );
+}
+
 const MotionBox = motion(Box);
 
 const ChatPage = () => {
@@ -36,13 +93,26 @@ const ChatPage = () => {
 
     if (!globalSocket) {
       globalSocket = io(ENDPOINT, { transports: ["websocket", "polling"] });
+      window.__auraSocket = globalSocket;
       globalSocket.emit("setup", {
         ...userInfo,
         token: jwtToken
       });
       globalSocket.on("connected", () => console.log("Global socket connected"));
       globalSocket.on("connect_error", err => console.error("Socket error:", err.message));
+    } else {
+      window.__auraSocket = globalSocket;
     }
+
+    // Load stored pending chat requests into Redux on mount
+    try {
+      const myId = userInfo._id || userInfo.id;
+      const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+      const storedNotifs = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (storedNotifs && storedNotifs.length > 0) {
+        dispatch(setNotification(storedNotifs));
+      }
+    } catch (e) {}
 
     // Incoming call & chat requests — always listen globally
     globalSocket.off("call-user").on("call-user", (data) => {
@@ -67,19 +137,30 @@ const ChatPage = () => {
           senderPic: data.sender.pic || ""
         };
 
-        const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+        // Load stored requests from local storage
+        try {
+          const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+          const storedNotifs = JSON.parse(localStorage.getItem(storageKey) || "[]");
+          if (storedNotifs && storedNotifs.length > 0) {
+            dispatch(setNotification(storedNotifs));
+          }
+        } catch (e) {}
 
         try {
+          const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
           const storedNotifs = JSON.parse(localStorage.getItem(storageKey) || "[]");
-          if (!storedNotifs.some(n => n.senderId === senderId)) {
+          if (!storedNotifs.some(n => String(n.senderId) === String(senderId))) {
             localStorage.setItem(storageKey, JSON.stringify([notifItem, ...storedNotifs]));
           }
         } catch (e) {}
 
-        const currentNotifs = window.__auraNotifs || [];
-        if (!currentNotifs.some(n => n.senderId === senderId)) {
-          dispatch(setNotification([notifItem, ...currentNotifs]));
-        }
+        dispatch(setNotification([notifItem, ...(window.__auraNotifs || [])]));
+
+        toast.info(`📩 New Chat Request from @${notifItem.senderUsername || notifItem.senderName}!`, {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: true
+        });
       }
     });
 
@@ -108,20 +189,55 @@ const ChatPage = () => {
   }, [dispatch]);
 
   const notification = useSelector(state => state.notification) || [];
+  const chatsList = useSelector(state => state.chats) || [];
 
-  // ── Hydrate stored received requests into Redux state on page load ─────────────
   useEffect(() => {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const myId = userInfo._id || userInfo.id;
-      const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
-      const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      if (stored.length > 0) {
-        const existingNotifs = window.__auraNotifs || [];
-        const merged = [...stored, ...existingNotifs.filter(n => !stored.some(s => s.senderId === n.senderId))];
-        dispatch(setNotification(merged));
-      }
-    } catch (e) {}
+    window.__auraNotifs = notification;
+  }, [notification]);
+
+  useEffect(() => {
+    const fetchPendingNotifications = async () => {
+      try {
+        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const myId = userInfo._id || userInfo.id;
+        const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
+        const storedLocal = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+        // Option A: Fetch from Backend Database
+        let dbNotifs = [];
+        try {
+          const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+          const { data } = await axios.get("/api/chat/requests/pending", config);
+          if (Array.isArray(data)) {
+            dbNotifs = data.map(req => ({
+              senderId: req.sender.id || req.sender._id,
+              senderName: req.sender.name,
+              senderPic: req.sender.pic,
+              senderUsername: req.sender.username,
+              requestId: req.id,
+              isRequest: true,
+              timestamp: req.createdAt
+            }));
+          }
+        } catch (dbErr) {}
+
+        // Combine DB pending requests with Option B LocalSync fallback
+        const combined = [...dbNotifs];
+        storedLocal.forEach(localNotif => {
+          if (!combined.some(c => String(c.senderId) === String(localNotif.senderId))) {
+            combined.push(localNotif);
+          }
+        });
+
+        if (combined.length > 0) {
+          const existingNotifs = window.__auraNotifs || [];
+          const merged = [...combined, ...existingNotifs.filter(n => !combined.some(s => s.senderId === n.senderId))];
+          dispatch(setNotification(merged));
+        }
+      } catch (e) {}
+    };
+
+    fetchPendingNotifications();
   }, [dispatch]);
 
   const chats = useSelector(state => state.chats) || [];
@@ -169,11 +285,13 @@ const ChatPage = () => {
       height: "100vh",
       maxHeight: "100vh",
       overflow: "hidden",
-      background: "#FAFAF9",
-      color: "#18181B",
+      background: "#F8FAFC",
+      color: "#0F172A",
       display: "flex",
-      flexDirection: "column"
+      flexDirection: "column",
+      position: "relative"
     }}>
+      <AmbientVFXBackground />
       {(user || localStorage.getItem("userInfo")) && <SideBar onOpenDrawer={onOpenDrawer} />}
 
       <Box

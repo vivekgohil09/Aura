@@ -30,6 +30,78 @@ import { Feather } from "lucide-react";
 
 import confetti from 'canvas-confetti';
 import { encryptMessage, decryptMessage } from '../config/dataCompressor';
+import * as THREE from 'three';
+
+// ── Modern Minimal White Luxury Ambient VFX Background Component ──
+function AmbientVFXBackground() {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 0,
+        overflow: 'hidden',
+        background: '#F8FAFC'
+      }}
+    >
+      {/* Top Left Golden Ambient Glow */}
+      <motion.div
+        animate={{
+          scale: [1, 1.25, 1],
+          opacity: [0.35, 0.55, 0.35],
+          x: [0, 20, 0],
+          y: [0, -15, 0]
+        }}
+        transition={{ repeat: Infinity, duration: 9, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: '-120px',
+          left: '-80px',
+          width: '520px',
+          height: '520px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(245, 158, 11, 0.05) 55%, transparent 75%)',
+          filter: 'blur(50px)'
+        }}
+      />
+      {/* Bottom Right Champagne Soft Radial */}
+      <motion.div
+        animate={{
+          scale: [1, 1.18, 1],
+          opacity: [0.3, 0.5, 0.3],
+          x: [0, -25, 0],
+          y: [0, 20, 0]
+        }}
+        transition={{ repeat: Infinity, duration: 11, ease: 'easeInOut', delay: 1 }}
+        style={{
+          position: 'absolute',
+          bottom: '-140px',
+          right: '-100px',
+          width: '580px',
+          height: '580px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(212, 175, 55, 0.04) 60%, transparent 80%)',
+          filter: 'blur(60px)'
+        }}
+      />
+      {/* Center Subtle Specular Light Beam */}
+      <motion.div
+        animate={{ opacity: [0.2, 0.4, 0.2] }}
+        transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: '30%',
+          left: '20%',
+          right: '20%',
+          height: '350px',
+          background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9) 0%, transparent 70%)',
+          filter: 'blur(40px)'
+        }}
+      />
+    </Box>
+  );
+}
 
 const url = "http://localhost:8000";
 
@@ -353,10 +425,13 @@ export default function LoginPage() {
 
   return (
     <ThemeProvider theme={theme}>
+      <AmbientVFXBackground />
       <Grid container component="main" sx={{
         minHeight: 'calc(100vh - 80px)',
-        background: '#FFF9F2',
-        backgroundImage: 'radial-gradient(at 0% 0%, rgba(246, 211, 101, 0.22) 0px, transparent 55%), radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.08) 0px, transparent 50%)'
+        position: 'relative',
+        zIndex: 1,
+        background: 'transparent',
+        backgroundImage: 'radial-gradient(at 10% 10%, rgba(212, 175, 55, 0.12) 0px, transparent 55%), radial-gradient(at 90% 90%, rgba(245, 158, 11, 0.08) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.8) 0px, transparent 100%)'
       }}>
         <CssBaseline />
         <Grid
@@ -366,7 +441,7 @@ export default function LoginPage() {
           md={7}
           className="card-3d-wrapper"
           sx={{
-            background: 'linear-gradient(145deg, #FFF9F2 0%, #FEF3E2 40%, #FAF0DF 100%)',
+            background: 'transparent',
             display: { xs: 'none', md: 'flex' },
             flexDirection: 'column',
             justifyContent: 'center',
@@ -376,16 +451,16 @@ export default function LoginPage() {
             overflow: 'hidden'
           }}
         >
-          {/* Floating Orbs & Background Rings */}
+          {/* Floating Luxury Orbs & Background Rings */}
           <motion.div
             animate={{ y: [0, -20, 0], x: [0, 10, 0], scale: [1, 1.1, 1] }}
             transition={{ repeat: Infinity, duration: 7, ease: "easeInOut" }}
             style={{
               position: 'absolute', top: '8%', left: '6%',
-              width: 120, height: 120,
+              width: 140, height: 140,
               borderRadius: '50%',
-              background: 'radial-gradient(circle at 35% 35%, rgba(255, 142, 83, 0.55), rgba(255, 107, 107, 0.2) 60%, transparent)',
-              filter: 'blur(18px)',
+              background: 'radial-gradient(circle at 35% 35%, rgba(212, 175, 55, 0.25), rgba(245, 158, 11, 0.05) 60%, transparent)',
+              filter: 'blur(22px)',
               pointerEvents: 'none'
             }}
           />
@@ -394,47 +469,42 @@ export default function LoginPage() {
             transition={{ repeat: Infinity, duration: 9, ease: "easeInOut", delay: 1.5 }}
             style={{
               position: 'absolute', bottom: '10%', right: '8%',
-              width: 160, height: 160,
+              width: 180, height: 180,
               borderRadius: '50%',
-              background: 'radial-gradient(circle at 40% 40%, rgba(255, 107, 107, 0.4), rgba(255, 220, 180, 0.2) 60%, transparent)',
-              filter: 'blur(28px)',
+              background: 'radial-gradient(circle at 40% 40%, rgba(15, 23, 42, 0.08), rgba(212, 175, 55, 0.08) 60%, transparent)',
+              filter: 'blur(30px)',
               pointerEvents: 'none'
             }}
           />
           <motion.div
             animate={{ rotate: [0, 360] }}
-            transition={{ repeat: Infinity, duration: 18, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
             style={{
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 420, height: 420,
+              width: 440, height: 440,
               borderRadius: '50%',
-              border: '1.5px solid rgba(255, 107, 107, 0.1)',
-              boxShadow: '0 0 40px rgba(255, 107, 107, 0.05) inset',
+              border: '1.5px solid rgba(212, 175, 55, 0.2)',
+              boxShadow: '0 0 30px rgba(212, 175, 55, 0.04) inset',
               pointerEvents: 'none'
             }}
           />
           <motion.div
             animate={{ rotate: [360, 0] }}
-            transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 14, ease: "linear" }}
             style={{
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 280, height: 280,
+              width: 290, height: 290,
               borderRadius: '50%',
-              border: '1px dashed rgba(255, 142, 83, 0.15)',
+              border: '1px dashed rgba(212, 175, 55, 0.25)',
               pointerEvents: 'none'
             }}
           />
           <motion.div
             animate={{ y: [0, -14, 0], opacity: [0.6, 1, 0.6] }}
             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-            style={{ position: 'absolute', top: '18%', right: '14%', width: 10, height: 10, borderRadius: '50%', background: '#FF8E53', boxShadow: '0 0 12px rgba(255, 142, 83, 0.6)', pointerEvents: 'none' }}
-          />
-          <motion.div
-            animate={{ y: [0, 12, 0], opacity: [0.5, 0.9, 0.5] }}
-            transition={{ repeat: Infinity, duration: 5.5, ease: "easeInOut", delay: 1 }}
-            style={{ position: 'absolute', bottom: '22%', left: '12%', width: 7, height: 7, borderRadius: '50%', background: '#FF6B6B', boxShadow: '0 0 10px rgba(255, 107, 107, 0.5)', pointerEvents: 'none' }}
+            style={{ position: 'absolute', top: '18%', right: '14%', width: 10, height: 10, borderRadius: '50%', background: '#D4AF37', boxShadow: '0 0 14px rgba(212, 175, 55, 0.8)', pointerEvents: 'none' }}
           />
           <motion.div
             initial={{ opacity: 0, x: -40, scale: 0.92 }}
@@ -447,42 +517,27 @@ export default function LoginPage() {
               transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
               style={{ width: '100%' }}
             >
-              <Box className="card-3d-tilt vfx-pulse-glow" sx={{
+              <Box className="card-3d-tilt" sx={{
                 position: 'relative',
                 zIndex: 2,
                 textAlign: 'center',
                 width: '100%',
                 p: { md: 4, lg: 5 },
-                borderRadius: '24px',
-                background: 'rgba(255, 255, 255, 0.92)',
-                backdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 142, 83, 0.15)',
-                boxShadow: '0 18px 50px rgba(255, 107, 107, 0.09), 0 6px 16px rgba(61, 43, 38, 0.04)',
+                borderRadius: '28px',
+                background: 'rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                boxShadow: '0 20px 60px rgba(15, 23, 42, 0.08), 0 0 25px rgba(212, 175, 55, 0.12)',
                 overflow: 'hidden'
               }}
               >
-                <Box sx={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent)', borderRadius: '2px', zIndex: 3 }} />
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.85, 0.5] }}
-                  transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                  style={{
-                    position: 'absolute',
-                    top: '-25%',
-                    left: '5%',
-                    width: '90%',
-                    height: '90%',
-                    background: 'radial-gradient(circle, rgba(255, 107, 107, 0.14) 0%, rgba(255, 142, 83, 0.08) 50%, transparent 80%)',
-                    filter: 'blur(35px)',
-                    zIndex: -1,
-                    pointerEvents: 'none'
-                  }}
-                />
-
+                <Box sx={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', borderRadius: '2px', zIndex: 3 }} />
+                
                 <motion.div
                   animate={{
                     y: [0, -14, 0],
                     rotate: [-8, 8, -8],
-                    rotateY: [0, 20, -20, 0],
                     scale: [1, 1.05, 1]
                   }}
                   transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
@@ -492,11 +547,14 @@ export default function LoginPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 1rem auto',
-                    filter: 'drop-shadow(0 10px 24px rgba(212, 175, 55, 0.5)) drop-shadow(0 4px 10px rgba(245, 158, 11, 0.3))',
-                    transformStyle: 'preserve-3d'
+                    width: '68px',
+                    height: '68px',
+                    borderRadius: '20px',
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                    boxShadow: '0 10px 30px rgba(212, 175, 55, 0.4)'
                   }}
                 >
-                  <Feather size={54} color="#D4AF37" strokeWidth={1.5} />
+                  <Feather size={36} color="#FFFFFF" strokeWidth={2.2} />
                 </motion.div>
 
                 <h1 style={{
@@ -505,51 +563,43 @@ export default function LoginPage() {
                   marginBottom: '0.35rem',
                   fontWeight: 900,
                   fontFamily: "'Outfit', sans-serif",
-                  background: 'linear-gradient(135deg, #0F172A 0%, #D4AF37 60%, #F59E0B 100%)',
+                  background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.05em'
+                  letterSpacing: '-0.03em'
                 }}>AURA</h1>
-                <p style={{ color: '#D4AF37', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem', marginBottom: '1.2rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Premier Messaging</p>
+                <p style={{ color: '#D4AF37', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '0.75rem', marginBottom: '1.4rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Pristine Encrypted Messaging</p>
 
                 <Grid container spacing={1.5} justifyContent="center">
                   <Grid item xs={6}>
-                    <motion.div
-                      whileHover={{ y: -4, scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
+                    <motion.div whileHover={{ y: -4, scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                       <Box sx={{
-                        p: 1.5,
-                        borderRadius: '12px',
-                        background: '#FFF4EE',
-                        border: '1px solid rgba(255, 107, 107, 0.25)',
-                        color: '#FF6B6B',
+                        p: 1.8,
+                        borderRadius: '16px',
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        color: '#0F172A',
                         textAlign: 'center',
-                        boxShadow: '0 2px 8px rgba(255, 107, 107, 0.08)'
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)'
                       }}>
-                        <div style={{ fontSize: '1.1rem', marginBottom: '3px' }}>⚡</div>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>Ultra-Fast</div>
+                        <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>⚡</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>Ultra-Fast</div>
                       </Box>
                     </motion.div>
                   </Grid>
                   <Grid item xs={6}>
-                    <motion.div
-                      whileHover={{ y: -4, scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
+                    <motion.div whileHover={{ y: -4, scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                       <Box sx={{
-                        p: 1.5,
-                        borderRadius: '12px',
-                        background: '#FFEADF',
-                        border: '1px solid rgba(255, 142, 83, 0.3)',
-                        color: '#1E1B18',
+                        p: 1.8,
+                        borderRadius: '16px',
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        color: '#0F172A',
                         textAlign: 'center',
-                        boxShadow: '0 2px 8px rgba(255, 142, 83, 0.08)'
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)'
                       }}>
-                        <div style={{ fontSize: '1.1rem', marginBottom: '3px' }}>🔒</div>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>Encrypted</div>
+                        <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>🔒</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>Encrypted</div>
                       </Box>
                     </motion.div>
                   </Grid>
@@ -567,8 +617,8 @@ export default function LoginPage() {
           elevation={0}
           className="page-animate"
           sx={{
-            background: { xs: '#FFF9F2', md: '#FFFDF9' },
-            borderLeft: { xs: 'none', md: '1px solid rgba(61, 43, 38, 0.1)' },
+            background: 'transparent',
+            borderLeft: { xs: 'none', md: '1px solid rgba(212, 175, 55, 0.2)' },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -583,35 +633,13 @@ export default function LoginPage() {
           {/* Mobile-only VFX */}
           <Box sx={{ display: { xs: 'block', md: 'none' }, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 0 }}>
             <motion.div
-              animate={{ y: [0, -16, 0], rotate: [-8, 8, -8], scale: [1, 1.06, 1] }}
-              transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
-              style={{
-                position: 'absolute', top: '-20px', left: '-25px',
-                opacity: 0.08,
-                filter: 'drop-shadow(0 8px 20px rgba(255, 107, 107, 0.4))'
-              }}
-            >
-              <Feather size={200} color="#FF6B6B" strokeWidth={1} />
-            </motion.div>
-            <motion.div
-              animate={{ y: [0, 12, 0], rotate: [8, -8, 8], scale: [1, 1.04, 1] }}
-              transition={{ repeat: Infinity, duration: 7, ease: 'easeInOut', delay: 1 }}
-              style={{
-                position: 'absolute', bottom: '-20px', right: '-25px',
-                opacity: 0.06,
-                filter: 'drop-shadow(0 8px 20px rgba(255, 142, 83, 0.3))'
-              }}
-            >
-              <Feather size={150} color="#FF8E53" strokeWidth={1} />
-            </motion.div>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+              animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.25, 0.1] }}
               transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
               style={{
                 position: 'absolute', bottom: '15%', left: '5%',
-                width: 110, height: 110, borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255, 142, 83, 0.6), transparent 70%)',
-                filter: 'blur(18px)'
+                width: 140, height: 140, borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(212, 175, 55, 0.4), transparent 70%)',
+                filter: 'blur(25px)'
               }}
             />
           </Box>
@@ -625,23 +653,24 @@ export default function LoginPage() {
             <Box
               sx={{
                 width: '100%',
-                maxWidth: '360px',
+                maxWidth: '400px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                background: 'rgba(255, 255, 255, 0.96)',
-                backdropFilter: 'blur(16px)',
-                p: { xs: 3, sm: 4 },
-                borderRadius: '20px',
-                border: '1px solid rgba(61, 43, 38, 0.08)',
-                boxShadow: '0 10px 32px rgba(61, 43, 38, 0.07)',
+                background: 'rgba(255, 255, 255, 0.88)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                p: { xs: 3.5, sm: 4.5 },
+                borderRadius: '28px',
+                border: '1.5px solid rgba(212, 175, 55, 0.35)',
+                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.08), 0 0 20px rgba(212, 175, 55, 0.1)',
                 position: 'relative',
                 zIndex: 1
               }}
             >
-              <h1 style={{ fontSize: '1.9rem', marginBottom: '0.15rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif", color: '#3D2B26', letterSpacing: '-0.03em' }}>Welcome Back</h1>
-              <Typography variant="body2" sx={{ color: '#806C65', mb: 2.5, fontFamily: "'Inter', sans-serif", fontSize: '0.82rem' }}>
-                Sign in to your <strong style={{ color: '#E63946' }}>AURA</strong> account
+              <h1 style={{ fontSize: '2.1rem', marginBottom: '0.25rem', fontWeight: 900, fontFamily: "'Outfit', sans-serif", color: '#0F172A', letterSpacing: '-0.03em' }}>Welcome Back</h1>
+              <Typography variant="body2" sx={{ color: '#64748B', mb: 3, fontFamily: "'Inter', sans-serif", fontSize: '0.88rem' }}>
+                Sign in to your <strong style={{ color: '#D4AF37' }}>AURA</strong> luxury workspace
               </Typography>
 
               <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
@@ -661,26 +690,27 @@ export default function LoginPage() {
                     '& .MuiOutlinedInput-root': {
                       color: '#0F172A',
                       backgroundColor: '#FFFFFF',
-                      borderRadius: '12px',
+                      borderRadius: '16px',
                       fontFamily: "'Inter', sans-serif",
-                      fontWeight: 500,
+                      fontWeight: 600,
                       '& fieldset': {
-                        borderColor: 'rgba(212, 175, 55, 0.25)',
-                        borderWidth: '1px'
+                        borderColor: 'rgba(226, 232, 240, 0.9)',
+                        borderWidth: '1.5px'
                       },
                       '&:hover fieldset': {
                         borderColor: '#D4AF37'
                       },
                       '&.Mui-focused fieldset': {
                         borderColor: '#D4AF37',
-                        borderWidth: '1.5px',
-                        boxShadow: '0 4px 14px rgba(212, 175, 55, 0.18)'
+                        borderWidth: '2px',
+                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
                       }
                     },
                     '& .MuiInputLabel-root': {
                       color: '#64748B',
                       fontFamily: "'Inter', sans-serif",
                       fontSize: '0.9rem',
+                      fontWeight: 500,
                       '&.Mui-focused': {
                         color: '#D4AF37'
                       }
@@ -703,26 +733,27 @@ export default function LoginPage() {
                     '& .MuiOutlinedInput-root': {
                       color: '#0F172A',
                       backgroundColor: '#FFFFFF',
-                      borderRadius: '12px',
+                      borderRadius: '16px',
                       fontFamily: "'Inter', sans-serif",
-                      fontWeight: 500,
+                      fontWeight: 600,
                       '& fieldset': {
-                        borderColor: 'rgba(212, 175, 55, 0.25)',
-                        borderWidth: '1px'
+                        borderColor: 'rgba(226, 232, 240, 0.9)',
+                        borderWidth: '1.5px'
                       },
                       '&:hover fieldset': {
                         borderColor: '#D4AF37'
                       },
                       '&.Mui-focused fieldset': {
                         borderColor: '#D4AF37',
-                        borderWidth: '1.5px',
-                        boxShadow: '0 4px 14px rgba(212, 175, 55, 0.18)'
+                        borderWidth: '2px',
+                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
                       }
                     },
                     '& .MuiInputLabel-root': {
                       color: '#64748B',
                       fontFamily: "'Inter', sans-serif",
                       fontSize: '0.9rem',
+                      fontWeight: 500,
                       '&.Mui-focused': {
                         color: '#D4AF37'
                       }
@@ -730,21 +761,24 @@ export default function LoginPage() {
                   }}
                 />
 
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     style={{
                       background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                       color: '#FFFFFF',
+                      border: '1px solid rgba(212, 175, 55, 0.5)',
                       fontWeight: 800,
                       fontSize: '1rem',
-                      padding: '12px',
-                      borderRadius: '12px',
-                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.25)'
+                      padding: '14px',
+                      borderRadius: '16px',
+                      boxShadow: '0 10px 28px rgba(15, 23, 42, 0.2)',
+                      fontFamily: "'Outfit', sans-serif",
+                      letterSpacing: '0.04em'
                     }}
                     type="submit"
                     fullWidth
                     variant="contained"
-                    sx={{ mt: 3, mb: 1.5, textTransform: 'none' }}
+                    sx={{ mt: 3, mb: 2, textTransform: 'none' }}
                   >
                     {loading ? (
                       <Box sx={{ display: 'flex' }}>
@@ -773,12 +807,13 @@ export default function LoginPage() {
                     }
                     style={{
                       background: '#FFFFFF',
-                      border: '1px solid #E2E8F0',
-                      color: '#1A1D20',
-                      fontWeight: 600,
-                      borderRadius: '12px',
-                      padding: '10px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                      border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                      color: '#0F172A',
+                      fontWeight: 700,
+                      borderRadius: '16px',
+                      padding: '12px',
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+                      fontFamily: "'Inter', sans-serif"
                     }}
                     sx={{ mb: 3, textTransform: 'none' }}
                   >
@@ -790,25 +825,24 @@ export default function LoginPage() {
                     <Link to="/change-password" style={{
                       cursor: "pointer",
                       textDecoration: "none",
-                      color: "#E63946",
+                      color: "#D4AF37",
                       fontSize: "0.875rem",
-                      fontWeight: 600,
-                      fontFamily: "'Inter', sans-serif",
-                      transition: "color 0.2s"
+                      fontWeight: 700,
+                      fontFamily: "'Inter', sans-serif"
                     }}>
                       Forgot password?
                     </Link>
                   </Grid>
                   <Grid item xs={12} sm="auto" sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-                    <Typography variant="body2" component="span" sx={{ color: '#806C65', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', mr: 0.5 }}>
+                    <Typography variant="body2" component="span" sx={{ color: '#64748B', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', mr: 0.5 }}>
                       Don't have an account?
                     </Typography>
                     <Link to="/signup" style={{
                       cursor: "pointer",
                       textDecoration: "none",
-                      color: "#E63946",
+                      color: "#0F172A",
                       fontSize: "0.875rem",
-                      fontWeight: 700,
+                      fontWeight: 800,
                       fontFamily: "'Inter', sans-serif"
                     }}>
                       Sign Up

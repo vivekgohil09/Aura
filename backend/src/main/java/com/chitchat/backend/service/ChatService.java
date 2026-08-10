@@ -19,6 +19,53 @@ public class ChatService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.chitchat.backend.repository.ChatRequestRepository chatRequestRepository;
+
+    public com.chitchat.backend.model.ChatRequest sendChatRequest(String targetUserId, User sender) {
+        if (targetUserId == null || targetUserId.isEmpty()) {
+            throw new RuntimeException("Target user ID is required");
+        }
+        User receiver = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        Optional<com.chitchat.backend.model.ChatRequest> existing = chatRequestRepository
+                .findBySenderAndReceiverAndStatus(sender, receiver, "PENDING");
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        com.chitchat.backend.model.ChatRequest request = com.chitchat.backend.model.ChatRequest.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .status("PENDING")
+                .build();
+        return chatRequestRepository.save(request);
+    }
+
+    public List<com.chitchat.backend.model.ChatRequest> getPendingRequests(User receiver) {
+        return chatRequestRepository.findByReceiverAndStatus(receiver, "PENDING");
+    }
+
+    public Chat respondToRequest(String requestId, String action, User currentUser) {
+        com.chitchat.backend.model.ChatRequest request = chatRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (!request.getReceiver().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized action");
+        }
+
+        if ("ACCEPT".equalsIgnoreCase(action)) {
+            request.setStatus("ACCEPTED");
+            chatRequestRepository.save(request);
+            return accessChat(request.getSender().getId(), currentUser);
+        } else {
+            request.setStatus("REJECTED");
+            chatRequestRepository.save(request);
+            return null;
+        }
+    }
+
     public Chat accessChat(String targetUserId, User currentUser) {
         if (targetUserId == null || targetUserId.trim().isEmpty()) {
             throw new RuntimeException("UserId param not sent with request");

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Container, Typography, Grid, Link as MuiLink, createTheme, ThemeProvider } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Shield, Heart } from 'lucide-react';
+import { Feather, Sparkles, Heart } from 'lucide-react';
 
 const defaultTheme = createTheme();
 
@@ -12,13 +12,14 @@ export default function Footer() {
       <Box
         component="footer"
         sx={{
-          backgroundColor: '#F3F0E6',
-          borderTop: '1px solid rgba(236, 233, 225, 0.9)',
-          color: '#555E58',
-          pt: 5,
+          backgroundColor: '#FFFFFF',
+          borderTop: '1px solid rgba(212, 175, 55, 0.25)',
+          color: '#64748B',
+          pt: 6,
           pb: 4,
           position: 'relative',
-          zIndex: 10
+          zIndex: 10,
+          boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.02)'
         }}
       >
         <Container maxWidth="xl">
@@ -27,69 +28,72 @@ export default function Footer() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '10px',
-                    background: 'linear-gradient(135deg, #E7F1EE 0%, #F7F0DF 100%)',
-                    border: '1px solid #E5E1D8',
+                    width: 38,
+                    height: 38,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    boxShadow: '0 6px 18px rgba(212, 175, 55, 0.35)'
                   }}
                 >
-                  <Sparkles size={16} color="#4F8A82" />
+                  <Feather size={20} color="#FFFFFF" strokeWidth={2} />
                 </Box>
                 <Typography
                   variant="h6"
                   sx={{
-                    fontWeight: 800,
-                    fontSize: '1.25rem',
-                    letterSpacing: '-0.02em',
-                    color: '#303633'
+                    fontFamily: "'Outfit', sans-serif",
+                    fontWeight: 900,
+                    fontSize: '1.5rem',
+                    letterSpacing: '-0.03em',
+                    background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
                   }}
                 >
-                  Aura
+                  AURA
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ color: '#707873', maxWidth: 320, lineHeight: 1.6 }}>
-                A modern, fast, and secure real-time messaging application designed for effortless communication.
+              <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 320, lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>
+                Next-generation real-time encrypted messaging app crafted with pristine white luxury aesthetics & instant socket speed.
               </Typography>
             </Grid>
 
             <Grid item xs={6} md={2}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#303633', mb: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', mb: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem' }}>
                 Quick Links
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link to="/login" style={{ textDecoration: 'none', color: '#4F8A82', fontSize: '0.875rem', fontWeight: 600 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, fontFamily: "'Inter', sans-serif" }}>
+                <Link to="/login" style={{ textDecoration: 'none', color: '#D4AF37', fontSize: '0.875rem', fontWeight: 700 }}>
                   Sign In
                 </Link>
-                <Link to="/signup" style={{ textDecoration: 'none', color: '#4F8A82', fontSize: '0.875rem', fontWeight: 600 }}>
+                <Link to="/signup" style={{ textDecoration: 'none', color: '#D4AF37', fontSize: '0.875rem', fontWeight: 700 }}>
                   Sign Up
                 </Link>
-                <Link to="/change-password" style={{ textDecoration: 'none', color: '#4F8A82', fontSize: '0.875rem', fontWeight: 600 }}>
+                <Link to="/change-password" style={{ textDecoration: 'none', color: '#D4AF37', fontSize: '0.875rem', fontWeight: 700 }}>
                   Reset Password
                 </Link>
               </Box>
             </Grid>
 
             <Grid item xs={6} md={3}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#303633', mb: 1.5 }}>
-                Security & Privacy
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', mb: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem' }}>
+                Security & Integrity
               </Typography>
-              <Typography variant="body2" sx={{ color: '#707873', lineHeight: 1.6, fontSize: '0.85rem' }}>
-                ✦ End-to-end communication safeguards<br />
-                ✦ Modern JWT Token authentication<br />
-                ✦ Cloud infrastructure ready
+              <Typography variant="body2" sx={{ color: '#64748B', lineHeight: 1.7, fontSize: '0.85rem', fontFamily: "'Inter', sans-serif" }}>
+                ✦ End-to-end encrypted payload protocol<br />
+                ✦ Dynamic JWT authentication security<br />
+                ✦ Always-on high availability cluster
               </Typography>
             </Grid>
           </Grid>
 
           <Box
             sx={{
-              mt: 4,
+              mt: 5,
               pt: 3,
-              borderTop: '1px solid rgba(210, 205, 195, 0.4)',
+              borderTop: '1px solid rgba(226, 232, 240, 0.8)',
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',
@@ -97,14 +101,14 @@ export default function Footer() {
               gap: 2
             }}
           >
-            <Typography variant="caption" sx={{ color: '#707873', fontSize: '0.8rem' }}>
+            <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.8rem', fontFamily: "'Inter', sans-serif" }}>
               Copyright © Aura {new Date().getFullYear()} · Created by Vivek Gohil. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: '#707873', fontSize: '0.8rem' }}>
-                Crafted with precision
+              <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.8rem', fontFamily: "'Inter', sans-serif" }}>
+                Crafted with luxury & precision
               </Typography>
-              <Heart size={14} color="#C9AD73" fill="#C9AD73" />
+              <Heart size={14} color="#D4AF37" fill="#D4AF37" />
             </Box>
           </Box>
         </Container>

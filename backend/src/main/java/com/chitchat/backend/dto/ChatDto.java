@@ -42,4 +42,11 @@ public class ChatDto {
         private String chatId;
         private String userId;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SendRequestDto {
+        private String targetUserId;
+    }
 }

@@ -12,12 +12,13 @@ const ChatBox = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
       alignItems="center"
       flexDir="column"
       p={3}
-      bg="#FFFFFF"
+      bg="rgba(255, 255, 255, 0.95)"
       position="relative"
       zIndex={1}
       style={{
-        border: "1px solid #F1F1F4",
-        boxShadow: "0 6px 24px rgba(0, 0, 0, 0.04)"
+        border: "1.5px solid rgba(212, 175, 55, 0.25)",
+        boxShadow: "0 10px 40px rgba(15, 23, 42, 0.05), 0 0 20px rgba(212, 175, 55, 0.08)",
+        backdropFilter: "blur(24px)"
       }}
       w={{ base: "100%", md: "68%" }}
       h="100%"

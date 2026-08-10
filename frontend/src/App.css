@@ -531,6 +531,15 @@ input:-webkit-autofill:active {
   border-radius: 12px;
 }
 
+/* Chakra UI Avatar Fallback Luxury Styling Override */
+.chakra-avatar,
+.chakra-avatar__initials {
+  background-color: #0F172A !important;
+  color: #D4AF37 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 800 !important;
+}
+
 /* Landing Page Dashboard Mockup Mobile Optimizations */
 @media (max-width: 768px) {
   .preview-dashboard-sidebar {

@@ -75,7 +75,7 @@ export default function App() {
     };
 
     pingBackend();
-    const keepAliveInterval = setInterval(pingBackend, 240000); // Ping every 4 minutes
+    const keepAliveInterval = setInterval(pingBackend, 45000); // Ping every 45 seconds to prevent Render backend from sleeping
 
     const handleUnload = () => {
       if (window.__auraSocket) {

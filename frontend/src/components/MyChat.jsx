@@ -261,33 +261,47 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
     <>
       {/* Create Group Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
-        {loadingTwo && <Progress size='xs' isIndeterminate colorScheme="red" />}
-        <ModalOverlay style={{ backdropFilter: "blur(6px)" }} />
-        <ModalContent style={{ background: "#FFFFFF", color: "#18181B", borderRadius: "24px", boxShadow: "0 25px 60px rgba(0,0,0,0.15)" }}>
-          <ModalHeader style={{ borderBottom: "1px solid #F1F1F4" }}>
-            <Text fontWeight="800" fontSize="1.3rem" color="#18181B" margin={0}>Create Group Chat</Text>
+        {loadingTwo && <Progress size='xs' isIndeterminate colorScheme="amber" bg="rgba(212, 175, 55, 0.2)" style={{ height: "3px" }} />}
+        <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(15, 23, 42, 0.35)" }} />
+        <ModalContent style={{
+          background: "#FFFFFF",
+          color: "#0F172A",
+          borderRadius: "28px",
+          border: "1.5px solid rgba(212, 175, 55, 0.3)",
+          boxShadow: "0 25px 60px rgba(15, 23, 42, 0.18)"
+        }}>
+          <ModalHeader style={{ borderBottom: "1px solid #F1F5F9", padding: "20px 24px" }}>
+            <Text fontWeight="900" fontSize="1.35rem" color="#0F172A" margin={0} fontFamily="'Outfit', sans-serif">Create Group Chat</Text>
           </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody d="flex" flexDir="column" py={4}>
+          <ModalCloseButton style={{ borderRadius: "50%", border: "1px solid rgba(226, 232, 240, 0.8)", top: "18px", right: "20px" }} />
+          <ModalBody d="flex" flexDir="column" py={4} px={5}>
             <FormControl>
               <Input
                 placeholder="Group Name (e.g. Design Team)"
                 mb={3}
                 value={groupChatName}
                 onChange={(e) => setGroupChatName(e.target.value)}
-                borderRadius="12px"
-                bg="#F4F4F5"
-                border="none"
+                borderRadius="16px"
+                bg="#FFFFFF"
+                border="1.5px solid rgba(226, 232, 240, 0.9)"
+                color="#0F172A"
+                fontWeight="600"
+                fontFamily="'Inter', sans-serif"
+                _focus={{ borderColor: "#D4AF37", boxShadow: "0 4px 14px rgba(212, 175, 55, 0.15)" }}
               />
             </FormControl>
             <FormControl>
               <Input
                 placeholder="Add Users (e.g. Vicky, Ram)"
-                mb={2}
+                mb={3}
                 onChange={(e) => handleSearch(e.target.value)}
-                borderRadius="12px"
-                bg="#F4F4F5"
-                border="none"
+                borderRadius="16px"
+                bg="#FFFFFF"
+                border="1.5px solid rgba(226, 232, 240, 0.9)"
+                color="#0F172A"
+                fontWeight="600"
+                fontFamily="'Inter', sans-serif"
+                _focus={{ borderColor: "#D4AF37", boxShadow: "0 4px 14px rgba(212, 175, 55, 0.15)" }}
               />
             </FormControl>
             <Box w="100%" d="flex" flexWrap="wrap" gap={1.5} mb={3}>
@@ -295,14 +309,29 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 <UserBadgeItem key={u.id || u._id} user={u} handleFunction={() => handleDelete(u)} />
               ))}
             </Box>
-            {loadingGroupUsers ? <Spinner size="sm" color="red.500" /> : (
+            {loadingGroupUsers ? <Spinner size="sm" color="#D4AF37" /> : (
               searchResult?.slice(0, 4).map((u) => (
                 <UserListItem key={u.id || u._id} user={u} handleFunction={() => handleGroup(u)} />
               ))
             )}
           </ModalBody>
-          <ModalFooter>
-            <Button bg="linear-gradient(135deg, #E63946, #d62839)" color="#FFF" borderRadius="12px" onClick={handleSubmit} _hover={{ opacity: 0.9 }}>
+          <ModalFooter style={{ borderTop: "1px solid #F1F5F9", padding: "16px 24px" }}>
+            <Button
+              style={{
+                background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(212, 175, 55, 0.5)",
+                borderRadius: "16px",
+                padding: "12px 24px",
+                fontWeight: 800,
+                fontSize: "0.95rem",
+                fontFamily: "'Outfit', sans-serif",
+                boxShadow: "0 8px 20px rgba(15, 23, 42, 0.2)",
+                cursor: "pointer"
+              }}
+              onClick={handleSubmit}
+              _hover={{ opacity: 0.92, transform: "translateY(-1px)" }}
+            >
               Create Group
             </Button>
           </ModalFooter>
@@ -313,11 +342,15 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
       <Box
         d={{ base: selectedChat ? "none" : "flex", md: "flex" }}
         flexDir="column"
-        bg="#FFFFFF"
+        bg="rgba(255, 255, 255, 0.95)"
         w={{ base: "100%", md: "32%" }}
         h="100%"
         borderRadius="24px"
-        style={{ border: "1px solid #F1F1F4", boxShadow: "0 6px 24px rgba(0, 0, 0, 0.04)" }}
+        style={{
+          border: "1.5px solid rgba(212, 175, 55, 0.25)",
+          boxShadow: "0 10px 40px rgba(15, 23, 42, 0.05), 0 0 20px rgba(212, 175, 55, 0.08)",
+          backdropFilter: "blur(24px)"
+        }}
         position="relative"
         overflow="hidden"
         zIndex={1}
@@ -325,7 +358,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         {/* 1. Conversations Label & Filter CTA */}
         <Box px={4} pt={4} pb={2} d="flex" flexDir="column" gap={2.5}>
           <Box d="flex" alignItems="center" justifyContent="space-between">
-            <Text fontWeight="800" fontSize="1.1rem" color="#18181B" margin={0} letterSpacing="-0.02em">
+            <Text fontWeight="900" fontSize="1.25rem" color="#0F172A" margin={0} letterSpacing="-0.02em" fontFamily="'Outfit', sans-serif">
               Conversations
             </Text>
             <Box d="flex" alignItems="center" gap={2}>
@@ -338,18 +371,18 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                       background: chatFilter === 'friends' ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : 'rgba(212, 175, 55, 0.08)',
                       color: chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37',
                       borderRadius: '99px',
-                      padding: '0 14px',
+                      padding: '0 12px',
                       fontWeight: 800,
                       fontSize: '0.8rem',
                       fontFamily: "'Outfit', sans-serif",
-                      border: chatFilter === 'friends' ? 'none' : '1px solid rgba(212, 175, 55, 0.25)',
+                      border: chatFilter === 'friends' ? 'none' : '1px solid rgba(212, 175, 55, 0.3)',
                       height: '34px',
                       minWidth: '34px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      boxShadow: chatFilter === 'friends' ? '0 6px 16px rgba(212, 175, 55, 0.35)' : 'none',
+                      boxShadow: chatFilter === 'friends' ? '0 4px 14px rgba(212, 175, 55, 0.35)' : 'none',
                       transition: 'all 0.2s ease'
                     }}
                   >
@@ -362,19 +395,24 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 <Button
                   onClick={onOpen}
                   size="sm"
-                  leftIcon={<AddIcon style={{ fontSize: "13px", color: "#D4AF37" }} />}
+                  leftIcon={<AddIcon style={{ fontSize: "14px", color: "#D4AF37" }} />}
                   style={{
-                    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
-                    color: "#FFFFFF",
+                    background: "rgba(212, 175, 55, 0.08)",
+                    color: "#D4AF37",
                     borderRadius: "99px",
+                    padding: "6px 14px",
                     fontWeight: 800,
-                    fontSize: "0.8rem",
+                    fontSize: "0.82rem",
                     fontFamily: "'Outfit', sans-serif",
-                    border: "none",
-                    height: "34px",
-                    padding: "0 14px",
-                    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.25)",
+                    letterSpacing: "0.02em",
+                    border: "1px solid rgba(212, 175, 55, 0.3)",
+                    boxShadow: "0 4px 12px rgba(212, 175, 55, 0.1)",
+                    WebkitTapHighlightColor: "transparent",
                     transition: "all 0.2s ease"
+                  }}
+                  _hover={{
+                    background: "rgba(212, 175, 55, 0.15)",
+                    borderColor: "#D4AF37"
                   }}
                 >
                   New Group
@@ -442,41 +480,55 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
 
                   const formatLatestMessage = (msg) => {
                     if (!msg || !msg.content) return 'No messages yet';
-                    if (msg.content.startsWith('[view-once]')) return '👁 View-once message';
-                    if (msg.content.startsWith('data:video')) return '🎥 Video message';
-                    return msg.content;
+                    let content = msg.content;
+                    if (content.startsWith('[gz]')) {
+                      // Attempt synchronous inline base64 decode check or fallback label
+                      try {
+                        const raw = atob(content.substring(4));
+                        if (raw.includes('[enc]')) {
+                          content = raw.split(':')[1] ? atob(raw.split(':')[1]) : '💬 Message';
+                        } else {
+                          content = raw;
+                        }
+                      } catch {
+                        content = '💬 Message';
+                      }
+                    } else if (content.startsWith('[enc]')) {
+                      try {
+                        const parts = content.substring(5).split(':');
+                        if (parts[1]) content = atob(parts[1]);
+                      } catch {
+                        content = '🔒 Encrypted message';
+                      }
+                    }
+                    if (content.startsWith('[view-once]')) return '👁 View-once message';
+                    if (content.startsWith('data:video')) return '🎥 Video message';
+                    if (content.startsWith('data:image')) return '📷 Photo message';
+                    if (content.startsWith('data:audio')) return '🎙 Voice message';
+                    return content;
                   };
 
                   const formatDateTime = (dateStr) => {
                     if (!dateStr) return 'Now';
                     let str = dateStr;
-                    if (typeof str === 'string' && str.includes('T') && !str.endsWith('Z') && !str.includes('+')) {
-                      str += 'Z';
-                    }
+                    if (typeof str === 'number') str = new Date(str).toISOString();
                     const d = new Date(str);
                     if (isNaN(d.getTime())) return 'Now';
-                    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const now = new Date();
                     const isToday = d.toDateString() === now.toDateString();
-                    if (isToday) {
-                      return timeStr;
-                    }
-                    const dateStrFormatted = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-                    return `${dateStrFormatted}, ${timeStr}`;
+                    return isToday
+                      ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
                   };
 
                   return (
                     <motion.div
-                      key={currentChatId || `chat-${index}`}
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      whileHover={{ scale: 1.01, x: 2 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 380,
-                        damping: 24,
-                        delay: Math.min(index * 0.03, 0.2)
-                      }}
+                      key={currentChatId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: index * 0.03 }}
+                      whileHover={{ scale: 1.01, x: 3 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       <Box
                         onClick={() => {
@@ -489,14 +541,14 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                           }
                         }}
                         cursor="pointer"
-                        bg={isSelected ? "linear-gradient(135deg, rgba(230, 57, 70, 0.08) 0%, rgba(230, 57, 70, 0.03) 100%)" : unreadCount > 0 ? "#FFF8F8" : "#FFFFFF"}
+                        bg={isSelected ? "linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)" : unreadCount > 0 ? "#FFFCF5" : "#FFFFFF"}
                         px={3}
                         py={2.5}
                         borderRadius="16px"
                         style={{
-                          border: isSelected ? "1px solid rgba(230, 57, 70, 0.2)" : "1px solid rgba(0, 0, 0, 0.03)",
-                          borderLeft: isPinned ? "4px solid #3B82F6" : isSelected ? "4px solid #E63946" : unreadCount > 0 ? "4px solid #F59E0B" : "1px solid rgba(0, 0, 0, 0.03)",
-                          boxShadow: isSelected ? "0 8px 20px rgba(230, 57, 70, 0.12)" : "0 2px 8px rgba(0, 0, 0, 0.02)",
+                          border: isSelected ? "1px solid rgba(212, 175, 55, 0.4)" : "1px solid rgba(226, 232, 240, 0.7)",
+                          borderLeft: isPinned ? "4px solid #D4AF37" : isSelected ? "4px solid #0F172A" : unreadCount > 0 ? "4px solid #F59E0B" : "1px solid rgba(226, 232, 240, 0.7)",
+                          boxShadow: isSelected ? "0 8px 24px rgba(212, 175, 55, 0.18)" : "0 2px 8px rgba(15, 23, 42, 0.03)",
                           transition: "all 0.2s ease"
                         }}
                         d="flex"
@@ -508,10 +560,10 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                             size="md"
                             name={senderName}
                             src={senderPic}
-                            bg="#FFE3E6"
-                            color="#E63946"
-                            fontWeight="700"
-                            style={{ border: isSelected ? "2px solid #E63946" : "2px solid #FFE3E6" }}
+                            bg="#F1F5F9"
+                            color="#0F172A"
+                            fontWeight="800"
+                            style={{ border: isSelected ? "2px solid #D4AF37" : "2px solid #E2E8F0" }}
                           />
                           {!chat.isGroupChat && (
                             <span
@@ -532,17 +584,17 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                         <Box flex="1" overflow="hidden">
                           <Box d="flex" justifyContent="space-between" alignItems="center">
                             <Box d="flex" alignItems="center" gap={1.5} flex="1" overflow="hidden">
-                              <Text fontWeight={unreadCount > 0 ? "800" : "700"} fontSize="sm" color="#18181B" isTruncated style={{ letterSpacing: "-0.01em" }}>
+                              <Text fontWeight={unreadCount > 0 ? "900" : "800"} fontSize="sm" color="#0F172A" isTruncated style={{ letterSpacing: "-0.01em", fontFamily: "'Outfit', sans-serif" }}>
                                 {senderName}
                               </Text>
                               {isPinned && (
                                 <Tooltip label="Pinned Chat" hasArrow placement="top">
-                                  <Badge bg="rgba(59, 130, 246, 0.1)" color="#2563EB" borderRadius="6px" px={1.5} fontSize="0.65rem">📌</Badge>
+                                  <Badge bg="rgba(212, 175, 55, 0.15)" color="#D4AF37" borderRadius="6px" px={1.5} fontSize="0.65rem">📌</Badge>
                                 </Tooltip>
                               )}
                               {isMuted && (
                                 <Tooltip label="Muted" hasArrow placement="top">
-                                  <Badge bg="rgba(113, 113, 122, 0.1)" color="#71717A" borderRadius="6px" px={1.5} fontSize="0.65rem">🔕</Badge>
+                                  <Badge bg="rgba(100, 116, 139, 0.1)" color="#64748B" borderRadius="6px" px={1.5} fontSize="0.65rem">🔕</Badge>
                                 </Tooltip>
                               )}
                             </Box>
@@ -553,19 +605,19 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                   animate={{ scale: [1, 1.15, 1] }}
                                   transition={{ duration: 1.2, repeat: Infinity }}
                                   style={{
-                                    background: "linear-gradient(135deg, #E63946 0%, #d62839 100%)",
+                                    background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
                                     color: "#FFFFFF",
                                     borderRadius: "99px",
                                     padding: "2px 8px",
                                     fontSize: "0.68rem",
                                     fontWeight: 800,
-                                    boxShadow: "0 2px 8px rgba(230, 57, 70, 0.4)"
+                                    boxShadow: "0 2px 8px rgba(212, 175, 55, 0.4)"
                                   }}
                                 >
                                   {unreadCount} NEW
                                 </motion.span>
                               )}
-                              <Text fontSize="xs" fontWeight="500" color={unreadCount > 0 ? "#E63946" : "#A1A1AA"}>
+                              <Text fontSize="xs" fontWeight="600" color={unreadCount > 0 ? "#D4AF37" : "#94A3B8"}>
                                 {formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt)}
                               </Text>
 
@@ -669,9 +721,9 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
               })()}
             </Stack>
           ) : (
-            <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" h="70%" opacity={0.6} p={4} textAlign="center">
-              <Text fontWeight="700" fontSize="sm" color="#18181B" mb={1}>No active conversations yet</Text>
-              <Text fontSize="xs" color="#71717A">Search a user or create a group to start messaging!</Text>
+            <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" h="70%" p={4} textAlign="center">
+              <Text fontWeight="800" fontSize="sm" color="#0F172A" mb={1} fontFamily="'Outfit', sans-serif">No active conversations yet</Text>
+              <Text fontSize="xs" color="#94A3B8" fontFamily="'Inter', sans-serif">Search a user or create a group to start messaging!</Text>
             </Box>
           )}
         </Box>

@@ -165,25 +165,24 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
 
   return (
     <Modal isOpen={isOpen} onClose={() => { stopCamera(); onClose(); }} size="2xl" isCentered scrollBehavior="inside">
-      <ModalOverlay style={{ backdropFilter: "blur(24px)", background: "rgba(10, 10, 12, 0.65)" }} />
+      <ModalOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(15, 23, 42, 0.45)" }} />
       <ModalContent
         style={{
-          background: "rgba(255, 255, 255, 0.85)",
-          backdropFilter: "blur(40px)",
-          color: "#18181B",
-          border: "1px solid rgba(255, 255, 255, 0.4)",
+          background: "#FFFFFF",
+          color: "#0F172A",
+          border: "1.5px solid rgba(212, 175, 55, 0.3)",
           borderRadius: "32px",
-          boxShadow: "0 40px 100px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+          boxShadow: "0 30px 80px rgba(15, 23, 42, 0.2)",
           overflow: "hidden"
         }}
       >
         <Box display="flex" justifyContent="flex-end" p={4} pb={0}>
           <ModalCloseButton 
             position="static" 
-            bg="rgba(0, 0, 0, 0.04)" 
+            bg="#F1F5F9" 
             borderRadius="50%" 
             size="md" 
-            _hover={{ bg: "rgba(0, 0, 0, 0.08)", color: "#18181B" }} 
+            _hover={{ bg: "#E2E8F0", color: "#0F172A" }} 
             onClick={() => { stopCamera(); onClose(); }}
           />
         </Box>
@@ -196,15 +195,16 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
               if (index !== 1) stopCamera();
             }}
           >
-            <TabList bg="rgba(0,0,0,0.03)" p={1.5} borderRadius="20px" mb={6} display="flex" gap={2}>
+            <TabList bg="#F8FAFC" p={1.5} borderRadius="20px" mb={6} display="flex" gap={2} border="1.5px solid #F1F5F9">
               <Tab
                 flex={1}
                 borderRadius="16px"
-                fontWeight="700"
+                fontWeight="800"
                 fontSize="0.85rem"
+                fontFamily="'Outfit', sans-serif"
                 py={3}
-                color="#71717A"
-                _selected={{ bg: '#FFFFFF', color: '#E63946', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
+                color="#64748B"
+                _selected={{ bg: '#FFFFFF', color: '#D4AF37', boxShadow: '0 4px 14px rgba(212, 175, 55, 0.2)' }}
                 transition="all 0.2s"
               >
                 ✨ Live Studio
@@ -212,11 +212,12 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
               <Tab
                 flex={1}
                 borderRadius="16px"
-                fontWeight="700"
+                fontWeight="800"
                 fontSize="0.85rem"
+                fontFamily="'Outfit', sans-serif"
                 py={3}
-                color="#71717A"
-                _selected={{ bg: '#FFFFFF', color: '#E63946', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
+                color="#64748B"
+                _selected={{ bg: '#FFFFFF', color: '#D4AF37', boxShadow: '0 4px 14px rgba(212, 175, 55, 0.2)' }}
                 transition="all 0.2s"
               >
                 📸 Web Camera
@@ -224,11 +225,12 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
               <Tab
                 flex={1}
                 borderRadius="16px"
-                fontWeight="700"
+                fontWeight="800"
                 fontSize="0.85rem"
+                fontFamily="'Outfit', sans-serif"
                 py={3}
-                color="#71717A"
-                _selected={{ bg: '#FFFFFF', color: '#E63946', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
+                color="#64748B"
+                _selected={{ bg: '#FFFFFF', color: '#D4AF37', boxShadow: '0 4px 14px rgba(212, 175, 55, 0.2)' }}
                 transition="all 0.2s"
               >
                 📁 Upload File
@@ -242,13 +244,13 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                   <Box
                     p={5}
                     borderRadius="24px"
-                    bg="rgba(255,255,255,0.6)"
-                    border="1px solid rgba(0,0,0,0.04)"
+                    bg="#F8FAFC"
+                    border="1.5px solid #F1F5F9"
                     display="flex"
                     flexDirection={{ base: 'column', md: 'row' }}
                     alignItems="center"
                     gap={8}
-                    boxShadow="0 4px 20px rgba(0,0,0,0.02)"
+                    boxShadow="0 4px 14px rgba(15, 23, 42, 0.02)"
                   >
                     <motion.div
                       whileHover={{ scale: 1.05, rotate: 1 }}
@@ -259,22 +261,23 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                         size="2xl"
                         src={getAvatarUrl(currentStyle, currentSeed)}
                         border="4px solid #FFFFFF"
-                        boxShadow="0 15px 35px rgba(230, 57, 70, 0.15)"
-                        bg="linear-gradient(135deg, rgba(230,57,70,0.1) 0%, rgba(255,255,255,0.8) 100%)"
+                        boxShadow="0 15px 35px rgba(212, 175, 55, 0.25)"
+                        bg="#0F172A"
+                        color="#D4AF37"
                         style={{ width: '130px', height: '130px' }}
                       />
                       <Badge
                         position="absolute"
                         bottom="4px"
                         right="-10px"
-                        bg="#E63946"
+                        bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
                         color="#FFF"
                         borderRadius="full"
                         px={3}
                         py={1}
                         fontSize="0.7rem"
-                        fontWeight="800"
-                        boxShadow="0 4px 12px rgba(230,57,70,0.3)"
+                        fontWeight="900"
+                        boxShadow="0 4px 12px rgba(212, 175, 55, 0.35)"
                         border="2px solid #FFF"
                       >
                         LIVE
@@ -283,14 +286,14 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
 
                     <VStack align="start" spacing={4} flex={1} w="100%">
                       <Box w="100%" display="flex" justifyContent="space-between" alignItems="center">
-                        <Text fontWeight="800" color="#18181B" fontSize="1rem" m={0}>
+                        <Text fontWeight="900" color="#0F172A" fontSize="1rem" fontFamily="'Outfit', sans-serif" m={0}>
                             Avatar Style
                         </Text>
                         <IconButton
                             icon={<RefreshIcon style={{fontSize:18}} />}
                             size="sm"
-                            bg="rgba(0,0,0,0.04)"
-                            color="#18181B"
+                            bg="rgba(212, 175, 55, 0.1)"
+                            color="#D4AF37"
                             borderRadius="10px"
                             title="Shuffle Seed"
                             onClick={() => {
@@ -298,7 +301,7 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                             setCurrentSeed(randomSeed);
                             setSelectedImage(getAvatarUrl(currentStyle, randomSeed));
                             }}
-                            _hover={{ bg: "rgba(0,0,0,0.08)" }}
+                            _hover={{ bg: "rgba(212, 175, 55, 0.2)" }}
                         />
                       </Box>
                       <HStack spacing={2.5} wrap="wrap">
@@ -307,18 +310,19 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                               <Button
                                 size="sm"
                                 borderRadius="12px"
-                                bg={currentStyle === style.id ? '#E63946' : '#FFFFFF'}
-                                color={currentStyle === style.id ? '#FFFFFF' : '#71717A'}
-                                border={currentStyle === style.id ? '1px solid #E63946' : '1px solid rgba(0,0,0,0.08)'}
-                                fontWeight={currentStyle === style.id ? "700" : "600"}
-                                boxShadow={currentStyle === style.id ? "0 4px 12px rgba(230,57,70,0.2)" : "0 2px 8px rgba(0,0,0,0.02)"}
+                                bg={currentStyle === style.id ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : '#FFFFFF'}
+                                color={currentStyle === style.id ? '#FFFFFF' : '#64748B'}
+                                border={currentStyle === style.id ? 'none' : '1.5px solid #F1F5F9'}
+                                fontWeight={currentStyle === style.id ? "800" : "600"}
+                                fontFamily="'Outfit', sans-serif"
+                                boxShadow={currentStyle === style.id ? "0 4px 12px rgba(212, 175, 55, 0.3)" : "none"}
                                 onClick={() => {
                                   setCurrentStyle(style.id);
                                   const avatarUrl = getAvatarUrl(style.id, currentSeed);
                                   setSelectedImage(avatarUrl);
                                 }}
                                 _hover={{
-                                    bg: currentStyle === style.id ? '#D62839' : 'rgba(0,0,0,0.02)'
+                                    bg: currentStyle === style.id ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : '#F1F5F9'
                                 }}
                               >
                                 {style.name}
@@ -330,13 +334,13 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                   </Box>
 
                   <Box>
-                    <Text fontWeight="800" color="#18181B" fontSize="1rem" mb={4}>
+                    <Text fontWeight="900" color="#0F172A" fontSize="1rem" fontFamily="'Outfit', sans-serif" mb={4}>
                         Popular Live Avatars
                     </Text>
                     <Grid templateColumns="repeat(4, 1fr)" gap={4} maxH="220px" overflowY="auto" p={1} sx={{
                         '&::-webkit-scrollbar': { width: '6px' },
                         '&::-webkit-scrollbar-track': { background: 'transparent' },
-                        '&::-webkit-scrollbar-thumb': { background: 'rgba(0,0,0,0.1)', borderRadius: '10px' }
+                        '&::-webkit-scrollbar-thumb': { background: 'rgba(212, 175, 55, 0.3)', borderRadius: '10px' }
                     }}>
                         {PRESET_SEEDS.map((seed) => {
                         const url = getAvatarUrl(currentStyle, seed);
@@ -351,14 +355,14 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                             <Box
                                 p={3}
                                 borderRadius="20px"
-                                bg={isSelected ? 'rgba(230,57,70,0.05)' : 'rgba(255,255,255,0.6)'}
-                                border={isSelected ? '2px solid #E63946' : '1px solid rgba(0,0,0,0.05)'}
+                                bg={isSelected ? 'rgba(212, 175, 55, 0.08)' : '#F8FAFC'}
+                                border={isSelected ? '2px solid #D4AF37' : '1.5px solid #F1F5F9'}
                                 cursor="pointer"
                                 display="flex"
                                 flexDirection="column"
                                 alignItems="center"
                                 position="relative"
-                                style={{ boxShadow: isSelected ? "0 8px 20px rgba(230, 57, 70, 0.15)" : "0 4px 12px rgba(0,0,0,0.02)" }}
+                                style={{ boxShadow: isSelected ? "0 8px 20px rgba(212, 175, 55, 0.2)" : "none" }}
                                 onClick={() => {
                                 setCurrentSeed(seed);
                                 setSelectedImage(url);
@@ -371,7 +375,7 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                                         position: 'absolute',
                                         top: 8,
                                         right: 8,
-                                        color: '#E63946',
+                                        color: '#D4AF37',
                                         fontSize: 18,
                                         backgroundColor: '#FFF',
                                         borderRadius: '50%'
@@ -379,8 +383,8 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                                     />
                                 </motion.div>
                                 )}
-                                <Avatar size="lg" src={url} bg="transparent" mb={2} style={{ filter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.1))' }} />
-                                <Text fontSize="0.75rem" fontWeight="700" color={isSelected ? '#E63946' : '#71717A'} isTruncated maxW="100%" m={0}>
+                                <Avatar size="lg" src={url} bg="transparent" mb={2} style={{ filter: 'drop-shadow(0 6px 10px rgba(15, 23, 42, 0.08))' }} />
+                                <Text fontSize="0.75rem" fontWeight="800" color={isSelected ? '#D4AF37' : '#64748B'} fontFamily="'Outfit', sans-serif" isTruncated maxW="100%" m={0}>
                                 {seed}
                                 </Text>
                             </Box>
@@ -400,30 +404,30 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                       w="100%"
                       h="300px"
                       borderRadius="24px"
-                      bg="rgba(255,255,255,0.6)"
-                      border="1px solid rgba(0,0,0,0.05)"
-                      boxShadow="0 4px 20px rgba(0,0,0,0.02)"
+                      bg="#F8FAFC"
+                      border="1.5px solid #F1F5F9"
+                      boxShadow="0 4px 14px rgba(15, 23, 42, 0.02)"
                       display="flex"
                       flexDirection="column"
                       alignItems="center"
                       justifyContent="center"
-                      color="#18181B"
+                      color="#0F172A"
                       gap={4}
                     >
-                      <CameraAltIcon style={{ fontSize: 56, color: '#E63946', filter: 'drop-shadow(0 0 12px rgba(230,57,70,0.5))' }} />
-                      <Text color="#71717A" fontSize="0.95rem" fontWeight="500">
+                      <CameraAltIcon style={{ fontSize: 56, color: '#D4AF37', filter: 'drop-shadow(0 0 12px rgba(212, 175, 55, 0.4))' }} />
+                      <Text color="#64748B" fontSize="0.95rem" fontWeight="600">
                         {cameraError || 'Camera is turned off'}
                       </Text>
                       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                           <Button
-                            bg="#E63946"
+                            bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
                             color="#FFF"
                             borderRadius="16px"
-                            fontWeight="700"
+                            fontWeight="800"
+                            fontFamily="'Outfit', sans-serif"
                             px={6}
                             onClick={startCamera}
-                            _hover={{ bg: '#D62839' }}
-                            boxShadow="0 8px 20px rgba(230,57,70,0.3)"
+                            boxShadow="0 8px 20px rgba(212, 175, 55, 0.35)"
                           >
                             <CameraAltIcon style={{ marginRight: 8, fontSize: 18 }} />
                             Start Camera
@@ -438,11 +442,12 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                         h="300px"
                         borderRadius="24px"
                         overflow="hidden"
-                        bg="#000"
+                        bg="#0F172A"
+                        border="2px solid #D4AF37"
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
-                        boxShadow="0 10px 30px rgba(0,0,0,0.2)"
+                        boxShadow="0 10px 30px rgba(15, 23, 42, 0.2)"
                       >
                         <video
                           ref={videoRef}
@@ -454,14 +459,14 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                       <HStack spacing={4}>
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Button
-                            bg="#E63946"
+                            bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
                             color="#FFF"
                             borderRadius="16px"
-                            fontWeight="700"
+                            fontWeight="800"
+                            fontFamily="'Outfit', sans-serif"
                             px={6}
                             onClick={capturePhoto}
-                            _hover={{ bg: '#D62839' }}
-                            boxShadow="0 8px 20px rgba(230,57,70,0.3)"
+                            boxShadow="0 8px 20px rgba(212, 175, 55, 0.35)"
                             >
                             <CameraAltIcon style={{ marginRight: 8, fontSize: 18 }} />
                             Snap Photo
@@ -469,12 +474,12 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                         </motion.div>
                         <Button
                           variant="ghost"
-                          color="#71717A"
+                          color="#64748B"
                           borderRadius="16px"
                           fontWeight="700"
                           px={6}
                           onClick={stopCamera}
-                          _hover={{ bg: 'rgba(0,0,0,0.05)', color: '#18181B' }}
+                          _hover={{ bg: '#F1F5F9', color: '#0F172A' }}
                         >
                           Stop Camera
                         </Button>
@@ -491,15 +496,15 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                     w="100%"
                     h="260px"
                     borderRadius="24px"
-                    border="2px dashed rgba(230,57,70,0.3)"
-                    bg="rgba(230,57,70,0.02)"
+                    border="2px dashed rgba(212, 175, 55, 0.4)"
+                    bg="rgba(212, 175, 55, 0.03)"
                     display="flex"
                     flexDirection="column"
                     alignItems="center"
                     justifyContent="center"
                     cursor="pointer"
                     position="relative"
-                    _hover={{ bg: 'rgba(230,57,70,0.05)', borderColor: '#E63946' }}
+                    _hover={{ bg: 'rgba(212, 175, 55, 0.08)', borderColor: '#D4AF37' }}
                     transition="all 0.3s"
                   >
                     <input
@@ -518,12 +523,12 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                         animate={{ y: [0, -10, 0] }}
                         transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
                     >
-                        <UploadFileIcon style={{ fontSize: 56, color: '#E63946', marginBottom: 12, filter: 'drop-shadow(0 8px 12px rgba(230,57,70,0.2))' }} />
+                        <UploadFileIcon style={{ fontSize: 56, color: '#D4AF37', marginBottom: 12, filter: 'drop-shadow(0 8px 12px rgba(212, 175, 55, 0.25))' }} />
                     </motion.div>
-                    <Text fontWeight="800" color="#18181B" fontSize="1.1rem" mb={1}>
+                    <Text fontWeight="900" color="#0F172A" fontSize="1.1rem" fontFamily="'Outfit', sans-serif" mb={1}>
                       Drag & Drop Image
                     </Text>
-                    <Text fontSize="0.85rem" color="#71717A" fontWeight="500">
+                    <Text fontSize="0.85rem" color="#64748B" fontWeight="600">
                       Supports JPG, PNG, WEBP (Max 10MB)
                     </Text>
                   </Box>
@@ -533,26 +538,26 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
           </Tabs>
         </ModalBody>
 
-        <ModalFooter borderTop="1px solid rgba(0,0,0,0.04)" bg="transparent" py={4} px={8}>
+        <ModalFooter borderTop="1px solid #F1F5F9" bg="transparent" py={4} px={8}>
           <HStack spacing={3} w="100%" justify="space-between">
              {/* PREVIEW MINI WIDGET */}
              <Box
               display="flex"
               alignItems="center"
               gap={3}
-              opacity={selectedImage ? 1 : 0.4}
+              opacity={selectedImage ? 1 : 0.5}
               transition="opacity 0.3s"
             >
                 {selectedImage ? (
-                    <Avatar size="sm" src={selectedImage} border="2px solid #E63946" boxShadow="0 2px 8px rgba(230,57,70,0.3)" />
+                    <Avatar size="sm" src={selectedImage} border="2px solid #D4AF37" boxShadow="0 2px 8px rgba(212, 175, 55, 0.3)" />
                 ) : (
-                    <Box w="32px" h="32px" borderRadius="50%" bg="rgba(0,0,0,0.1)" />
+                    <Box w="32px" h="32px" borderRadius="50%" bg="#F1F5F9" />
                 )}
                 <Box>
-                    <Text fontSize="0.8rem" fontWeight="800" color="#18181B" m={0}>
+                    <Text fontSize="0.8rem" fontWeight="800" color="#0F172A" fontFamily="'Outfit', sans-serif" m={0}>
                         {selectedImage ? "Avatar Selected" : "No Selection"}
                     </Text>
-                    <Text fontSize="0.7rem" color="#71717A" m={0}>
+                    <Text fontSize="0.7rem" color="#64748B" m={0}>
                         {selectedImage ? "Ready to apply" : "Choose an avatar"}
                     </Text>
                 </Box>
@@ -564,23 +569,25 @@ export default function AvatarCameraModal({ isOpen, onClose, onSelectMedia, curr
                 onClick={() => { stopCamera(); onClose(); }}
                 borderRadius="16px"
                 fontWeight="700"
-                color="#71717A"
+                color="#64748B"
                 px={6}
-                _hover={{ bg: 'rgba(0,0,0,0.05)', color: '#18181B' }}
+                _hover={{ bg: '#F1F5F9', color: '#0F172A' }}
                 >
                 Cancel
                 </Button>
                 <motion.div whileHover={selectedImage ? { scale: 1.05 } : {}} whileTap={selectedImage ? { scale: 0.95 } : {}}>
                     <Button
-                    bg={selectedImage ? '#18181B' : 'rgba(0,0,0,0.05)'}
-                    color={selectedImage ? '#FFFFFF' : '#A1A1AA'}
+                    bg={selectedImage ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' : '#F1F5F9'}
+                    color={selectedImage ? '#FFFFFF' : '#94A3B8'}
                     fontWeight="800"
+                    fontFamily="'Outfit', sans-serif"
                     borderRadius="16px"
+                    border={selectedImage ? '1.5px solid rgba(212, 175, 55, 0.4)' : 'none'}
                     px={6}
-                    boxShadow={selectedImage ? '0 8px 24px rgba(0,0,0,0.2)' : 'none'}
+                    boxShadow={selectedImage ? '0 8px 24px rgba(15, 23, 42, 0.2)' : 'none'}
                     isDisabled={!selectedImage}
                     onClick={handleSave}
-                    _hover={{ bg: selectedImage ? '#000000' : 'rgba(0,0,0,0.05)' }}
+                    _hover={{ bg: selectedImage ? '#0F172A' : '#F1F5F9' }}
                     >
                     Save Avatar
                     </Button>

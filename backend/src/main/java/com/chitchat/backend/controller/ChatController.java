@@ -69,4 +69,25 @@ public class ChatController {
         chatService.deleteChat(chatId, currentUser);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/request/send")
+    public ResponseEntity<com.chitchat.backend.model.ChatRequest> sendRequest(
+            @RequestBody ChatDto.SendRequestDto request,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(chatService.sendChatRequest(request.getTargetUserId(), currentUser));
+    }
+
+    @GetMapping("/requests/pending")
+    public ResponseEntity<List<com.chitchat.backend.model.ChatRequest>> getPendingRequests(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(chatService.getPendingRequests(currentUser));
+    }
+
+    @PostMapping("/request/respond")
+    public ResponseEntity<Chat> respondToRequest(
+            @RequestParam String requestId,
+            @RequestParam String action,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(chatService.respondToRequest(requestId, action, currentUser));
+    }
 }
