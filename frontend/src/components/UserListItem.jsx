@@ -72,14 +72,20 @@ const UserListItem = ({ user, handleFunction }) => {
         >
             <Avatar
                 mr={3}
-                size="sm"
+                size="md"
                 cursor="pointer"
-                name={user.name}
-                src={(!user?.pic || user?.pic.includes("icon-library.com") || user?.pic.includes("flaticon.com")) ? "" : user.pic}
-                bg="#F1F5F9"
-                color="#0F172A"
-                fontWeight="800"
-                style={{ border: "2px solid #E2E8F0" }}
+                name={user?.name || "Aura User"}
+                src={user?.pic && !user.pic.includes("icon-library.com") && !user.pic.includes("flaticon.com") ? user.pic : undefined}
+                bg="#0F172A !important"
+                color="#D4AF37 !important"
+                fontWeight="900"
+                style={{
+                    width: "44px",
+                    height: "44px",
+                    border: "2px solid #D4AF37",
+                    boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+                    flexShrink: 0
+                }}
             />
             <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                 <Box style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
