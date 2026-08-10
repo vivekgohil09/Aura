@@ -304,15 +304,15 @@ function FeatureCard({ feature, index }) {
         position: 'relative',
         zIndex: 1,
         height: '100%',
-        background: 'rgba(15, 23, 42, 0.75)',
+        background: 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(30px)',
         WebkitBackdropFilter: 'blur(30px)',
         borderRadius: '28px',
         padding: '38px 34px',
-        border: `1px solid rgba(255, 255, 255, 0.1)`,
+        border: `1px solid ${isInView ? 'rgba(212, 175, 55, 0.35)' : 'rgba(226, 232, 240, 0.9)'}`,
         boxShadow: isInView
-          ? `0 25px 60px -10px ${feature.glow}, 0 10px 25px rgba(0, 0, 0, 0.2)`
-          : '0 8px 30px rgba(0, 0, 0, 0.1)',
+          ? `0 20px 50px ${feature.glow}, 0 10px 25px rgba(0, 0, 0, 0.03)`
+          : '0 8px 30px rgba(0, 0, 0, 0.03)',
         rotateX,
         rotateY,
         transformStyle: 'preserve-3d',
@@ -329,9 +329,9 @@ function FeatureCard({ feature, index }) {
           transition={{ duration: 5, ease: 'linear', repeat: Infinity }}
           style={{
             position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-            background: `linear-gradient(90deg, transparent, ${feature.accent}40, transparent)`,
+            background: `linear-gradient(90deg, transparent, ${feature.accent}25, transparent)`,
             backgroundSize: '200% 200%',
-            opacity: 0.3,
+            opacity: 0.4,
           }}
         />
 
@@ -342,12 +342,12 @@ function FeatureCard({ feature, index }) {
             style={{
               width: 68, height: 68,
               borderRadius: '20px',
-              background: `linear-gradient(135deg, ${feature.accent}30, ${feature.accent}05)`,
-              border: `1.5px solid ${feature.accent}66`,
+              background: `linear-gradient(135deg, ${feature.accent}15, ${feature.accent}05)`,
+              border: `1.5px solid ${feature.accent}33`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginBottom: '26px',
               color: feature.accent,
-              boxShadow: `0 8px 32px ${feature.accent}44`,
+              boxShadow: `0 8px 24px ${feature.accent}22`,
             }}
           >
             {feature.icon}
@@ -357,14 +357,14 @@ function FeatureCard({ feature, index }) {
             fontFamily: "'Outfit', sans-serif",
             fontWeight: 800,
             fontSize: '1.4rem',
-            color: '#F8FAFC',
+            color: '#0F172A',
             marginBottom: '12px',
             letterSpacing: '-0.02em',
           }}>{feature.title}</h3>
 
           <p style={{
             fontFamily: "'Inter', sans-serif",
-            color: '#CBD5E1',
+            color: '#64748B',
             fontSize: '0.98rem',
             lineHeight: 1.65,
             margin: 0,
