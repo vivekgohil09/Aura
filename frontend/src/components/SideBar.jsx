@@ -544,6 +544,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 } catch (e) {}
             }
 
+            // Call Option A Backend Persistence API
+            try {
+                const config = { headers: { "Content-Type": "application/json", Authorization: "Bearer " + getJwtToken() } };
+                await axios.post("/api/chat/request/send", { targetUserId: String(targetId) }, config);
+            } catch (e) {}
+
             // Send real-time request via socket to target user
             if (window.__auraSocket) {
                 window.__auraSocket.emit("send-chat-request", {

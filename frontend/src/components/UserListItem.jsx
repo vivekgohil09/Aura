@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Avatar } from "@chakra-ui/avatar";
 import { Box, Text } from "@chakra-ui/layout";
 import { useSelector } from "react-redux";
+import { getJwtToken } from "../config/getJwt";
 
 const UserListItem = ({ user, handleFunction }) => {
     const loggedInUser = useSelector((state) => state.user) || JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -34,11 +35,11 @@ const UserListItem = ({ user, handleFunction }) => {
                 if (!sentList.includes(String(targetUserId))) {
                     localStorage.setItem(storageKey, JSON.stringify([...sentList, String(targetUserId)]));
                 }
-                // Call Option A Backend persistence API
-                const config = { headers: { "Content-Type": "application/json", Authorization: "Bearer " + (localStorage.getItem("token") || "") } };
+                // Call Option A Backend persistence API with correct getJwtToken()
+                const token = getJwtToken();
                 await fetch("/api/chat/request/send", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + (localStorage.getItem("token") || "") },
+                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
                     body: JSON.stringify({ targetUserId: String(targetUserId) })
                 });
             } catch (e) {}
