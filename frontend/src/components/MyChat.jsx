@@ -863,29 +863,27 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                     </motion.div>
                     );
                   });
-                })()
-              ) : (
-                <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" py={12} px={4} textAlign="center">
-                  <Sparkles size={32} color="#D4AF37" style={{ marginBottom: "12px", opacity: 0.8 }} />
-                  <Text fontWeight="800" fontSize="1.05rem" color="#0F172A" mb={1} fontFamily="'Outfit', sans-serif">
-                    No active conversations yet
-                  </Text>
-                  <Text fontSize="0.82rem" color="#64748B" maxW="240px" fontFamily="'Inter', sans-serif">
-                    Search a user or create a group to start messaging!
-                  </Text>
-                </Box>
-              )}
+                })()}
 
-              {/* Subtle Security Encryption Badge */}
-              {chats && chats.length > 0 && (
+                {/* Subtle Security Encryption Badge */}
                 <Box d="flex" alignItems="center" justifyContent="center" gap={1.5} py={6} opacity={0.75}>
                   <Lock size={12} color="#94A3B8" />
                   <Text fontSize="0.72rem" fontWeight="600" color="#94A3B8" letterSpacing="0.02em" fontFamily="'Inter', sans-serif">
                     End-to-end encrypted chats
                   </Text>
                 </Box>
-              )}
-            </Stack>
+              </Stack>
+            ) : (
+              <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" py={12} px={4} textAlign="center">
+                <Sparkles size={32} color="#D4AF37" style={{ marginBottom: "12px", opacity: 0.8 }} />
+                <Text fontWeight="800" fontSize="1.05rem" color="#0F172A" mb={1} fontFamily="'Outfit', sans-serif">
+                  No active conversations yet
+                </Text>
+                <Text fontSize="0.82rem" color="#64748B" maxW="240px" fontFamily="'Inter', sans-serif">
+                  Search a user or create a group to start messaging!
+                </Text>
+              </Box>
+            )}
         </Box>
       </Box>
     </>
