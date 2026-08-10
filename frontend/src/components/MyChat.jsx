@@ -123,11 +123,37 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         };
         const { data } = await axios.get(`/api/chat`, config);
         dispatch(setChats(getFilteredChats(data)));
+
+        // Polling Option A: Fetch Pending Chat Requests from DB
+        try {
+          const reqRes = await axios.get("/api/chat/requests/pending", config);
+          if (Array.isArray(reqRes.data)) {
+            const dbNotifs = reqRes.data.map(req => ({
+              senderId: req.sender.id || req.sender._id,
+              senderName: req.sender.name,
+              senderPic: req.sender.pic,
+              senderUsername: req.sender.username,
+              requestId: req.id,
+              isRequest: true,
+              timestamp: req.createdAt
+            }));
+
+            const existingNotifs = window.__auraNotifs || [];
+            const merged = [...dbNotifs];
+            existingNotifs.forEach(n => {
+              if (!merged.some(m => String(m.senderId) === String(n.senderId))) {
+                merged.push(n);
+              }
+            });
+            dispatch(setNotification(merged));
+          }
+        } catch (err) {}
       } catch (e) { }
     };
 
     setLoggedUser(JSON.parse(localStorage.getItem("userInfo") || "{}"));
     fetchChats();
+    fetchChatsBackground();
     const interval = setInterval(() => {
       fetchChatsBackground();
     }, 4000);
