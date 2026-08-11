@@ -169,14 +169,14 @@ class StompService {
   }
 
   // Convenience publishing methods
-  sendTyping(chatId) {
+  sendTyping(chatId, sender) {
     if (!this.client?.connected) return;
-    this.client.publish({ destination: '/app/typing', body: JSON.stringify({ chatId }) });
+    this.client.publish({ destination: '/app/typing', body: JSON.stringify({ chatId, ...sender }) });
   }
 
-  sendStopTyping(chatId) {
+  sendStopTyping(chatId, sender) {
     if (!this.client?.connected) return;
-    this.client.publish({ destination: '/app/stop-typing', body: JSON.stringify({ chatId }) });
+    this.client.publish({ destination: '/app/stop-typing', body: JSON.stringify({ chatId, ...sender }) });
   }
 
   sendMessageRead(chatId, messageIds, readerId) {
@@ -255,3 +255,4 @@ class StompService {
 }
 
 export const stompService = new StompService();
+

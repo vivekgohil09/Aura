@@ -38,8 +38,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useDisclosure } from "@chakra-ui/hooks";
 import { setSelectedChat, setChats } from '../redux/actions/index';
 import ScrollableChat from './ScrollableChat';
-import Lottie from "react-lottie";
-import animationData from "../animations/typing.json";
 import { compressData } from '../config/dataCompressor';
 import { stompService } from '../config/stompService2';
 const url = window.location.origin;
@@ -63,7 +61,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const dispatch = useDispatch()
     const selectedChat = useSelector(state => state.selectedChats)
     const notification = useSelector(state => state.notification);
-    const user = useSelector(state => state.users)
+    const user = useSelector(state => state.user)
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [groupChatName, setGroupChatName] = useState();
     const [selectedUsers, setSelectedUsers] = useState([]);
@@ -77,12 +75,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [socketConnected, setSocketConnected] = useState(false)
     const [typing, setTyping] = useState(false);
     const [istyping, setIsTyping] = useState(false);
+    const typingTimeoutRef = useRef(null);
+    const remoteTypingTimeoutRef = useRef(null);
     // View-once & Schedule
     const [viewOnceMode, setViewOnceMode] = useState(false);
     const [scheduleModal, setScheduleModal] = useState(false);
     const [scheduledAt, setScheduledAt] = useState('');
     const [pendingScheduled, setPendingScheduled] = useState([]);
     const userStatuses = useSelector(state => state.userStatuses) || {};
+    const [presenceNow, setPresenceNow] = useState(Date.now());
+    const PRESENCE_STALE_MS = 45000;
 
     const formatLastSeenDate = (lastSeenRaw) => {
         if (!lastSeenRaw) return "recently";
@@ -416,7 +418,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             } else {
                 if (!accepted) {
                     if (window.stompService && window.stompService.isConnected && window.stompService.isConnected()) {
-                        window.stompService.sendCallUser({ type: 'call-user', chatId, fromUser: user?.name || user?.username || 'User', fromAvatar: user?.pic || '', fromUser: myId, toUser: targetUserId, callType: type });
+                        window.stompService.sendCallUser({ type: 'call-user', chatId, fromUser: user?.name || user?.username || 'User', fromAvatar: user?.pic || '', fromUserId: myId, toUser: targetUserId, callType: type });
                     } else {
                         emitWithRetry('call-user', {
                             chatId,
@@ -610,14 +612,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         setIsCallAccepted(false);
     };
 
-    const defaultOptions = {
-        loop: true,
-        autoplay: true,
-        animationData: animationData,
-        rendererSettings: {
-            preserveAspectRatio: "xMidYMid slice",
-        },
-    };
 
     useEffect(() => {
         // Chat UI initialization
@@ -846,33 +840,119 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             theme: 'colored'
         });
     }
+
+    const getCurrentUser = () => {
+        let storedUser = {};
+        try {
+            storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        } catch (e) {}
+        return storedUser?.userLogin || storedUser?.data || storedUser || user?.userLogin || user?.data || user || {};
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => setPresenceNow(Date.now()), 15000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const getTypingPayload = () => {
+        const currentUser = getCurrentUser();
+        const chatId = selectedChat?.id || selectedChat?._id;
+        const senderId = currentUser?._id || currentUser?.id || currentUser?.userId;
+        const senderName = currentUser?.name || currentUser?.username || 'User';
+        const senderEmail = currentUser?.email || '';
+        return { chatId, senderId, senderName, senderEmail };
+    };
+
+    const isTypingFromOtherUser = (data, chatId) => {
+        const currentUser = getCurrentUser();
+        const incomingChatId = typeof data === 'object' && data !== null
+            ? (data.chatId || data.room || data.chat?.id || data.chat?._id)
+            : data;
+        if (String(incomingChatId) !== String(chatId)) return false;
+
+        const senderId = typeof data === 'object' && data !== null
+            ? (data.senderId || data.userId || data.fromUser || data.fromUserId)
+            : null;
+        const senderEmail = typeof data === 'object' && data !== null ? data.senderEmail : null;
+        const localUserId = currentUser?._id || currentUser?.id || currentUser?.userId;
+        const localEmail = currentUser?.email;
+
+        if (senderId && localUserId) return String(senderId) !== String(localUserId);
+        if (senderEmail && localEmail) return String(senderEmail).toLowerCase() !== String(localEmail).toLowerCase();
+        return false;
+    };
+
+    const emitStopTyping = () => {
+        const typingPayload = getTypingPayload();
+        if (!typingPayload.chatId) return;
+        if (stompService.isConnected()) {
+            stompService.sendStopTyping(typingPayload.chatId, typingPayload);
+        } else if (socket && socket.emit) {
+            socket.emit("stop typing", typingPayload);
+        }
+        setTyping(false);
+    };
+
+    const showRemoteTyping = () => {
+        setIsTyping(true);
+        if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current);
+        remoteTypingTimeoutRef.current = setTimeout(() => {
+            setIsTyping(false);
+            remoteTypingTimeoutRef.current = null;
+        }, 3500);
+    };
+
+    const hideRemoteTyping = () => {
+        setIsTyping(false);
+        if (remoteTypingTimeoutRef.current) {
+            clearTimeout(remoteTypingTimeoutRef.current);
+            remoteTypingTimeoutRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        setTyping(false);
+        hideRemoteTyping();
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
+        }
+
+        return () => {
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current);
+        };
+    }, [selectedChat?.id, selectedChat?._id]);
+
     const typingHandler = (e) => {
-        setNewMessage(e.target.value);
+        const value = e.target.value;
+        setNewMessage(value);
 
         if (!socketConnected) return;
 
+        if (!value.trim()) {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = null;
+            }
+            emitStopTyping();
+            return;
+        }
+
         if (!typing) {
             setTyping(true);
+            const typingPayload = getTypingPayload();
             if (stompService.isConnected()) {
-                stompService.sendTyping(selectedChat._id);
+                stompService.sendTyping(typingPayload.chatId, typingPayload);
             } else if (socket && socket.emit) {
-                socket.emit("typing", selectedChat._id);
+                socket.emit("typing", typingPayload);
             }
         }
-        let lastTypingTime = new Date().getTime();
-        var timerLength = 3000;
-        setTimeout(() => {
-            var timeNow = new Date().getTime();
-            var timeDiff = timeNow - lastTypingTime;
-            if (timeDiff >= timerLength && typing) {
-                if (stompService.isConnected()) {
-                    stompService.sendStopTyping(selectedChat._id);
-                } else if (socket && socket.emit) {
-                    socket.emit("stop typing", selectedChat._id);
-                }
-            setTyping(false);
-            }
-        }, timerLength);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            emitStopTyping();
+            typingTimeoutRef.current = null;
+        }, 3000);
     }
 
     const sendingMsgRef = useRef(false);
@@ -882,7 +962,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         if (e.key === "Enter" && newMessage) {
             sendingMsgRef.current = true;
             const chatId = selectedChat.id || selectedChat._id;
-            if (stompService.isConnected()) { stompService.sendStopTyping(chatId); } else if (socket) { socket.emit("stop typing", chatId); }
+            const typingPayload = getTypingPayload();
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = null;
+            }
+            if (stompService.isConnected()) { stompService.sendStopTyping(chatId, typingPayload); } else if (socket) { socket.emit("stop typing", typingPayload); }
             const rawContent = viewOnceMode ? `[view-once] ${newMessage}` : newMessage;
             setNewMessage("");
             setViewOnceMode(false);
@@ -1112,14 +1197,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             const chatId = selectedChat.id || selectedChat._id;
             if (socket) {
                 socket.emit("join chat", chatId);
-                socket.off("typing").on("typing", (room) => {
-                    if (String(room) === String(chatId)) {
-                        setIsTyping(true);
+                socket.off("typing").on("typing", (data) => {
+                    if (isTypingFromOtherUser(data, chatId)) {
+                        showRemoteTyping();
                     }
                 });
-                socket.off("stop typing").on("stop typing", (room) => {
-                    if (String(room) === String(chatId)) {
-                        setIsTyping(false);
+                socket.off("stop typing").on("stop typing", (data) => {
+                    if (isTypingFromOtherUser(data, chatId)) {
+                        hideRemoteTyping();
                     }
                 });
 
@@ -1211,10 +1296,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 const unsubTyping = stompService.subscribeToTopic(`/topic/typing/${chatId}`, (data) => {
                     try {
                         if (!data) return;
+                        if (!isTypingFromOtherUser(data, chatId)) return;
                         if (data.stopped || data.stopped === true) {
-                            setIsTyping(false);
+                            hideRemoteTyping();
                         } else {
-                            setIsTyping(true);
+                            showRemoteTyping();
                         }
                     } catch (e) { }
                 });
@@ -1334,9 +1420,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             const targetUser = getSenderUser(user, selectedChat.users);
                             const targetUserId = targetUser ? String(targetUser._id || targetUser.id || targetUser.publicId || '') : '';
                             const statusObj = targetUserId && userStatuses[targetUserId] ? userStatuses[targetUserId] : null;
-                            const isTargetOnline = statusObj != null 
-                                ? statusObj.isOnline 
-                                : Boolean(targetUser?.isOnline || targetUser?.online);
+                            const statusAge = statusObj?.updatedAt ? presenceNow - statusObj.updatedAt : Number.POSITIVE_INFINITY;
+                            const hasFreshPresence = statusObj != null && statusAge <= PRESENCE_STALE_MS;
+                            const isTargetOnline = hasFreshPresence
+                                ? Boolean(statusObj.isOnline)
+                                : statusObj == null && Boolean(targetUser?.isOnline || targetUser?.online);
                             const targetLastSeen = statusObj != null && statusObj.lastSeen != null
                                 ? statusObj.lastSeen
                                 : targetUser?.lastSeen;
@@ -1391,10 +1479,37 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 {getSender(user, selectedChat.users)}
                                             </p>
                                             {isTargetOnline ? (
-                                                <span style={{ fontSize: "0.72rem", color: "#10B981", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600, marginTop: "2px", whiteSpace: "nowrap" }}>
-                                                    <span style={{ width: "6px", height: "6px", backgroundColor: "#10B981", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px rgba(16, 185, 129, 0.6)" }}></span>
-                                                    Online
-                                                </span>
+                                                <motion.div
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "6px",
+                                                        marginTop: "2px",
+                                                        whiteSpace: "nowrap",
+                                                        background: "linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%)",
+                                                        paddingLeft: "4px",
+                                                        borderRadius: "6px"
+                                                    }}
+                                                    animate={{ scale: [1, 1.02, 1] }}
+                                                    transition={{ repeat: Infinity, duration: 2 }}
+                                                >
+                                                    <motion.span
+                                                        animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+                                                        transition={{ repeat: Infinity, duration: 2 }}
+                                                        style={{
+                                                            width: "6px",
+                                                            height: "6px",
+                                                            backgroundColor: "#10B981",
+                                                            borderRadius: "50%",
+                                                            display: "inline-block",
+                                                            boxShadow: "0 0 8px rgba(16, 185, 129, 0.8)",
+                                                            flexShrink: 0
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: "0.72rem", color: "#10B981", fontWeight: 700, letterSpacing: "0.02em" }}>
+                                                        Active now
+                                                    </span>
+                                                </motion.div>
                                             ) : (
                                                 <span style={{ fontSize: "0.72rem", color: "#64748B", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                     <span style={{ width: "6px", height: "6px", backgroundColor: "#9CA3AF", borderRadius: "50%", display: "inline-block", flexShrink: 0 }}></span>
@@ -2218,15 +2333,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             bottom="0"
                             zIndex="100"
                         >
-                            {istyping && (
-                                <div>
-                                    <Lottie
-                                        options={defaultOptions}
-                                        width={70}
-                                        style={{ marginBottom: 15, marginLeft: 0 }}
-                                    />
-                                </div>
-                            )}
 
                             {showPicker && (
                                 <Box position="absolute" bottom="75px" left="10px" zIndex="1000">

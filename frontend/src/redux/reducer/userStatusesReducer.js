@@ -9,7 +9,8 @@ const userStatusesReducer = (state = initialState, action) => {
                 ...state,
                 [action.payload.userId]: {
                     isOnline: action.payload.isOnline,
-                    lastSeen: action.payload.lastSeen
+                    lastSeen: action.payload.lastSeen,
+                    updatedAt: Date.now()
                 }
             };
         case "LOGOUT_USER":

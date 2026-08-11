@@ -16,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 @Component
 public class StompEventListener {
 
+    private final java.util.concurrent.ConcurrentMap<String, String> sessionUsers = new java.util.concurrent.ConcurrentHashMap<>();
+
     @Autowired
     private UserService userService;
 
@@ -30,13 +32,16 @@ public class StompEventListener {
             if (userObj instanceof UsernamePasswordAuthenticationToken auth) {
                 Object principal = auth.getPrincipal();
                 if (principal instanceof User user) {
+                    String sessionId = accessor.getSessionId();
+                    if (sessionId != null) {
+                        sessionUsers.put(sessionId, user.getId());
+                    }
                     userService.updateOnlineStatus(user.getId(), true);
-                    // Send lastSeen as null when online
-                    messagingTemplate.convertAndSend("/topic/presence", java.util.Map.of(
-                            "userId", user.getId(),
-                            "isOnline", true,
-                            "lastSeen", null
-                    ));
+                    java.util.Map<String, Object> presence = new java.util.HashMap<>();
+                    presence.put("userId", user.getId());
+                    presence.put("isOnline", true);
+                    presence.put("lastSeen", null);
+                    messagingTemplate.convertAndSend("/topic/presence", presence);
                 }
             }
         } catch (Exception ignored) {}
@@ -47,10 +52,16 @@ public class StompEventListener {
         try {
             StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
             Object userObj = accessor.getUser();
+            String sessionId = accessor.getSessionId();
+            String disconnectedUserId = sessionId != null ? sessionUsers.remove(sessionId) : null;
             if (userObj instanceof UsernamePasswordAuthenticationToken auth) {
                 Object principal = auth.getPrincipal();
                 if (principal instanceof User user) {
-                    var updated = userService.updateOnlineStatus(user.getId(), false);
+                    String userId = disconnectedUserId != null ? disconnectedUserId : user.getId();
+                    if (sessionUsers.containsValue(userId)) {
+                        return;
+                    }
+                    var updated = userService.updateOnlineStatus(userId, false);
                     Long lastSeenEpoch = null;
                     try {
                         if (updated != null && updated.getLastSeen() != null) {
@@ -64,11 +75,24 @@ public class StompEventListener {
                         lastSeenEpoch = java.time.Instant.now().toEpochMilli();
                     }
                     messagingTemplate.convertAndSend("/topic/presence", java.util.Map.of(
-                            "userId", user.getId(),
+                            "userId", userId,
                             "isOnline", false,
                             "lastSeen", lastSeenEpoch
                     ));
                 }
+            } else if (disconnectedUserId != null) {
+                if (sessionUsers.containsValue(disconnectedUserId)) {
+                    return;
+                }
+                var updated = userService.updateOnlineStatus(disconnectedUserId, false);
+                Long lastSeenEpoch = updated != null && updated.getLastSeen() != null
+                        ? updated.getLastSeen().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        : java.time.Instant.now().toEpochMilli();
+                messagingTemplate.convertAndSend("/topic/presence", java.util.Map.of(
+                        "userId", disconnectedUserId,
+                        "isOnline", false,
+                        "lastSeen", lastSeenEpoch
+                ));
             }
         } catch (Exception ignored) {}
     }

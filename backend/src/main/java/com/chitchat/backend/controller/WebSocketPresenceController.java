@@ -28,7 +28,9 @@ public class WebSocketPresenceController {
         Object chatIdObj = payload.get("chatId");
         if (chatIdObj == null) return;
         String chatId = chatIdObj.toString();
-        messagingTemplate.convertAndSend("/topic/typing/" + chatId, Map.of("chatId", chatId, "stopped", true));
+        payload.put("chatId", chatId);
+        payload.put("stopped", true);
+        messagingTemplate.convertAndSend("/topic/typing/" + chatId, payload);
     }
 
     @Autowired

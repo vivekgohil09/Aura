@@ -572,7 +572,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>
-                  {otherUser?.name || otherUser?.username || 'Typing...'}
+                  {`${otherUser?.name || otherUser?.username || 'User'} is typing...`}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {[0, 1, 2].map((dot) => (
