@@ -41,7 +41,7 @@ import ScrollableChat from './ScrollableChat';
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
 import { compressData } from '../config/dataCompressor';
-import { stompService } from '../config/stompService.clean';
+import { stompService } from '../config/stompService2';
 const url = window.location.origin;
 // Use the global socket initialized in ChatPage so call listeners work app-wide
 const getSocket = () => window.__auraSocket || null;
@@ -832,7 +832,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
         if (!typing) {
             setTyping(true);
-            socket.emit("typing", selectedChat._id);
+            if (stompService.isConnected()) {
+                stompService.sendTyping(selectedChat._id);
+            } else if (socket && socket.emit) {
+                socket.emit("typing", selectedChat._id);
+            }
         }
         let lastTypingTime = new Date().getTime();
         var timerLength = 3000;
@@ -840,7 +844,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             var timeNow = new Date().getTime();
             var timeDiff = timeNow - lastTypingTime;
             if (timeDiff >= timerLength && typing) {
-                socket.emit("stop typing", selectedChat._id);
+                if (stompService.isConnected()) {
+                    stompService.sendStopTyping(selectedChat._id);
+                } else if (socket && socket.emit) {
+                    socket.emit("stop typing", selectedChat._id);
+                }
             setTyping(false);
             }
         }, timerLength);
@@ -853,7 +861,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         if (e.key === "Enter" && newMessage) {
             sendingMsgRef.current = true;
             const chatId = selectedChat.id || selectedChat._id;
-            if (socket) { socket.emit("stop typing", chatId); }
+            if (stompService.isConnected()) { stompService.sendStopTyping(chatId); } else if (socket) { socket.emit("stop typing", chatId); }
             const rawContent = viewOnceMode ? `[view-once] ${newMessage}` : newMessage;
             setNewMessage("");
             setViewOnceMode(false);
@@ -1177,7 +1185,40 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             } else {
                 // Use STOMP subscription per-conversation
                 unsubscribe = stompService.subscribeToConversation(chatId, handleNewMessage);
-                return () => { if (unsubscribe) unsubscribe(); };
+
+                // Typing topic (stomp)
+                const unsubTyping = stompService.subscribeToTopic(`/topic/typing/${chatId}`, (data) => {
+                    try {
+                        if (!data) return;
+                        if (data.stopped || data.stopped === true) {
+                            setIsTyping(false);
+                        } else {
+                            setIsTyping(true);
+                        }
+                    } catch (e) { }
+                });
+
+                // Message-read topic (stomp)
+                const unsubMsgRead = stompService.subscribeToTopic(`/topic/message-read/${chatId}`, (data) => {
+                    try {
+                        if (!data) return;
+                        const msgIds = data.messageIds || data.ids || (data.lastMessageId ? [data.lastMessageId] : []);
+                        if (msgIds && msgIds.length > 0) {
+                            setMessages(prev => prev.map(m => {
+                                const id = m._id || m.id;
+                                if (!id) return m;
+                                if (msgIds.includes(id)) return { ...m, isRead: true, seen: true, read: true };
+                                return m;
+                            }));
+                        }
+                    } catch (e) {}
+                });
+
+                return () => {
+                    try { if (unsubscribe) unsubscribe(); } catch (e) {}
+                    try { if (unsubTyping) unsubTyping(); } catch (e) {}
+                    try { if (unsubMsgRead) unsubMsgRead(); } catch (e) {}
+                };
             }
         }
     }, [selectedChat]);

@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setUserDetails, setNotification, updateUserStatus, setSelectedChat, setChats } from "../redux/actions";
 import axios from 'axios';
 import { useDisclosure } from '@chakra-ui/hooks';
-import { stompService } from "../config/stompService.clean";
+import { stompService } from "../config/stompService2";
 import { motion, AnimatePresence } from "framer-motion";
 import { Portal } from "@chakra-ui/react";
 
@@ -226,11 +226,24 @@ const ChatPage = () => {
       }
     });
 
+    // Subscribe to presence topic (STOMP)
+    let unsubPresence = null;
+    try {
+      unsubPresence = stompService.subscribeToTopic('/topic/presence', (data) => {
+        try {
+          if (data && data.userId) {
+            dispatch(updateUserStatus(data.userId, Boolean(data.isOnline), data.lastSeen));
+          }
+        } catch (e) {}
+      });
+    } catch (e) {}
+
     return () => {
       globalSocket?.off("call-user");
       globalSocket?.off("end-call");
       globalSocket?.off("chat-request-received");
       globalSocket?.off("chat-request-accepted-received");
+      try { if (unsubPresence) unsubPresence(); } catch (e) {}
     };
   }, [dispatch]);
 

@@ -6,8 +6,8 @@ class StompService {
   constructor() {
     this.client = null;
     this.connected = false;
-    this.subscriptions = new Map();
-    this.topicSubscriptions = new Map();
+    this.subscriptions = new Map(); // conversation subscriptions (keyed by chatId)
+    this.topicSubscriptions = new Map(); // generic topic subscriptions (keyed by topic)
     this.listeners = new Set();
   }
 
@@ -31,9 +31,17 @@ class StompService {
         this.connected = true;
         this.notifyListeners(true);
         if (onConnected) onConnected(frame);
+
+        // restore conversation subscriptions
         this.subscriptions.forEach((entry, chatId) => {
           entry.sub = null;
           this._createSubscription(chatId, entry.callback);
+        });
+
+        // restore topic subscriptions
+        this.topicSubscriptions.forEach((entry, topic) => {
+          entry.sub = null;
+          this._createTopicSubscription(topic, entry.callback);
         });
       },
       onStompError: (frame) => {
@@ -74,6 +82,7 @@ class StompService {
     });
   }
 
+  // Conversation-level subscription
   subscribeToConversation(chatId, onMessageReceived) {
     if (!chatId) {
       console.error('chatId is required');
@@ -99,7 +108,7 @@ class StompService {
     const sub = this.client.subscribe(destination, (message) => {
       try {
         const parsed = JSON.parse(message.body);
-        console.log('Received message:', parsed);
+        // console.log('Received message:', parsed);
         callback(parsed);
       } catch (error) {
         console.error('Failed to parse STOMP message:', error, message.body);
@@ -122,6 +131,58 @@ class StompService {
     }
     this.subscriptions.delete(chatId);
     console.log('Unsubscribed from:', `/topic/conversations/${chatId}`);
+  }
+
+  // Generic topic subscribe/unsubscribe helpers
+  subscribeToTopic(topic, callback) {
+    if (!topic) return null;
+    this.unsubscribeFromTopic(topic);
+    const entry = { callback, sub: null };
+    this.topicSubscriptions.set(topic, entry);
+    if (this.client?.connected) this._createTopicSubscription(topic, callback);
+    return () => this.unsubscribeFromTopic(topic);
+  }
+
+  _createTopicSubscription(topic, callback) {
+    if (!this.client?.connected) return;
+    console.log('Subscribing to topic:', topic);
+    const sub = this.client.subscribe(topic, (message) => {
+      try {
+        const parsed = JSON.parse(message.body);
+        callback(parsed);
+      } catch (error) {
+        console.error('Failed to parse STOMP topic message:', error, message.body);
+      }
+    });
+    const entry = this.topicSubscriptions.get(topic);
+    if (entry) entry.sub = sub;
+  }
+
+  unsubscribeFromTopic(topic) {
+    const entry = this.topicSubscriptions.get(topic);
+    if (!entry) return;
+    if (entry.sub) {
+      try { entry.sub.unsubscribe(); } catch (e) { console.error(e); }
+    }
+    this.topicSubscriptions.delete(topic);
+    console.log('Unsubscribed from topic:', topic);
+  }
+
+  // Convenience publishing methods
+  sendTyping(chatId) {
+    if (!this.client?.connected) return;
+    this.client.publish({ destination: '/app/typing', body: JSON.stringify({ chatId }) });
+  }
+
+  sendStopTyping(chatId) {
+    if (!this.client?.connected) return;
+    this.client.publish({ destination: '/app/stop-typing', body: JSON.stringify({ chatId }) });
+  }
+
+  sendMessageRead(chatId, messageIds, readerId) {
+    if (!this.client?.connected) return;
+    const payload = { chatId, messageIds, readerId };
+    this.client.publish({ destination: '/app/message.read', body: JSON.stringify(payload) });
   }
 
   sendMessage(chatId, content, clientMessageId = null) {
@@ -149,14 +210,16 @@ class StompService {
     console.log('Disconnecting STOMP');
     this.subscriptions.forEach((entry) => {
       if (entry.sub) {
-        try {
-          entry.sub.unsubscribe();
-        } catch (error) {
-          console.error(error);
-        }
+        try { entry.sub.unsubscribe(); } catch (error) { console.error(error); }
       }
     });
     this.subscriptions.clear();
+    this.topicSubscriptions.forEach((entry) => {
+      if (entry.sub) {
+        try { entry.sub.unsubscribe(); } catch (error) { console.error(error); }
+      }
+    });
+    this.topicSubscriptions.clear();
     this.client.deactivate();
     this.client = null;
     this.connected = false;

@@ -23,7 +23,7 @@ import { Search, Feather } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
 import Stack from '@mui/material/Stack';
-import { stompService } from '../config/stompService.clean';
+import { stompService } from '../config/stompService2';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Progress } from '@chakra-ui/react'
 import { Badge } from '@chakra-ui/react';

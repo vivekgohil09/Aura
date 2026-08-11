@@ -9,6 +9,7 @@ import { getJwtToken } from '../config/getJwt';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { decompressData, decompressionCache } from '../config/dataCompressor';
+import { stompService } from '../config/stompService2';
 
 const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, viewCountdown, revealViewOnce }) => {
   const isEncrypted = typeof content === 'string' && (content.startsWith('[gz]') || content.startsWith('[enc]'));
@@ -247,7 +248,11 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
       setMessages(prev => prev.map(m => ids.includes(m._id || m.id) ? { ...m, isRead: true, seen: true, read: true } : m));
 
       // Emit to server
-      sock.emit('message-read', { chatId, messageIds: ids, readerId: localLoggedId });
+      if (sock && sock.__isStompShim) {
+        try { stompService.sendMessageRead(chatId, ids, localLoggedId); } catch (e) {}
+      } else {
+        try { sock.emit('message-read', { chatId, messageIds: ids, readerId: localLoggedId }); } catch(e) {}
+      }
     } catch (e) {}
 
   }, [messages, isAtBottom, chatId]);
