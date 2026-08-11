@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSelector } from 'react-redux';
 import { Avatar } from "@chakra-ui/avatar";
 import { Box, Text } from "@chakra-ui/layout";
 import { useSelector } from "react-redux";
@@ -46,6 +47,10 @@ const UserListItem = ({ user, handleFunction }) => {
         }
         if (handleFunction) handleFunction(user);
     };
+
+    const userStatuses = useSelector(state => state.userStatuses) || {};
+    const statusObj = userStatuses[targetUserId] || {};
+    const isOnlineNow = Boolean(statusObj.isOnline);
 
     return (
         <Box
@@ -100,6 +105,8 @@ const UserListItem = ({ user, handleFunction }) => {
                         backgroundColor: '#0F172A'
                     }}
                 />
+                {/* Presence badge */}
+                <div style={{ position: 'absolute', right: 6, bottom: 6, width: 12, height: 12, borderRadius: 12, background: isOnlineNow ? '#10B981' : '#94A3B8', border: '2px solid #FFFFFF', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }} />
             </Box>
             <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                 <Box style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>

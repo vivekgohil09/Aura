@@ -31,10 +31,11 @@ public class StompEventListener {
                 Object principal = auth.getPrincipal();
                 if (principal instanceof User user) {
                     userService.updateOnlineStatus(user.getId(), true);
+                    // Send lastSeen as null when online
                     messagingTemplate.convertAndSend("/topic/presence", java.util.Map.of(
                             "userId", user.getId(),
                             "isOnline", true,
-                            "lastSeen", ""
+                            "lastSeen", null
                     ));
                 }
             }
@@ -50,11 +51,22 @@ public class StompEventListener {
                 Object principal = auth.getPrincipal();
                 if (principal instanceof User user) {
                     var updated = userService.updateOnlineStatus(user.getId(), false);
-                    String lastSeen = updated != null && updated.getLastSeen() != null ? updated.getLastSeen().toString() : java.time.LocalDateTime.now().toString();
+                    Long lastSeenEpoch = null;
+                    try {
+                        if (updated != null && updated.getLastSeen() != null) {
+                            java.time.LocalDateTime ls = updated.getLastSeen();
+                            java.time.ZoneId zid = java.time.ZoneId.systemDefault();
+                            lastSeenEpoch = ls.atZone(zid).toInstant().toEpochMilli();
+                        } else {
+                            lastSeenEpoch = java.time.Instant.now().toEpochMilli();
+                        }
+                    } catch (Exception e) {
+                        lastSeenEpoch = java.time.Instant.now().toEpochMilli();
+                    }
                     messagingTemplate.convertAndSend("/topic/presence", java.util.Map.of(
                             "userId", user.getId(),
                             "isOnline", false,
-                            "lastSeen", lastSeen
+                            "lastSeen", lastSeenEpoch
                     ));
                 }
             }

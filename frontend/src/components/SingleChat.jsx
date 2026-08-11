@@ -87,18 +87,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const formatLastSeenDate = (lastSeenRaw) => {
         if (!lastSeenRaw) return "recently";
         try {
-            const date = new Date(lastSeenRaw);
+            let date;
+            if (typeof lastSeenRaw === 'number' || (typeof lastSeenRaw === 'string' && /^[0-9]+$/.test(lastSeenRaw))) {
+                date = new Date(Number(lastSeenRaw));
+            } else {
+                // Try ISO parse, fallback to Date constructor
+                const parsed = Date.parse(String(lastSeenRaw));
+                date = isNaN(parsed) ? new Date(String(lastSeenRaw)) : new Date(parsed);
+            }
             if (isNaN(date.getTime())) return "recently";
-            
+
             const now = new Date();
             const isToday = date.toDateString() === now.toDateString();
-            
+
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
             const isYesterday = date.toDateString() === yesterday.toDateString();
-            
+
             const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
+
             if (isToday) {
                 return `today at ${timeString}`;
             }
