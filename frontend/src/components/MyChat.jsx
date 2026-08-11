@@ -32,10 +32,31 @@ const DecryptedLatestMessage = ({ msg }) => {
       if (isMounted) setText('👁 View-once message');
       return;
     }
+    if (content.startsWith('[call] ')) {
+      const callText = content.replace('[call] ', '').toLowerCase();
+      if (callText.includes('cancelled') || callText.includes('missed') || callText.includes('declined')) {
+        if (isMounted) setText('🚫 Call cancelled');
+      } else if (callText.includes('ended')) {
+        if (isMounted) setText(`📞 Call ended (${callText.replace('ended', '').trim() || 'voice'})`);
+      } else {
+        if (isMounted) setText('📞 Voice call');
+      }
+      return;
+    }
     if (content.startsWith('[gz]') || content.startsWith('[enc]')) {
       decompressData(content).then(res => {
         if (!isMounted) return;
-        if (res.startsWith('data:image')) setText('📷 Photo message');
+        if (res.startsWith('[call] ')) {
+          const callText = res.replace('[call] ', '').toLowerCase();
+          if (callText.includes('cancelled') || callText.includes('missed') || callText.includes('declined')) {
+            setText('🚫 Call cancelled');
+          } else if (callText.includes('ended')) {
+            setText(`📞 Call ended (${callText.replace('ended', '').trim() || 'voice'})`);
+          } else {
+            setText('📞 Voice call');
+          }
+        }
+        else if (res.startsWith('data:image')) setText('📷 Photo message');
         else if (res.startsWith('data:video') || res.includes('video/mp4') || res.includes('.mp4')) setText('🎥 Video message');
         else if (res.startsWith('data:audio') || res.includes('audio/mp3') || res.includes('.mp3')) setText('🎙 Voice message');
         else if (res.startsWith('data:application') || res.startsWith('data:text')) setText('📄 Document');
@@ -443,6 +464,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
 
       {/* ── LEFT SIDEBAR PANEL ── */}
       <Box
+        className="aura-chat-panel aura-chat-list-panel"
         d={{ base: selectedChat ? "none" : "flex", md: "flex" }}
         flexDir="column"
         bg="rgba(255, 255, 255, 0.95)"
@@ -460,6 +482,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
       >
         {/* 1. Conversations Label & Filter CTA (Fixed Top Header) */}
         <Box
+          className="aura-chat-list-header"
           px={4}
           pt={4}
           pb={3}
@@ -659,6 +682,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                       whileTap={{ scale: 0.98 }}
                     >
                       <Box
+                        className={`aura-conversation-row ${isSelected ? 'is-selected' : ''} ${unreadCount > 0 ? 'has-unread' : ''}`}
                         onClick={() => {
                           dispatch(setSelectedChat(chat));
                           if (unreadCount > 0) {

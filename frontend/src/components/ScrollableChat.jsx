@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { getJwtToken } from '../config/getJwt';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PhoneOff, PhoneCall, PhoneMissed } from 'lucide-react';
 
 import { decompressData, decompressionCache } from '../config/dataCompressor';
 import { stompService } from '../config/stompService2';
@@ -65,23 +66,65 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
   }
 
   if (text.startsWith('[call] ')) {
-    const callText = text.replace('[call] ', '');
-    let icon = '📞';
-    let bgColor = isMe ? 'rgba(255,255,255,0.1)' : '#F3F4F6';
-    let textColor = isMe ? '#FFFFFF' : '#111827';
-    
-    if (callText.includes('declined') || callText.includes('cancelled') || callText.includes('missed')) {
-       icon = '🚫';
-       bgColor = isMe ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2';
-       textColor = isMe ? '#FCA5A5' : '#EF4444';
-    } else if (callText.includes('ended')) {
-       icon = '✅';
-    }
+    const callText = text.replace('[call] ', '').toLowerCase();
+    const isNegative = callText.includes('declined') || callText.includes('cancelled') || callText.includes('missed');
+
+    const cardBg = isNegative
+      ? 'rgba(239, 68, 68, 0.12)'
+      : 'rgba(16, 185, 129, 0.12)';
+
+    const cardBorder = isNegative
+      ? '1.5px solid rgba(239, 68, 68, 0.35)'
+      : '1.5px solid rgba(16, 185, 129, 0.35)';
+
+    const titleColor = isNegative ? '#EF4444' : '#10B981';
+    const subtitleColor = isNegative ? '#EF4444' : '#10B981';
+
+    const iconBadgeBg = isNegative
+      ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+      : 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+
+    const IconComponent = isNegative ? PhoneOff : PhoneCall;
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: bgColor, borderRadius: '12px', border: `1px solid ${isMe ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}` }}>
-         <span style={{ fontSize: '18px' }}>{icon}</span>
-         <span style={{ fontSize: '0.9rem', fontWeight: 600, color: textColor, textTransform: 'capitalize' }}>Call {callText}</span>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px 18px',
+        background: cardBg,
+        borderRadius: '16px',
+        border: cardBorder,
+        boxShadow: isNegative
+          ? '0 4px 16px rgba(239, 68, 68, 0.18)'
+          : '0 4px 16px rgba(16, 185, 129, 0.18)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        minWidth: '220px'
+      }}>
+        <div style={{
+          width: '38px',
+          height: '38px',
+          borderRadius: '12px',
+          background: iconBadgeBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: isNegative
+            ? '0 4px 12px rgba(239, 68, 68, 0.35)'
+            : '0 4px 12px rgba(16, 185, 129, 0.35)',
+          flexShrink: 0
+        }}>
+          <IconComponent size={19} color="#FFFFFF" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: titleColor, textTransform: 'capitalize', letterSpacing: '-0.01em' }}>
+            Call {callText}
+          </span>
+          <span style={{ fontSize: '0.74rem', fontWeight: 600, color: subtitleColor, marginTop: '2px', opacity: 0.9 }}>
+            {isNegative ? 'Voice call • Unanswered' : 'Voice call • Connected'}
+          </span>
+        </div>
       </div>
     );
   }
@@ -138,7 +181,7 @@ const parseUtcDate = (dateInput) => {
       const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
       return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
     }
-  } catch (e) {}
+  } catch (e) { }
   return new Date();
 };
 
@@ -149,7 +192,7 @@ const formatTime = (dateInput) => {
     if (d && !isNaN(d.getTime())) {
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     }
-  } catch (e) {}
+  } catch (e) { }
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
@@ -179,10 +222,10 @@ const getDateLabel = (dateInput) => {
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  
+
   if (d.toDateString() === today.toDateString()) return 'Today';
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  
+
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
 };
 
@@ -190,10 +233,10 @@ const shouldShowDateDivider = (messages, index) => {
   if (index === 0) return true;
   const currentMsg = messages[index];
   const prevMsg = messages[index - 1];
-  
+
   const d1 = parseUtcDate(currentMsg.createdAt || currentMsg.timestamp);
   const d2 = parseUtcDate(prevMsg.createdAt || prevMsg.timestamp);
-  
+
   if (!d1 || !d2 || isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
   return d1.toDateString() !== d2.toDateString();
 };
@@ -249,11 +292,11 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
 
       // Emit to server
       if (sock && sock.__isStompShim) {
-        try { stompService.sendMessageRead(chatId, ids, localLoggedId); } catch (e) {}
+        try { stompService.sendMessageRead(chatId, ids, localLoggedId); } catch (e) { }
       } else {
-        try { sock.emit('message-read', { chatId, messageIds: ids, readerId: localLoggedId }); } catch(e) {}
+        try { sock.emit('message-read', { chatId, messageIds: ids, readerId: localLoggedId }); } catch (e) { }
       }
-    } catch (e) {}
+    } catch (e) { }
 
   }, [messages, isAtBottom, chatId]);
 
@@ -403,73 +446,52 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
               <div
                 key={msgId}
                 style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: isMe ? 'flex-end' : 'flex-start',
-                width: '100%',
-                marginTop: isSameUser(messages, m, i, loggedId) ? 3 : 10,
-                marginBottom: 2,
-              }}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                onContextMenu={(e) => openCtx(e, m)}
-                style={{
                   display: 'flex',
-                  justifyContent: isMe ? 'flex-end' : 'flex-start',
-                  maxWidth: '78%',
-                  position: 'relative'
+                  flexDirection: 'column',
+                  alignItems: isMe ? 'flex-end' : 'flex-start',
+                  width: '100%',
+                  marginTop: isSameUser(messages, m, i, loggedId) ? 3 : 10,
+                  marginBottom: 2,
                 }}
               >
-                {editing ? (
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: 320 }}>
-                    <input
-                      autoFocus
-                      value={editText}
-                      onChange={e => setEditText(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(m); if (e.key === 'Escape') setEditingId(null); }}
-                      style={{
-                        flex: 1, border: '1.5px solid #FF2A54', borderRadius: 14, padding: '8px 14px',
-                        fontSize: 14, outline: 'none', fontFamily: "'Inter', sans-serif"
-                      }}
-                    />
-                    <button onClick={() => saveEdit(m)} style={{ background: '#FF2A54', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Save</button>
-                    <button onClick={() => setEditingId(null)} style={{ background: 'transparent', border: '1px solid #ddd', borderRadius: 10, padding: '6px 10px', cursor: 'pointer', fontSize: 13 }}>✕</button>
-                  </div>
-                ) : (
-                  <span
-                    className="animate-message"
-                    style={{
-                      display: 'inline-block',
-                      width: 'auto',
-                      background: isMe
-                        ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
-                        : '#FFFFFF',
-                      color: isMe ? '#FFFFFF' : '#0F172A',
-                      border: isMe ? '1.5px solid rgba(212, 175, 55, 0.45)' : '1.5px solid #F1F5F9',
-                      boxShadow: isMe ? '0 4px 18px rgba(15, 23, 42, 0.15)' : '0 2px 10px rgba(15, 23, 42, 0.03)',
-                      borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
-                      padding: '12px 18px',
-                      fontSize: '0.94rem',
-                      lineHeight: '1.5',
-                      fontWeight: 500,
-                      wordBreak: 'normal',
-                      overflowWrap: 'anywhere',
-                      whiteSpace: 'pre-wrap',
-                      cursor: 'context-menu',
-                      position: 'relative',
-                      fontFamily: "'Outfit', 'Inter', -apple-system, sans-serif",
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
-                        <div style={{ flex: 1 }}>
-                          <DecompressedContent 
-                            content={m.content} 
-                            isMe={isMe} 
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  onContextMenu={(e) => openCtx(e, m)}
+                  style={{
+                    display: 'flex',
+                    justifyContent: isMe ? 'flex-end' : 'flex-start',
+                    maxWidth: '78%',
+                    position: 'relative'
+                  }}
+                >
+                  {editing ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: 320 }}>
+                      <input
+                        autoFocus
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(m); if (e.key === 'Escape') setEditingId(null); }}
+                        style={{
+                          flex: 1, border: '1.5px solid #FF2A54', borderRadius: 14, padding: '8px 14px',
+                          fontSize: 14, outline: 'none', fontFamily: "'Inter', sans-serif"
+                        }}
+                      />
+                      <button onClick={() => saveEdit(m)} style={{ background: '#FF2A54', color: '#fff', border: 'none', borderRadius: 10, padding: '6px 12px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Save</button>
+                      <button onClick={() => setEditingId(null)} style={{ background: 'transparent', border: '1px solid #ddd', borderRadius: 10, padding: '6px 10px', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                    </div>
+                  ) : (() => {
+                    const rawText = typeof m.content === 'string' ? m.content : '';
+                    const cachedText = decompressionCache.get(m.content) || rawText;
+                    const isCallMsg = rawText.includes('[call]') || cachedText.includes('[call]');
+
+                    if (isCallMsg) {
+                      return (
+                        <div style={{ display: 'inline-block', width: 'auto', padding: 0, margin: '4px 0' }}>
+                          <DecompressedContent
+                            content={m.content}
+                            isMe={isMe}
                             msgId={msgId}
                             expiredOnce={expiredOnce}
                             revealedOnce={revealedOnce}
@@ -477,61 +499,108 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                             revealViewOnce={revealViewOnce}
                           />
                         </div>
-                        <span
-                          style={{
-                            fontSize: '0.66rem',
-                            opacity: isMe ? 0.92 : 0.7,
-                            alignSelf: 'flex-end',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                            color: isMe ? 'rgba(255, 255, 255, 0.92)' : '#64748B',
-                            paddingLeft: '6px'
-                          }}
-                        >
-                          {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
-                        </span>
-                      </div>
+                      );
+                    }
 
-                      {/* Bookmark tag badge */}
-                      {bmked && tag && (
-                        <span style={{
-                          display: 'block', fontSize: 10, fontWeight: 700, marginTop: 2,
-                          color: TAG_COLORS[tag]?.color || '#FF2A54',
-                          opacity: 0.9,
-                        }}>
-                          📌 {tag.replace('_', ' ')}
-                        </span>
-                      )}
-                    </div>
-                  </span>
-                )}
-              </motion.div>
+                    return (
+                      <span
+                        className="animate-message"
+                        style={{
+                          display: 'inline-block',
+                          width: 'auto',
+                          background: isMe
+                            ? '#E0A927'
+                            : '#FFFFFF',
+                          color: isMe ? '#FFFFFF' : '#0F172A',
+                          border: isMe
+                            ? '1.5px solid rgba(212, 175, 55, 0.45)'
+                            : '1.5px solid #F1F5F9',
+                          boxShadow: isMe
+                            ? '0 4px 18px rgba(15, 23, 42, 0.25)'
+                            : '0 2px 10px rgba(15, 23, 42, 0.03)',
+                          borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
+                          padding: '12px 18px',
+                          fontSize: '0.94rem',
+                          lineHeight: '1.5',
+                          fontWeight: 500,
+                          wordBreak: 'normal',
+                          overflowWrap: 'anywhere',
+                          whiteSpace: 'pre-wrap',
+                          cursor: 'context-menu',
+                          position: 'relative',
+                          fontFamily: "'Outfit', 'Inter', -apple-system, sans-serif",
+                          letterSpacing: '-0.01em'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
+                            <div style={{ flex: 1 }}>
+                              <DecompressedContent
+                                content={m.content}
+                                isMe={isMe}
+                                msgId={msgId}
+                                expiredOnce={expiredOnce}
+                                revealedOnce={revealedOnce}
+                                viewCountdown={viewCountdown}
+                                revealViewOnce={revealViewOnce}
+                              />
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '0.66rem',
+                                opacity: isMe ? 0.92 : 0.7,
+                                alignSelf: 'flex-end',
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                color: isMe ? 'rgba(255, 255, 255, 0.92)' : '#64748B',
+                                paddingLeft: '6px'
+                              }}
+                            >
+                              {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
+                            </span>
+                          </div>
 
-              {/* Instagram-style Transparent Seen / Sent Receipt below last sent message */}
-              {isMe && i === messages.length - 1 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 2 }}
-                  animate={{ opacity: 0.85, y: 0 }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    width: '100%',
-                    marginTop: '2px',
-                    marginRight: '6px'
-                  }}
-                >
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 500,
-                    color: (m.isRead || m.seen || m.read) ? '#0EA5E9' : '#64748B',
-                    fontFamily: "'Inter', sans-serif"
-                  }}>
-                    {(m.isRead || m.seen || m.read) ? 'Seen' : 'Sent'} • {getRelativeTime(m.createdAt || m.updatedAt || m.timestamp)}
-                  </span>
+                          {/* Bookmark tag badge */}
+                          {bmked && tag && (
+                            <span style={{
+                              display: 'block', fontSize: 10, fontWeight: 700, marginTop: 2,
+                              color: TAG_COLORS[tag]?.color || '#FF2A54',
+                              opacity: 0.9,
+                            }}>
+                              📌 {tag.replace('_', ' ')}
+                            </span>
+                          )}
+                        </div>
+                      </span>
+                    );
+                  })()}
                 </motion.div>
-              )}
-            </div>
+
+                {/* Instagram-style Transparent Seen / Sent Receipt below last sent message */}
+                {isMe && i === messages.length - 1 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 2 }}
+                    animate={{ opacity: 0.85, y: 0 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      width: '100%',
+                      marginTop: '2px',
+                      marginRight: '6px'
+                    }}
+                  >
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 500,
+                      color: (m.isRead || m.seen || m.read) ? '#0EA5E9' : '#64748B',
+                      fontFamily: "'Inter', sans-serif"
+                    }}>
+                      {(m.isRead || m.seen || m.read) ? 'Seen' : 'Sent'} • {getRelativeTime(m.createdAt || m.updatedAt || m.timestamp)}
+                    </span>
+                  </motion.div>
+                )}
+              </div>
             </React.Fragment>
           );
         })}

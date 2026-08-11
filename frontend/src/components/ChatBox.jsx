@@ -8,6 +8,7 @@ const ChatBox = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
   return (
     <Box
+      className="aura-chat-panel aura-chat-main-panel"
       d={{ base: selectedChat ? "flex" : "none", md: "flex" }}
       alignItems="center"
       flexDir="column"

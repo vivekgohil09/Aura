@@ -38,6 +38,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useDisclosure } from "@chakra-ui/hooks";
 import { setSelectedChat, setChats } from '../redux/actions/index';
 import ScrollableChat from './ScrollableChat';
+import '../styles/chatTheme.css';
 import { compressData } from '../config/dataCompressor';
 import { stompService } from '../config/stompService2';
 const url = window.location.origin;
@@ -77,6 +78,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const [istyping, setIsTyping] = useState(false);
     const typingTimeoutRef = useRef(null);
     const remoteTypingTimeoutRef = useRef(null);
+    const messageCacheMapRef = useRef({});
     // View-once & Schedule
     const [viewOnceMode, setViewOnceMode] = useState(false);
     const [scheduleModal, setScheduleModal] = useState(false);
@@ -1047,8 +1049,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
     const fetchMessages = async (e) => {
         if (!selectedChat) return;
+        const chatId = selectedChat.id || selectedChat._id;
 
-        setMessageloading(true)
+        // Instant Cache Check: Load cached messages immediately (0ms lag, no full spinner)
+        if (messageCacheMapRef.current[chatId] && messageCacheMapRef.current[chatId].length > 0) {
+            setMessages(messageCacheMapRef.current[chatId]);
+            setMessageloading(false);
+        } else {
+            setMessageloading(true);
+        }
 
         try {
             const config = {
@@ -1056,7 +1065,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     Authorization: "Bearer " + getJwtToken(),
                 },
             };
-            const chatId = selectedChat.id || selectedChat._id;
             const { data } = await axios.get(`/api/message/${chatId}`, config);
 
             let clearedAt = 0;
@@ -1083,14 +1091,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 return msgTime === 0 || msgTime > clearedAt;
             });
 
+            messageCacheMapRef.current[chatId] = filteredData;
             setMessages(filteredData);
             setMessageloading(false);
             if (socket) {
                 socket.emit("join chat", chatId);
             }
-
-
         } catch (error) {
+            setMessageloading(false);
             if (handleAuthError(error, history)) return;
             toast.error("Error Occured!", {
                 position: "top-center",
