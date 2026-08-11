@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useSelector } from 'react-redux';
 import { Avatar } from "@chakra-ui/avatar";
 import { Box, Text } from "@chakra-ui/layout";
-import { useSelector } from "react-redux";
 import { getJwtToken } from "../config/getJwt";
 
 const UserListItem = ({ user, handleFunction }) => {
