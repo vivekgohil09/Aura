@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux'
 import { MDBBtn } from 'mdb-react-ui-kit';
@@ -36,17 +36,13 @@ import { getSender, getPicture, getSenderUser } from '../config/ChatsLogic';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDisclosure } from "@chakra-ui/hooks";
-import { setSelectedChat } from '../redux/actions/index';
+import { setSelectedChat, setChats } from '../redux/actions/index';
 import ScrollableChat from './ScrollableChat';
-import io from "socket.io-client"
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
 import { compressData } from '../config/dataCompressor';
-import { stompService } from '../config/stompService';
+import { stompService } from '../config/stompService.clean';
 const url = window.location.origin;
-const ENDPOINT = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? window.location.protocol + "//" + window.location.hostname + ":9092"
-  : "https://aura-vdcq.onrender.com";
 // Use the global socket initialized in ChatPage so call listeners work app-wide
 const getSocket = () => window.__auraSocket || null;
 var socket, selectedChatCompare;
@@ -381,17 +377,44 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
             // Emit call signal over WebSocket
             const chatId = selectedChat ? (selectedChat.id || selectedChat._id) : null;
-            if (socket && !accepted && chatId) {
-                socket.emit("call-user", {
-                    chatId,
-                    fromUser: user?.name || "User",
-                    callType: type
-                });
-            } else if (socket && accepted && chatId) {
-                socket.emit("accept-call", { chatId, fromUserId: user?._id || user?.id });
-                const targetUser = getSenderUser(user, selectedChat.users);
-                if (targetUser) {
-                    initWebRTCRef.current(stream, false, targetUser._id || targetUser.id);
+            const targetUser = selectedChat ? getSenderUser(user, selectedChat.users) : null;
+            const targetUserId = targetUser ? (targetUser._id || targetUser.id) : null;
+            const myId = user ? (user._id || user.id) : null;
+
+            const gSock = getSocket();
+            const emitWithRetry = (eventName, payload, attempts = 8, delay = 250) => {
+                const tryEmit = (n) => {
+                    const s = getSocket();
+                    if (s) {
+                        s.emit(eventName, payload);
+                        return;
+                    }
+                    if (n <= 0) {
+                        toast.error('Signaling server unavailable. Please try again.');
+                        return;
+                    }
+                    setTimeout(() => tryEmit(n - 1), delay);
+                };
+                tryEmit(attempts);
+            };
+
+            if (!chatId) {
+                toast.error('No chat selected for call');
+            } else {
+                if (!accepted) {
+                    emitWithRetry('call-user', {
+                        chatId,
+                        fromUser: user?.name || user?.username || 'User',
+                        fromAvatar: user?.pic || '',
+                        fromUserId: myId,
+                        targetUserId: targetUserId,
+                        callType: type
+                    });
+                } else {
+                    emitWithRetry('accept-call', { chatId, fromUserId: myId });
+                    if (targetUser) {
+                        initWebRTCRef.current(stream, false, targetUserId);
+                    }
                 }
             }
         } catch (err) {
@@ -818,13 +841,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             var timeDiff = timeNow - lastTypingTime;
             if (timeDiff >= timerLength && typing) {
                 socket.emit("stop typing", selectedChat._id);
-                setTyping(false);
+            setTyping(false);
             }
         }, timerLength);
     }
 
+    const sendingMsgRef = useRef(false);
+
     const sendMessage = async (e) => {
+        if (sendingMsgRef.current) return;
         if (e.key === "Enter" && newMessage) {
+            sendingMsgRef.current = true;
             const chatId = selectedChat.id || selectedChat._id;
             if (socket) { socket.emit("stop typing", chatId); }
             const rawContent = viewOnceMode ? `[view-once] ${newMessage}` : newMessage;
@@ -850,6 +877,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             } catch (error) {
                 if (handleAuthError(error, history)) return;
                 toast.error("Error Occured!", { position: "top-center", autoClose: 2000, hideProgressBar: true, theme: 'colored' });
+            } finally {
+                sendingMsgRef.current = false;
             }
         }
     }
@@ -858,8 +887,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         const chatId = selectedChat.id || selectedChat._id;
         try {
             const content = await compressData(rawContent);
-            const clientMsgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+            const clientMsgId = `sys_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             if (stompService.connected) {
                 stompService.sendMessage(chatId, content, clientMsgId);
             } else {
@@ -868,37 +896,37 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 };
                 const { data } = await axios.post(`/api/message`, { content, chatId, clientMessageId: clientMsgId }, config);
                 if (socket) { socket.emit("new message", data); }
-                setMessages(prev => {
-                    if (prev.some(m => (m.clientMessageId && m.clientMessageId === clientMsgId) || m._id === data._id || m.id === data.id)) return prev;
-                    return [...prev, data];
-                });
+                setMessages(prev => [...prev, data]);
             }
-        } catch (error) {
-            console.error("Failed to send system message:", error);
-        }
+        } catch { /* silent */ }
     };
 
-    const sendScheduledMessage = async () => {
-        if (!newMessage.trim() || !scheduledAt) {
-            toast.warning('Enter a message and pick a time!', { autoClose: 2000, hideProgressBar: true });
-            return;
-        }
-        const delay = new Date(scheduledAt).getTime() - Date.now();
-        if (delay <= 0) { toast.error('Pick a future time!', { autoClose: 2000, hideProgressBar: true }); return; }
-        const msgText = newMessage;
-        const scheduled = { id: Date.now(), content: msgText, scheduledAt, chatId: selectedChat.id || selectedChat._id };
-        setPendingScheduled(prev => [...prev, scheduled]);
-        setScheduleModal(false);
-        setNewMessage('');
-        toast.success(`⏰ Message scheduled for ${new Date(scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, { autoClose: 3000, hideProgressBar: true });
-        // Send after delay
+    const scheduleMessage = async (scheduledTimeISO) => {
+        if (!newMessage) return;
+        const chatId = selectedChat.id || selectedChat._id;
+        const rawContent = viewOnceMode ? `[view-once] ${newMessage}` : newMessage;
+        const scheduledObj = {
+            id: `sch_${Date.now()}`,
+            chatId,
+            rawContent,
+            scheduledTimeISO,
+            status: 'pending'
+        };
+        setPendingScheduled(prev => [...prev, scheduledObj]);
+        setNewMessage("");
+        setViewOnceMode(false);
+        toast.success(`⏰ Message scheduled for ${new Date(scheduledTimeISO).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, { autoClose: 3000, hideProgressBar: true });
+
+        const delay = Math.max(0, new Date(scheduledTimeISO).getTime() - Date.now());
         setTimeout(async () => {
             try {
-                const config = { headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getJwtToken() } };
-                const { data } = await axios.post('/api/message', { content: msgText, chatId: selectedChat.id || selectedChat._id }, config);
-                if (socket) { socket.emit('new message', data); }
+                const content = await compressData(rawContent);
+                const clientMsgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const config = { headers: { "Content-Type": "application/json", Authorization: "Bearer " + getJwtToken() } };
+                const { data } = await axios.post(`/api/message`, { content, chatId, clientMessageId: clientMsgId }, config);
+                if (socket) { socket.emit("new message", data); }
                 setMessages(prev => [...prev, data]);
-                setPendingScheduled(prev => prev.filter(s => s.id !== scheduled.id));
+                setPendingScheduled(prev => prev.filter(s => s.id !== scheduledObj.id));
             } catch { /* silent */ }
         }, delay);
     };
@@ -923,9 +951,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 clearedAt = clearedChats[chatId] || 0;
             } catch(e) {}
             
-            const filteredData = data.filter(m => {
-                const msgTime = new Date(m.createdAt || m.timestamp).getTime();
-                return msgTime > clearedAt;
+            const parseMessageTime = (dateInput) => {
+                if (!dateInput) return 0;
+                if (typeof dateInput === 'number') return dateInput;
+                if (Array.isArray(dateInput)) {
+                    const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
+                    return Date.UTC(year, month - 1, day, hour, minute, second);
+                }
+                const parsed = new Date(dateInput).getTime();
+                return isNaN(parsed) ? 0 : parsed;
+            };
+
+            const filteredData = (Array.isArray(data) ? data : []).filter(m => {
+                if (!m) return false;
+                const msgTime = parseMessageTime(m.createdAt || m.timestamp || m.updatedAt);
+                if (!clearedAt) return true;
+                return msgTime === 0 || msgTime > clearedAt;
             });
 
             setMessages(filteredData);
@@ -1024,12 +1065,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     }
                 });
             } else if (!socket) {
-                try {
-                    socket = io(ENDPOINT, { transports: ["websocket", "polling"] });
-                    socket.emit("setup", userInfo);
-                    socket.on("connected", () => setSocketConnected(true));
+                    socket = getSocket();
+                    if (socket && socket.on) socket.on('connected', () => setSocketConnected(true));
                     window.__auraSocket = socket;
-                } catch (e) {}
             }
         };
         setTimeout(tryConnect, 100);
@@ -1055,35 +1093,90 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                         setIsTyping(false);
                     }
                 });
+
+            // Listen for remote read receipts and mark messages locally
+            socket.off("message-read").on("message-read", (data) => {
+                try {
+                    if (!data) return;
+                    const incomingChatId = data.chatId || data.chat || data.chat?.id;
+                    const msgIds = data.messageIds || data.ids || (data.lastMessageId ? [data.lastMessageId] : []);
+                    const currentChatId = selectedChat ? (selectedChat._id || selectedChat.id) : null;
+                    if (!currentChatId || String(incomingChatId) !== String(currentChatId)) {
+                        // Also update global chat list if available
+                        try {
+                            const chatsList = window.__auraChats || [];
+                            const changed = chatsList.map(c => {
+                                const cid = c._id || c.id;
+                                if (String(cid) === String(incomingChatId) && c.latestMessage) {
+                                    return { ...c, latestMessage: { ...c.latestMessage, isRead: true, seen: true, read: true } };
+                                }
+                                return c;
+                            });
+                            window.__auraChats = changed;
+                            try { dispatch(setChats(changed)); } catch (e) {}
+                        } catch (e) {}
+                        return;
+                    }
+
+                    if (msgIds && msgIds.length > 0) {
+                        setMessages(prev => prev.map(m => {
+                            const id = m._id || m.id;
+                            if (msgIds.includes(id)) return { ...m, isRead: true, seen: true, read: true };
+                            return m;
+                        }));
+                    }
+                } catch (e) {}
+            });
             }
 
-            const unsubscribe = stompService.subscribeToConversation(chatId, (newMessageReceived) => {
-                const currentChat = selectedChatRef.current;
-                const currentChatId = currentChat ? (currentChat.id || currentChat._id) : null;
-                const incomingChatId = newMessageReceived?.chat
-                    ? (newMessageReceived.chat.id || newMessageReceived.chat._id)
-                    : newMessageReceived?.chatId;
+            // Prefer WebSocket live stream for incoming messages; fallback to STOMP when socket unavailable
+            let unsubscribe = null;
+            const handleNewMessage = (newMessageReceived) => {
+                try {
+                    const currentChat = selectedChatRef.current;
+                    const currentChatId = currentChat ? (currentChat.id || currentChat._id) : null;
+                    const incomingChatId = newMessageReceived?.chat
+                        ? (newMessageReceived.chat.id || newMessageReceived.chat._id)
+                        : newMessageReceived?.chatId;
 
-                if (!currentChatId || String(currentChatId) !== String(incomingChatId)) {
-                    dispatch(setNotification([newMessageReceived, ...(notification || [])]));
-                    setFetchAgain(prev => !prev);
-                } else {
-                    setMessages(prev => {
-                        const msgId = newMessageReceived._id || newMessageReceived.id;
-                        const clientMsgId = newMessageReceived.clientMessageId;
-                        const exists = prev.some(m =>
-                            (msgId && (m._id === msgId || m.id === msgId)) ||
-                            (clientMsgId && m.clientMessageId === clientMsgId)
-                        );
-                        if (exists) return prev;
-                        return [...prev, newMessageReceived];
-                    });
-                }
-            });
-
-            return () => {
-                if (unsubscribe) unsubscribe();
+                    if (!currentChatId || String(currentChatId) !== String(incomingChatId)) {
+                        dispatch(setNotification([newMessageReceived, ...(notification || [])]));
+                        setFetchAgain(prev => !prev);
+                    } else {
+                        setMessages(prev => {
+                            const msgId = newMessageReceived._id || newMessageReceived.id;
+                            const clientMsgId = newMessageReceived.clientMessageId;
+                            const exists = prev.some(m =>
+                                (msgId && (m._id === msgId || m.id === msgId)) ||
+                                (clientMsgId && m.clientMessageId === clientMsgId)
+                            );
+                            if (exists) return prev;
+                            return [...prev, newMessageReceived];
+                        });
+                    }
+                } catch (e) { console.error('handleNewMessage error', e); }
             };
+
+            if (socket) {
+                // listen for several common event names (server may use any)
+                socket.off("new message").on("new message", handleNewMessage);
+                socket.off("message").on("message", handleNewMessage);
+                socket.off("message received").on("message received", handleNewMessage);
+                socket.off("message-received").on("message-received", handleNewMessage);
+
+                // cleanup
+                return () => {
+                    try {
+                        socket.off("new message", handleNewMessage);
+                        socket.off("message", handleNewMessage);
+                        socket.off("message received", handleNewMessage);
+                        socket.off("message-received", handleNewMessage);
+                    } catch (e) {}
+                };
+            } else {
+                unsubscribe = stompService.subscribeToConversation(chatId, handleNewMessage);
+                return () => { if (unsubscribe) unsubscribe(); };
+            }
         }
     }, [selectedChat]);
 
@@ -1353,7 +1446,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             />
                         ) : (
                             <Box flex="1" overflowY="auto" minH="0" pr={1}>
-                                <ScrollableChat messages={messages} setMessages={setMessages} isTyping={istyping} />
+                                <ScrollableChat chatId={(selectedChat && (selectedChat._id || selectedChat.id)) || null} otherUser={selectedChat ? getSenderUser(user, selectedChat.users) : null} messages={messages} setMessages={setMessages} isTyping={istyping} />
                             </Box>
                         )}
                         {/* Video & Voice Call Modal Overlay */}
@@ -1370,66 +1463,219 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     left: 0,
                                     width: "100vw",
                                     height: "100vh",
-                                    background: "radial-gradient(circle at 50% 30%, #FFFFFF 0%, #FFF3F5 60%, #FFE9ED 100%)",
+                                    background: "radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0d0d1a 40%, #000000 100%)",
                                     zIndex: 9999,
                                     display: "flex",
                                     flexDirection: "column",
                                     alignItems: "center",
                                     justifyContent: "space-between",
-                                    padding: "48px 24px 40px 24px",
-                                    backdropFilter: "blur(40px)"
+                                    padding: "32px 20px 28px 20px",
+                                    overflow: "hidden"
                                 }}
                             >
+                                {/* Ambient Glow Effects */}
+                                <motion.div
+                                    animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.05, 1] }}
+                                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                    style={{
+                                        position: "absolute",
+                                        top: "-120px",
+                                        left: "50%",
+                                        transform: "translateX(-50%)",
+                                        width: "500px",
+                                        height: "500px",
+                                        borderRadius: "50%",
+                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%)",
+                                        pointerEvents: "none"
+                                    }}
+                                />
+                                <motion.div
+                                    animate={{ opacity: [0.15, 0.35, 0.15] }}
+                                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                                    style={{
+                                        position: "absolute",
+                                        bottom: "-80px",
+                                        right: "-60px",
+                                        width: "400px",
+                                        height: "400px",
+                                        borderRadius: "50%",
+                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%)",
+                                        pointerEvents: "none"
+                                    }}
+                                />
+
                                 {/* Header Section */}
-                                <Box display="flex" flexDirection="column" alignItems="center">
+                                <Box display="flex" flexDirection="column" alignItems="center" zIndex={10}>
                                     <Box
                                         display="inline-flex"
                                         alignItems="center"
                                         gap="8px"
-                                        bg="rgba(255, 42, 84, 0.08)"
+                                        bg="rgba(212, 175, 55, 0.08)"
                                         px={4}
                                         py={1.5}
                                         borderRadius="99px"
-                                        border="1px solid rgba(255, 42, 84, 0.15)"
+                                        border="1px solid rgba(212, 175, 55, 0.25)"
                                         mb={3}
+                                        style={{ backdropFilter: "blur(16px)" }}
                                     >
-                                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FF2A54", boxShadow: "0 0 12px #FF2A54" }}></span>
-                                        <Text fontSize="0.75rem" fontWeight="800" color="#FF2A54" letterSpacing="0.08em">
-                                            {callType === "video" ? "4K HD VIDEO ENCRYPTED" : "HD VOICE ENCRYPTED"}
+                                        <motion.span
+                                            animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+                                            transition={{ duration: 1.5, repeat: Infinity }}
+                                            style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#D4AF37", boxShadow: "0 0 12px rgba(212, 175, 55, 0.8)", display: "inline-block" }}
+                                        />
+                                        <Text fontSize="0.72rem" fontWeight="800" color="#D4AF37" letterSpacing="0.1em" margin={0}>
+                                            {callType === "video" ? "HD VIDEO • E2E ENCRYPTED" : "HD VOICE • E2E ENCRYPTED"}
                                         </Text>
                                     </Box>
-                                    <Text fontSize="1.8rem" fontWeight="800" color="#1E1B18" fontFamily="'Outfit', sans-serif" letterSpacing="-0.02em" mt={1}>
+                                    <Text fontSize="1.6rem" fontWeight="800" color="#FFFFFF" fontFamily="'Outfit', sans-serif" letterSpacing="-0.02em" mt={1} margin={0}>
                                         {getSender(user, selectedChat.users)}
                                     </Text>
-                                    <Text fontSize="0.9rem" fontWeight="600" color="#FF2A54" mt={1}>
-                                        {isCallAccepted ? formatCallDuration(callDuration) : "🔔 Calling..."}
-                                    </Text>
+                                    <Box display="flex" alignItems="center" gap="6px" mt={2}>
+                                        {isCallAccepted ? (
+                                            <Text fontSize="0.88rem" fontWeight="700" color="#D4AF37" margin={0}>
+                                                {formatCallDuration(callDuration)}
+                                            </Text>
+                                        ) : (
+                                            <Box display="flex" alignItems="center" gap="6px">
+                                                <Text fontSize="0.88rem" fontWeight="600" color="rgba(255,255,255,0.6)" margin={0}>Calling</Text>
+                                                {[0, 1, 2].map((i) => (
+                                                    <motion.span
+                                                        key={i}
+                                                        animate={{ opacity: [0.2, 1, 0.2] }}
+                                                        transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
+                                                        style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#D4AF37", display: "inline-block" }}
+                                                    />
+                                                ))}
+                                            </Box>
+                                        )}
+                                    </Box>
                                 </Box>
 
                                 {/* Center Hero Content */}
                                 {callType === "video" ? (
-                                    <Box position="relative" width="100%" maxW="720px" height="440px" display="flex" justifyContent="center" alignItems="center" bg="#121214" borderRadius="24px" overflow="hidden" boxShadow="0 18px 45px rgba(0, 0, 0, 0.15)">
+                                    <Box
+                                        position="relative"
+                                        width="100%"
+                                        maxW="780px"
+                                        flex="1"
+                                        minH="0"
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        bg="#0a0a0f"
+                                        borderRadius="28px"
+                                        overflow="hidden"
+                                        border="1.5px solid rgba(212, 175, 55, 0.2)"
+                                        boxShadow="0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.06)"
+                                        zIndex={10}
+                                        my={3}
+                                    >
+                                        {/* Remote Participant HD Video Stream */}
                                         <video 
-                                            ref={localVideoRef} 
+                                            ref={remoteVideoRef} 
                                             autoPlay 
                                             playsInline 
-                                            muted 
                                             style={{ 
                                                 width: '100%', 
                                                 height: '100%', 
                                                 objectFit: 'cover', 
-                                                transform: 'scaleX(-1)', 
-                                                borderRadius: '24px' 
+                                                borderRadius: '28px',
+                                                display: isCallAccepted ? 'block' : 'none'
                                             }} 
                                         />
-                                        <Box position="absolute" bottom="16px" right="16px" bg="rgba(0, 0, 0, 0.65)" backdropFilter="blur(12px)" px={3.5} py={1.2} borderRadius="12px" color="#FFFFFF" border="1px solid rgba(255, 255, 255, 0.2)">
-                                            <Text fontSize="xs" fontWeight="700">You (HD Self View)</Text>
+
+                                        {/* Fullscreen Local Video Stream while calling/connecting */}
+                                        {!isCallAccepted && (
+                                            <video 
+                                                ref={localVideoRef} 
+                                                autoPlay 
+                                                playsInline 
+                                                muted 
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '100%', 
+                                                    objectFit: 'cover', 
+                                                    transform: 'scaleX(-1)', 
+                                                    borderRadius: '28px' 
+                                                }} 
+                                            />
+                                        )}
+
+                                        {/* HD LIVE Badge Overlay */}
+                                        <Box
+                                            position="absolute"
+                                            top="16px"
+                                            left="16px"
+                                            display="flex"
+                                            alignItems="center"
+                                            gap="6px"
+                                            bg="rgba(0, 0, 0, 0.55)"
+                                            backdropFilter="blur(16px)"
+                                            px={3}
+                                            py={1}
+                                            borderRadius="99px"
+                                            border="1px solid rgba(255, 255, 255, 0.1)"
+                                            zIndex={25}
+                                        >
+                                            <motion.span
+                                                animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
+                                                transition={{ duration: 1.5, repeat: Infinity }}
+                                                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#FF3B5C", display: "inline-block" }}
+                                            />
+                                            <Text fontSize="0.68rem" fontWeight="800" color="#FFFFFF" letterSpacing="0.06em" margin={0}>
+                                                {isCallAccepted ? "HD LIVE" : "CONNECTING"}
+                                            </Text>
                                         </Box>
+
+                                        {/* Floating PiP Self View when call is connected */}
+                                        {isCallAccepted && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                                                style={{
+                                                    position: "absolute",
+                                                    bottom: "16px",
+                                                    right: "16px",
+                                                    width: "140px",
+                                                    height: "105px",
+                                                    borderRadius: "16px",
+                                                    overflow: "hidden",
+                                                    border: "2px solid rgba(212, 175, 55, 0.5)",
+                                                    boxShadow: "0 8px 28px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.1)",
+                                                    zIndex: 20,
+                                                    background: "#000"
+                                                }}
+                                            >
+                                                <video 
+                                                    ref={localVideoRef} 
+                                                    autoPlay 
+                                                    playsInline 
+                                                    muted 
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%', 
+                                                        objectFit: 'cover', 
+                                                        transform: 'scaleX(-1)' 
+                                                    }} 
+                                                />
+                                                <Box position="absolute" bottom="4px" left="6px" bg="rgba(0, 0, 0, 0.6)" px={1.5} py={0.5} borderRadius="6px">
+                                                    <Text fontSize="9px" fontWeight="700" color="#D4AF37" margin={0}>You</Text>
+                                                </Box>
+                                            </motion.div>
+                                        )}
+
+                                        {!isCallAccepted && (
+                                            <Box position="absolute" bottom="16px" right="16px" bg="rgba(0, 0, 0, 0.5)" backdropFilter="blur(12px)" px={3} py={1} borderRadius="12px" border="1px solid rgba(255, 255, 255, 0.1)" zIndex={25}>
+                                                <Text fontSize="0.72rem" fontWeight="700" color="rgba(255,255,255,0.8)" margin={0}>You (Self View)</Text>
+                                            </Box>
+                                        )}
                                     </Box>
                                 ) : (
-                                    <Box display="flex" flexDirection="column" alignItems="center" my="auto" position="relative">
+                                    <Box display="flex" flexDirection="column" alignItems="center" my="auto" position="relative" zIndex={10}>
+                                        {/* Gold Pulse Ring Animations */}
                                         <motion.div
-                                            animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0.05, 0.35] }}
+                                            animate={{ scale: [1, 1.5, 1], opacity: [0.25, 0, 0.25] }}
                                             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                                             style={{
                                                 position: "absolute",
@@ -1437,11 +1683,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 width: "170px",
                                                 height: "170px",
                                                 borderRadius: "50%",
-                                                background: "rgba(255, 42, 84, 0.18)"
+                                                background: "rgba(212, 175, 55, 0.15)"
                                             }}
                                         />
                                         <motion.div
-                                            animate={{ scale: [1, 1.75, 1], opacity: [0.2, 0, 0.2] }}
+                                            animate={{ scale: [1, 1.8, 1], opacity: [0.12, 0, 0.12] }}
                                             transition={{ duration: 2.4, repeat: Infinity, delay: 0.6, ease: "easeInOut" }}
                                             style={{
                                                 position: "absolute",
@@ -1449,7 +1695,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 width: "170px",
                                                 height: "170px",
                                                 borderRadius: "50%",
-                                                background: "rgba(255, 42, 84, 0.1)"
+                                                background: "rgba(212, 175, 55, 0.08)"
                                             }}
                                         />
 
@@ -1457,20 +1703,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             size="2xl"
                                             name={getSender(user, selectedChat.users)}
                                             src={getPicture(user, selectedChat.users)}
-                                            bg="#FFE3E6"
-                                            color="#FF2A54"
+                                            bg="rgba(212, 175, 55, 0.15)"
+                                            color="#D4AF37"
                                             fontWeight="800"
                                             fontSize="2.8rem"
                                             style={{
                                                 width: "130px",
                                                 height: "130px",
-                                                border: "5px solid #FFFFFF",
-                                                boxShadow: "0 15px 45px rgba(255, 42, 84, 0.28)",
+                                                border: "3px solid rgba(212, 175, 55, 0.4)",
+                                                boxShadow: "0 15px 45px rgba(212, 175, 55, 0.2), 0 0 30px rgba(212, 175, 55, 0.1)",
                                                 position: "relative",
                                                 zIndex: 2
                                             }}
                                         />
 
+                                        {/* Audio Equalizer Bars */}
                                         <Box display="flex" alignItems="center" gap="5px" mt={7} mb={2}>
                                             {[0, 1, 2, 3, 4].map((i) => (
                                                 <motion.div
@@ -1479,14 +1726,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
                                                     style={{
                                                         width: "4px",
-                                                        background: "#FF2A54",
+                                                        background: "linear-gradient(180deg, #D4AF37 0%, #F59E0B 100%)",
                                                         borderRadius: "4px"
                                                     }}
                                                 />
                                             ))}
                                         </Box>
 
-                                        <Text color="#71717A" fontSize="0.85rem" fontWeight="600" mt={1}>
+                                        <Text color="rgba(255, 255, 255, 0.5)" fontSize="0.82rem" fontWeight="600" mt={1} margin={0}>
                                             {isCallAccepted ? "AURA Live HD Audio Stream Active" : "Waiting for contact to answer..."}
                                         </Text>
                                     </Box>
@@ -1501,21 +1748,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         transition={{ type: "spring", stiffness: 350, damping: 25 }}
                                         whileHover={{
                                             scale: 1.01,
-                                            boxShadow: "0 25px 60px rgba(0, 0, 0, 0.14)",
-                                            borderColor: "rgba(255, 42, 84, 0.4)"
+                                            boxShadow: "0 25px 60px rgba(0, 0, 0, 0.35)",
+                                            borderColor: "rgba(212, 175, 55, 0.4)"
                                         }}
                                         style={{
                                             width: "95%",
                                             maxWidth: "480px",
                                             margin: "0 auto 12px auto",
-                                            background: "rgba(255, 255, 255, 0.45)",
+                                            background: "rgba(255, 255, 255, 0.06)",
                                             backdropFilter: "blur(24px)",
                                             WebkitBackdropFilter: "blur(24px)",
                                             padding: "14px 18px",
                                             borderRadius: "24px",
                                             textAlign: "left",
-                                            border: "1.5px solid rgba(255, 255, 255, 0.75)",
-                                            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.08)",
+                                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                                            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.25)",
                                             zIndex: 40,
                                             cursor: "pointer",
                                             transition: "border-color 0.25s ease, box-shadow 0.25s ease"
@@ -1526,30 +1773,30 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 <motion.span
                                                     animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
                                                     transition={{ repeat: Infinity, duration: 1.5 }}
-                                                    style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FF2A54", display: "inline-block" }}
+                                                    style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#D4AF37", display: "inline-block" }}
                                                 />
-                                                <Text color="#FF2A54" fontSize="0.72rem" fontWeight="800" letterSpacing="0.08em" textTransform="uppercase" m={0}>
+                                                <Text color="#D4AF37" fontSize="0.72rem" fontWeight="800" letterSpacing="0.08em" textTransform="uppercase" m={0}>
                                                     LIVE AI CAPTIONS & TRANSLATION
                                                 </Text>
                                             </Box>
-                                            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#475569", background: "rgba(0, 0, 0, 0.06)", padding: "2px 8px", borderRadius: "99px" }}>
+                                            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "rgba(255,255,255,0.5)", background: "rgba(255, 255, 255, 0.06)", padding: "2px 8px", borderRadius: "99px" }}>
                                                 HD REAL-TIME
                                             </span>
                                         </Box>
 
                                         {captionsLog.length === 0 && !currentTranscript && (
-                                            <Text color="#475569" fontSize="0.84rem" fontWeight="600" italic m={0}>
+                                            <Text color="rgba(255,255,255,0.45)" fontSize="0.84rem" fontWeight="600" italic m={0}>
                                                 🎙️ Speaking to generate live captions...
-                                                <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.75 }} style={{ color: "#FF2A54", marginLeft: "4px", fontWeight: "bold" }}>|</motion.span>
+                                                <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.75 }} style={{ color: "#D4AF37", marginLeft: "4px", fontWeight: "bold" }}>|</motion.span>
                                             </Text>
                                         )}
                                         {captionsLog.map((c, index) => (
                                             <motion.div key={c.id || index} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} style={{ marginBottom: "8px" }}>
-                                                <Text color="#0F172A" fontSize="0.92rem" fontWeight="700" m={0} style={{ lineHeight: 1.4 }}>
-                                                    <span style={{ color: "#FF2A54", fontWeight: 800 }}>{c.speaker}:</span> {c.original}
+                                                <Text color="rgba(255,255,255,0.9)" fontSize="0.92rem" fontWeight="700" m={0} style={{ lineHeight: 1.4 }}>
+                                                    <span style={{ color: "#D4AF37", fontWeight: 800 }}>{c.speaker}:</span> {c.original}
                                                 </Text>
                                                 {c.translated && (
-                                                    <Text color="#059669" fontSize="0.86rem" fontWeight="800" m={0} style={{ marginTop: "2px" }}>
+                                                    <Text color="#10B981" fontSize="0.86rem" fontWeight="800" m={0} style={{ marginTop: "2px" }}>
                                                         🌐 {c.translated}
                                                     </Text>
                                                 )}
@@ -1557,9 +1804,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         ))}
                                         {currentTranscript && (
                                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                                <Text color="#0284C7" fontSize="0.9rem" fontWeight="700" italic m={0}>
+                                                <Text color="rgba(255,255,255,0.7)" fontSize="0.9rem" fontWeight="700" italic m={0}>
                                                     {currentTranscript}
-                                                    <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.6 }} style={{ color: "#FF2A54", marginLeft: "3px", fontWeight: 900 }}>|</motion.span>
+                                                    <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.6 }} style={{ color: "#D4AF37", marginLeft: "3px", fontWeight: 900 }}>|</motion.span>
                                                 </Text>
                                             </motion.div>
                                         )}
@@ -1575,13 +1822,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         transition={{ duration: 0.2 }}
                                         style={{
                                             marginBottom: "12px",
-                                            background: "rgba(255, 255, 255, 0.88)",
+                                            background: "rgba(255, 255, 255, 0.06)",
                                             backdropFilter: "blur(28px)",
                                             WebkitBackdropFilter: "blur(28px)",
                                             borderRadius: "24px",
                                             padding: "12px 16px",
-                                            border: "1.5px solid rgba(255, 255, 255, 0.95)",
-                                            boxShadow: "0 20px 45px rgba(0, 0, 0, 0.12)",
+                                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                                            boxShadow: "0 20px 45px rgba(0, 0, 0, 0.35)",
                                             display: "flex",
                                             alignItems: "center",
                                             gap: "12px",
@@ -1597,8 +1844,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 style={{
                                                     padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.15)" : "rgba(0, 0, 0, 0.05)",
-                                                    border: liveCaptionsEnabled ? "1.5px solid #10B981" : "1px solid #E2E8F0",
+                                                    background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                                                    border: liveCaptionsEnabled ? "1.5px solid #10B981" : "1px solid rgba(255, 255, 255, 0.15)",
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
@@ -1606,7 +1853,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             >
                                                 <span>💬</span>
-                                                <Text fontSize="0.78rem" fontWeight="800" color={liveCaptionsEnabled ? "#059669" : "#475569"} m={0}>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={liveCaptionsEnabled ? "#10B981" : "rgba(255,255,255,0.6)"} m={0}>
                                                     Captions {liveCaptionsEnabled ? "ON" : "OFF"}
                                                 </Text>
                                             </motion.div>
@@ -1621,8 +1868,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 style={{
                                                     padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    background: translateEnabled ? "rgba(99, 102, 241, 0.15)" : "rgba(0, 0, 0, 0.05)",
-                                                    border: translateEnabled ? "1.5px solid #6366F1" : "1px solid #E2E8F0",
+                                                    background: translateEnabled ? "rgba(99, 102, 241, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                                                    border: translateEnabled ? "1.5px solid #6366F1" : "1px solid rgba(255, 255, 255, 0.15)",
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
@@ -1630,7 +1877,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             >
                                                 <span>🌐</span>
-                                                <Text fontSize="0.78rem" fontWeight="800" color={translateEnabled ? "#4F46E5" : "#475569"} m={0}>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={translateEnabled ? "#818CF8" : "rgba(255,255,255,0.6)"} m={0}>
                                                     Translate {translateEnabled ? "ON" : "OFF"}
                                                 </Text>
                                             </motion.div>
@@ -1645,8 +1892,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 style={{
                                                     padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    background: noiseFilterEnabled ? "rgba(245, 158, 11, 0.15)" : "rgba(0, 0, 0, 0.05)",
-                                                    border: noiseFilterEnabled ? "1.5px solid #F59E0B" : "1px solid #E2E8F0",
+                                                    background: noiseFilterEnabled ? "rgba(212, 175, 55, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                                                    border: noiseFilterEnabled ? "1.5px solid #D4AF37" : "1px solid rgba(255, 255, 255, 0.15)",
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
@@ -1654,7 +1901,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             >
                                                 <span>🎙️</span>
-                                                <Text fontSize="0.78rem" fontWeight="800" color={noiseFilterEnabled ? "#D97706" : "#475569"} m={0}>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={noiseFilterEnabled ? "#D4AF37" : "rgba(255,255,255,0.6)"} m={0}>
                                                     Noise Filter {noiseFilterEnabled ? "ON" : "OFF"}
                                                 </Text>
                                             </motion.div>
@@ -1841,7 +2088,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
                         {/* Premium Floating Input Bar */}
                         <FormControl
-                            onKeyDown={sendMessage}
                             id="first-name"
                             isRequired
                             mt={3}
@@ -2051,6 +2297,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
+                                            e.stopPropagation();
                                             sendMessage(e);
                                             e.target.style.height = '38px';
                                         }

@@ -103,7 +103,7 @@ function AmbientVFXBackground() {
   );
 }
 
-const url = "http://localhost:8000";
+const url = "https://aura-vdcq.onrender.com";
 
 const StyledModal = styled(ModalUnstyled)`
   position: fixed;

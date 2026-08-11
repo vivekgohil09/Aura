@@ -23,7 +23,7 @@ import { Search, Feather } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
 import Stack from '@mui/material/Stack';
-import { stompService } from '../config/stompService';
+import { stompService } from '../config/stompService.clean';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Progress } from '@chakra-ui/react'
 import { Badge } from '@chakra-ui/react';
@@ -69,7 +69,7 @@ import {
     MenuList,
 } from "@chakra-ui/menu";
 
-const url = "http://localhost:8000";
+const url = "https://aura-vdcq.onrender.com";
 
 const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
@@ -488,7 +488,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         }
     }
 
-    const accessChat = async (userId) => {
+    const accessChat = async (userId, autoSelect = true) => {
         console.log(userId);
         try {
             setLoadingChat(true);
@@ -505,10 +505,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             if (!existingChats.find((c) => String(c.id || c._id) === String(dataChatId))) {
                 dispatch(setChats([data, ...existingChats.filter(c => String(c.id || c._id) !== String(dataChatId))]));
             }
-            dispatch(setSelectedChat(data));
+            if (autoSelect) {
+                dispatch(setSelectedChat(data));
+                onCloseDrawer();
+            }
             console.log(data);
             setLoadingChat(false);
-            onCloseDrawer();
             return data;
         } catch (error) {
             if (handleAuthError(error, history)) return;
@@ -556,13 +558,6 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 await axios.post("/api/chat/request/send", { targetUserId: String(targetId) }, config);
             } catch (e) {}
 
-            // Send real-time request via socket to target user
-            if (window.__auraSocket) {
-                window.__auraSocket.emit("send-chat-request", {
-                    targetUserId: targetId,
-                    sender: user
-                });
-            }
             setIsQrScannerOpen(false);
             setScannedUser(null);
             setScannedUsername('');
@@ -588,7 +583,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     } catch (e) {}
                 }
 
-                const fullChat = await accessChat(senderId);
+                const fullChat = await accessChat(senderId, false);
                 if (fullChat) {
                     const existingChats = chats || [];
                     const fullChatId = fullChat._id || fullChat.id;
@@ -597,14 +592,6 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     }
                     // Do NOT auto open mychat when accepting request
 
-                    // Emit acceptance back to the original sender via WebSockets
-                    if (window.__auraSocket) {
-                        window.__auraSocket.emit("chat-request-accepted", {
-                            senderId: senderId,
-                            acceptedBy: user,
-                            chat: fullChat
-                        });
-                    }
                 }
             }
             const updatedNotifs = notification.filter(n => n !== notif);

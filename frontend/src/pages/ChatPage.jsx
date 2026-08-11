@@ -6,15 +6,14 @@ import MyChat from "../components/MyChat";
 import ChatBox from "../components/ChatBox";
 import { Box, Modal, ModalOverlay, ModalContent, ModalBody, Avatar, Text, Flex, Button } from "@chakra-ui/react";
 import { useSelector, useDispatch } from "react-redux";
-import { setUserDetails, setNotification, updateUserStatus } from "../redux/actions";
+import { setUserDetails, setNotification, updateUserStatus, setSelectedChat, setChats } from "../redux/actions";
+import axios from 'axios';
 import { useDisclosure } from '@chakra-ui/hooks';
-import { io } from "socket.io-client";
+import { stompService } from "../config/stompService.clean";
 import { motion, AnimatePresence } from "framer-motion";
 import { Portal } from "@chakra-ui/react";
 
-const ENDPOINT = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? window.location.protocol + "//" + window.location.hostname + ":9092"
-  : "https://aura-vdcq.onrender.com";
+// STOMP will be used instead of socket.io. Keep a shim for legacy checks.
 let globalSocket = null;
 
 // ── Modern Minimal White Luxury Ambient VFX Background Component (ChatPage) ──
@@ -92,19 +91,22 @@ const ChatPage = () => {
     if (!userInfo) return;
 
     if (!globalSocket) {
-      globalSocket = io(ENDPOINT, { transports: ["websocket", "polling"] });
+      // Connect STOMP service and provide a lightweight shim at window.__auraSocket for legacy emits/listeners.
+      stompService.connect(() => console.log('STOMP connected'), (err) => console.error('STOMP connect error', err));
+      // Shim: provide minimal API used elsewhere. Emits will be no-ops for events handled via REST or STOMP subscriptions.
+      globalSocket = {
+        emit: (event, payload) => {
+          try {
+            if (event === 'leave-app') {
+              stompService.disconnect();
+            }
+            // Other legacy emits (send-chat-request, chat-request-accepted) now use REST calls in the UI.
+          } catch (e) { }
+        },
+        on: () => {},
+        off: () => {}
+      };
       window.__auraSocket = globalSocket;
-      globalSocket.emit("setup", {
-        ...userInfo,
-        token: jwtToken
-      });
-      globalSocket.on("connected", () => console.log("Global socket connected"));
-      globalSocket.on("connect_error", err => console.error("Socket error:", err.message));
-      globalSocket.on("user status change", (data) => {
-        if (data && data.userId) {
-          dispatch(updateUserStatus(data.userId, Boolean(data.isOnline), data.lastSeen));
-        }
-      });
     } else {
       window.__auraSocket = globalSocket;
     }
@@ -121,7 +123,20 @@ const ChatPage = () => {
 
     // Incoming call & chat requests — always listen globally
     globalSocket.off("call-user").on("call-user", (data) => {
-      setIncomingCall(data);
+      const myId = userInfo._id || userInfo.id;
+      if (data) {
+        if (data.fromUserId && String(data.fromUserId) === String(myId)) {
+          return; // Ignore calls initiated by self
+        }
+        if (data.targetUserId && String(data.targetUserId) !== String(myId)) {
+          return; // Ignore calls targeted for someone else
+        }
+        setIncomingCall(data);
+      }
+    });
+
+    globalSocket.off("end-call").on("end-call", () => {
+      setIncomingCall(null);
     });
 
     globalSocket.off("chat-request-received").on("chat-request-received", (data) => {
@@ -188,10 +203,55 @@ const ChatPage = () => {
 
     return () => {
       globalSocket?.off("call-user");
+      globalSocket?.off("end-call");
       globalSocket?.off("chat-request-received");
       globalSocket?.off("chat-request-accepted-received");
     };
   }, [dispatch]);
+
+  // Play audio ringtone when an incoming call is active
+  useEffect(() => {
+    let stopRinging = null;
+    if (incomingCall) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const playRingTone = () => {
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+          }
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc1.type = "sine";
+          osc2.type = "sine";
+          osc1.frequency.setValueAtTime(440, audioCtx.currentTime);
+          osc2.frequency.setValueAtTime(480, audioCtx.currentTime);
+
+          gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc1.start();
+          osc2.start();
+          osc1.stop(audioCtx.currentTime + 1.2);
+          osc2.stop(audioCtx.currentTime + 1.2);
+        };
+        playRingTone();
+        const interval = setInterval(playRingTone, 2000);
+        stopRinging = () => {
+          clearInterval(interval);
+          try { audioCtx.close(); } catch(e) {}
+        };
+      } catch (e) {}
+    }
+    return () => {
+      if (stopRinging) stopRinging();
+    };
+  }, [incomingCall]);
 
   const notification = useSelector(state => state.notification) || [];
   const chatsList = useSelector(state => state.chats) || [];
@@ -259,7 +319,23 @@ const ChatPage = () => {
       const chatToOpen = chats.find(c => String(c._id || c.id) === String(incomingCall.chatId));
       if (chatToOpen) {
         dispatch(setSelectedChat(chatToOpen));
+      } else {
+        // If the chat isn't in the local list yet, fetch it immediately so conversation opens without delay
+        try {
+          const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+          const { data } = await axios.get(`/api/chat/${incomingCall.chatId}`, config);
+          if (data) {
+            // add to global list and open it
+            const existing = window.__auraChats || [];
+            window.__auraChats = [data, ...existing.filter(c => String(c._id || c.id) !== String(data._id || data.id))];
+            dispatch(setChats(window.__auraChats));
+            dispatch(setSelectedChat(data));
+          }
+        } catch (e) {
+          console.error('Failed to fetch chat on accept:', e?.message || e);
+        }
       }
+      // Mark call to accept in the chat component
       window.__auraCallToAccept = incomingCall;
       setIncomingCall(null);
     }
@@ -320,8 +396,8 @@ const ChatPage = () => {
           <Portal>
             <div style={{
               position: "fixed", inset: 0, zIndex: 99999,
-              background: "rgba(0,0,0,0.75)",
-              backdropFilter: "blur(18px)",
+              background: "rgba(255,255,255,0.86)",
+              backdropFilter: "blur(8px) saturate(120%)",
               display: "flex", alignItems: "center", justifyContent: "center"
             }}>
               <MotionBox
@@ -330,28 +406,29 @@ const ChatPage = () => {
                 exit={{ scale: 0.7, opacity: 0, y: 60 }}
                 transition={{ type: "spring", stiffness: 260, damping: 22 }}
                 style={{
-                  background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-                  borderRadius: "28px",
-                  padding: "48px 40px 40px",
-                  width: "90%",
-                  maxWidth: "340px",
+                  background: "linear-gradient(180deg, #FFFFFF 0%, #FBFBFD 100%)",
+                  borderRadius: "20px",
+                  padding: "36px 28px 28px",
+                  width: "92%",
+                  maxWidth: "420px",
                   textAlign: "center",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  boxShadow: "0 0 60px rgba(220,20,60,0.4), 0 30px 80px rgba(0,0,0,0.8)"
+                  border: "1px solid rgba(15, 23, 42, 0.06)",
+                  boxShadow: "0 12px 36px rgba(15,23,42,0.08)"
                 }}
               >
                 {/* Pulsing rings */}
                 <div style={{ position: "relative", width: 110, height: 110, margin: "0 auto 24px" }}>
                   {[1, 2, 3].map(i => (
                     <motion.div key={i}
-                      animate={{ scale: [1, 1.8 + i * 0.3], opacity: [0.5, 0] }}
-                      transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.3 }}
+                  animate={{ scale: [1, 1.6 + i * 0.25], opacity: [0.45, 0] }}
+                  transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.28 }}
                       style={{
                         position: "absolute", inset: 0,
                         borderRadius: "50%",
-                        border: "2px solid rgba(220,20,60,0.6)",
-                        margin: "auto"
-                      }}
+                    border: "2px solid rgba(212,175,55,0.28)",
+                    margin: "auto",
+                    boxShadow: "0 8px 30px rgba(212,175,55,0.12)"
+                  }}
                     />
                   ))}
                   <motion.div
@@ -364,40 +441,44 @@ const ChatPage = () => {
                       name={incomingCall?.fromUser || "User"}
                       src={incomingCall?.fromAvatar || ""}
                       style={{
-                        border: "4px solid #DC143C",
-                        boxShadow: "0 0 30px rgba(220,20,60,0.8)"
+                        border: "4px solid rgba(212,175,55,0.95)",
+                        boxShadow: "0 8px 36px rgba(212,175,55,0.18)"
                       }}
                     />
                   </motion.div>
                 </div>
 
-                <Text style={{ color: "#fff", fontSize: "22px", fontWeight: 700, marginBottom: "6px" }}>
+                <Text style={{ color: "#0F172A", fontSize: "22px", fontWeight: 800, marginBottom: "6px" }}>
                   {incomingCall?.fromUser || "Someone"}
                 </Text>
-                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", marginBottom: "36px" }}>
+                <Text style={{ color: "#475569", fontSize: "15px", marginBottom: "24px" }}>
                   {incomingCall?.callType === "voice" ? "📞 Incoming Voice Call..." : "📹 Incoming Video Call..."}
                 </Text>
 
                 <Flex gap={4} justify="center">
                   <motion.button
-                    whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
                     onClick={declineCall}
                     style={{
-                      width: 64, height: 64, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #dc2626, #991b1b)",
-                      border: "none", cursor: "pointer", fontSize: "26px",
-                      boxShadow: "0 4px 20px rgba(220,38,38,0.5)"
+                      width: 62, height: 62, borderRadius: "50%",
+                      background: "#F4F4F5",
+                      border: "1px solid rgba(15,23,42,0.06)",
+                      color: "#374151",
+                      cursor: "pointer",
+                      fontSize: "22px",
+                      boxShadow: "0 6px 18px rgba(2,6,23,0.06)"
                     }}
-                  >📵</motion.button>
+                  >✕</motion.button>
 
                   <motion.button
-                    whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
                     onClick={acceptCall}
                     style={{
-                      width: 64, height: 64, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #16a34a, #15803d)",
-                      border: "none", cursor: "pointer", fontSize: "26px",
-                      boxShadow: "0 4px 20px rgba(22,163,74,0.5)"
+                      width: 62, height: 62, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
+                      border: "none", cursor: "pointer", fontSize: "22px",
+                      boxShadow: "0 8px 24px rgba(212,175,55,0.24)",
+                      color: "#08121A"
                     }}
                   >📞</motion.button>
                 </Flex>

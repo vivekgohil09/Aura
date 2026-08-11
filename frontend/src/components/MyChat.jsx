@@ -458,8 +458,25 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         overflow="hidden"
         zIndex={1}
       >
-        {/* 1. Conversations Label & Filter CTA */}
-        <Box px={4} pt={4} pb={2} d="flex" flexDir="column" gap={2.5} flexShrink={0}>
+        {/* 1. Conversations Label & Filter CTA (Fixed Top Header) */}
+        <Box
+          px={4}
+          pt={4}
+          pb={3}
+          d="flex"
+          flexDir="column"
+          gap={2.5}
+          flexShrink={0}
+          position="sticky"
+          top={0}
+          zIndex={10}
+          bg="rgba(255, 255, 255, 0.98)"
+          style={{
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderBottom: "1.5px solid rgba(212, 175, 55, 0.2)"
+          }}
+        >
           <Box d="flex" alignItems="center" justifyContent="space-between">
             <Text fontWeight="900" fontSize="1.25rem" color="#0F172A" margin={0} letterSpacing="-0.02em" fontFamily="'Outfit', sans-serif">
               Conversations
@@ -745,7 +762,21 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                 {isLatestMsgVisible ? formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt) : ""}
                               </Text>
 
-                              {/* Ultra-Clean Luxurious Three Dots Menu */}
+                            {/* Show "Seen" for latest message if it was sent by current user and marked read */}
+                            {chat.latestMessage && (() => {
+                              const latestSenderId = (chat.latestMessage.sender && (chat.latestMessage.sender._id || chat.latestMessage.sender.id)) || chat.latestMessage.senderId || null;
+                              const myId = currentUserObj._id || currentUserObj.id;
+                              const latestIsMine = latestSenderId && myId && String(latestSenderId) === String(myId);
+                              const latestSeen = chat.latestMessage.isRead || chat.latestMessage.seen || chat.latestMessage.read;
+                              if (latestIsMine && latestSeen) {
+                                return (
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0EA5E9', marginLeft: 8 }}>Seen</span>
+                                );
+                              }
+                              return null;
+                            })()}
+
+                            {/* Ultra-Clean Luxurious Three Dots Menu */}
                               <Menu placement="bottom-end" isLazy strategy="fixed">
                                 <MenuButton
                                   as={motion.button}

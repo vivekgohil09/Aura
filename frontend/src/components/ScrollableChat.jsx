@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react'
-import ScrollableFeed from 'react-scrollable-feed'
 import { isSameSender, isLastMessage, isSameSenderMargin, isSameUser } from "../config/ChatsLogic"
 import { Avatar } from "@chakra-ui/avatar";
 import { Tooltip } from "@chakra-ui/tooltip";
@@ -198,17 +197,60 @@ const shouldShowDateDivider = (messages, index) => {
   return d1.toDateString() !== d2.toDateString();
 };
 
-const ScrollableChat = ({ messages, setMessages, isTyping }) => {
+const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) => {
   const user = useSelector(state => state.user)
 
   // ── Context-menu state
   const [ctxMenu, setCtxMenu] = useState(null); // { x, y, msg }
   const ctxRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Track whether user is scrolled to (near) bottom so auto-scroll doesn't interrupt manual scroll-up
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const threshold = 60; // px from bottom to still consider "at bottom"
+      const atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) <= threshold;
+      setIsAtBottom(atBottom);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    // initialize
+    onScroll();
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isAtBottom) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    // Emit read receipts for any incoming unread messages when user is viewing (near bottom)
+    try {
+      const sock = window.__auraSocket || null;
+      if (!sock || !messages || !Array.isArray(messages) || !chatId) return;
+      if (!isAtBottom) return; // Only mark read when user is at bottom viewing latest
+
+      const localLoggedId = user?._id || user?.id || user?.userLogin?._id || user?.userLogin?.id;
+      const unreadIncoming = messages.filter(m => {
+        const sid = senderId(m);
+        const id = m._id || m.id;
+        const isMe = String(sid) === String(localLoggedId);
+        const alreadyRead = m.isRead || m.seen || m.read;
+        return !isMe && !alreadyRead && id;
+      });
+
+      if (unreadIncoming.length === 0) return;
+
+      const ids = unreadIncoming.map(m => m._id || m.id);
+      // Optimistically mark them read locally
+      setMessages(prev => prev.map(m => ids.includes(m._id || m.id) ? { ...m, isRead: true, seen: true, read: true } : m));
+
+      // Emit to server
+      sock.emit('message-read', { chatId, messageIds: ids, readerId: localLoggedId });
+    } catch (e) {}
+
+  }, [messages, isAtBottom, chatId]);
 
   // ── Edit state
   const [editingId, setEditingId] = useState(null);
@@ -324,8 +366,9 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
   const loggedId = user?._id || user?.id || user?.userLogin?._id || user?.userLogin?.id;
 
   return (
-    <div style={{ position: 'relative' }}>
-      <ScrollableFeed>
+    <div ref={scrollContainerRef} style={{ position: 'relative', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
+      <div style={{ display: 'block' }}>
+
         {messages && messages.map((m, i) => {
           const isMe = Boolean(senderId(m) && loggedId && String(senderId(m)) === String(loggedId));
           const msgId = m._id || m.id;
@@ -491,49 +534,63 @@ const ScrollableChat = ({ messages, setMessages, isTyping }) => {
         {/* Live Animated Typing Bubble Indicator on Left Side */}
         {isTyping && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 6 }}
+            initial={{ opacity: 0, scale: 0.95, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 6 }}
+            exit={{ opacity: 0, scale: 0.95, y: 6 }}
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
               width: '100%',
               marginTop: '10px',
-              marginBottom: '6px'
+              marginBottom: '6px',
+              gap: 10,
             }}
           >
+            {otherUser && (
+              <div style={{ width: 36, height: 36, flexShrink: 0 }}>
+                <img src={otherUser?.pic || ''} alt={otherUser?.name || 'User'} style={{ width: 36, height: 36, borderRadius: 12, objectFit: 'cover', border: '1.5px solid rgba(226,232,240,0.9)' }} />
+              </div>
+            )}
+
             <div
               style={{
                 background: '#FFFFFF',
                 borderRadius: '18px 18px 18px 4px',
-                padding: '10px 16px',
+                padding: '8px 12px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '8px',
                 border: '1px solid rgba(226, 232, 240, 0.9)',
-                boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)'
+                boxShadow: '0 6px 18px rgba(15, 23, 42, 0.06)'
               }}
             >
-              {[0, 1, 2].map((dot) => (
-                <motion.span
-                  key={dot}
-                  animate={{ y: [0, -5, 0], opacity: [0.35, 1, 0.35] }}
-                  transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.18, ease: "easeInOut" }}
-                  style={{
-                    width: '7px',
-                    height: '7px',
-                    borderRadius: '50%',
-                    background: '#806C65',
-                    display: 'inline-block'
-                  }}
-                />
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>
+                  {otherUser?.name || otherUser?.username || 'Typing...'}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {[0, 1, 2].map((dot) => (
+                    <motion.span
+                      key={dot}
+                      animate={{ y: [0, -6, 0], opacity: [0.35, 1, 0.35] }}
+                      transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.14, ease: "easeInOut" }}
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: '#D4AF37',
+                        display: 'inline-block'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
         <div ref={messagesEndRef} />
-      </ScrollableFeed>
+      </div>
 
       {/* ── Context Menu */}
       <AnimatePresence>
