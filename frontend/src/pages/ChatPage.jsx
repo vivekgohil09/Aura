@@ -94,18 +94,40 @@ const ChatPage = () => {
       // Connect STOMP service and provide a lightweight shim at window.__auraSocket for legacy emits/listeners.
       stompService.connect(() => console.log('STOMP connected'), (err) => console.error('STOMP connect error', err));
       // Shim: provide minimal API used elsewhere. Emits will be no-ops for events handled via REST or STOMP subscriptions.
-      globalSocket = {
-        emit: (event, payload) => {
-          try {
-            if (event === 'leave-app') {
-              stompService.disconnect();
-            }
-            // Other legacy emits (send-chat-request, chat-request-accepted) now use REST calls in the UI.
-          } catch (e) { }
-        },
-        on: () => {},
-        off: () => {}
+      // Minimal shim to satisfy existing socket.io usage patterns in the UI.
+      const shim = {};
+      shim.emit = (event, payload) => {
+        try {
+          if (event === 'leave-app') {
+            stompService.disconnect();
+          }
+          // No-op for other legacy emits; REST or STOMP topics should handle actual actions.
+        } catch (e) { }
+        return shim;
       };
+
+      // on/off are chainable in socket.io; preserve that by returning shim.
+      shim.on = (event, cb) => {
+        try {
+          if (event === 'connected') {
+            // Hook into STOMP connect status
+            stompService.addConnectionListener((connected) => {
+              if (connected) cb();
+            });
+            // If already connected, call immediately
+            if (stompService.isConnected()) cb();
+          }
+          // Other events (call-user, end-call, chat-request-*) are not auto-shimmed here.
+        } catch (e) {}
+        return shim;
+      };
+
+      shim.off = (event) => {
+        // No-op but chainable
+        return shim;
+      };
+
+      globalSocket = shim;
       window.__auraSocket = globalSocket;
     } else {
       window.__auraSocket = globalSocket;
