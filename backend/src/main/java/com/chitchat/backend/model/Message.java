@@ -35,6 +35,7 @@ public class Message {
 
     private String clientMessageId;
     private boolean isRead = false;
+    private LocalDateTime seenAt;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

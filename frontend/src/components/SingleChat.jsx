@@ -293,19 +293,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         };
 
         pc.onicecandidate = (event) => {
-            if (event.candidate && socket) {
-                socket.emit("webrtc-signal", {
-                    targetUserId,
-                    fromUserId: user?._id || user?.id,
-                    signal: { type: 'ice', candidate: event.candidate }
-                });
+            if (event.candidate) {
+                if (stompService.isConnected()) {
+                    stompService.sendIceCandidate({ type: 'ice-candidate', chatId: selectedChatRef.current?._id || selectedChatRef.current?.id, fromUser: user?._id || user?.id, toUser: targetUserId, signalData: { candidate: event.candidate } });
+                } else if (socket && socket.emit) {
+                    socket.emit("webrtc-signal", {
+                        targetUserId,
+                        fromUserId: user?._id || user?.id,
+                        signal: { type: 'ice', candidate: event.candidate }
+                    });
+                }
             }
         };
 
         if (isCaller) {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            if (socket) {
+            if (stompService.isConnected()) {
+                stompService.sendCallUser({ type: 'call-user', chatId: selectedChatRef.current?._id || selectedChatRef.current?.id, fromUser: user?._id || user?.id, toUser: targetUserId, signalData: offer });
+            } else if (socket) {
                 socket.emit("webrtc-signal", {
                     targetUserId,
                     fromUserId: user?._id || user?.id,
@@ -402,16 +408,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 toast.error('No chat selected for call');
             } else {
                 if (!accepted) {
-                    emitWithRetry('call-user', {
-                        chatId,
-                        fromUser: user?.name || user?.username || 'User',
-                        fromAvatar: user?.pic || '',
-                        fromUserId: myId,
-                        targetUserId: targetUserId,
-                        callType: type
-                    });
+                    if (window.stompService && window.stompService.isConnected && window.stompService.isConnected()) {
+                        window.stompService.sendCallUser({ type: 'call-user', chatId, fromUser: user?.name || user?.username || 'User', fromAvatar: user?.pic || '', fromUser: myId, toUser: targetUserId, callType: type });
+                    } else {
+                        emitWithRetry('call-user', {
+                            chatId,
+                            fromUser: user?.name || user?.username || 'User',
+                            fromAvatar: user?.pic || '',
+                            fromUserId: myId,
+                            targetUserId: targetUserId,
+                            callType: type
+                        });
+                    }
                 } else {
-                    emitWithRetry('accept-call', { chatId, fromUserId: myId });
+                    if (window.stompService && window.stompService.isConnected && window.stompService.isConnected()) {
+                        window.stompService.sendAnswerCall({ type: 'accept-call', chatId, fromUserId: myId });
+                    } else {
+                        emitWithRetry('accept-call', { chatId, fromUserId: myId });
+                    }
                     if (targetUser) {
                         initWebRTCRef.current(stream, false, targetUserId);
                     }
@@ -1214,10 +1228,69 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     } catch (e) {}
                 });
 
+                // Call signalling topic
+                const unsubCall = stompService.subscribeToCall(chatId, async (signal) => {
+                    try {
+                        if (!signal || !signal.type) return;
+                        const t = signal.type;
+                        if (t === 'call-user') {
+                            // incoming call offer
+                            setIncomingCall(signal);
+                        } else if (t === 'call-accepted' || t === 'make-answer' || t === 'answer-call') {
+                            // remote accepted -> create/attach local stream
+                            setIsCallAccepted(true);
+                            if (localVideoRef.current && localVideoRef.current.srcObject && selectedChatRef.current && user) {
+                                const targetUser = getSenderUser(user, selectedChatRef.current.users);
+                                if (targetUser && initWebRTCRef.current) {
+                                    initWebRTCRef.current(localVideoRef.current.srcObject, true, targetUser._id || targetUser.id);
+                                }
+                            }
+                        } else if (t === 'end-call') {
+                            // remote ended
+                            if (isCallerRef.current) {
+                                const dur = callDurationRef.current;
+                                if (dur > 0) {
+                                    sendSystemMessage(`[call] ended ${formatCallDuration(dur)}`);
+                                } else {
+                                    sendSystemMessage(`[call] declined`);
+                                }
+                            }
+                            if (localVideoRef.current && localVideoRef.current.srcObject) {
+                                localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
+                            }
+                            if (peerConnectionRef.current) {
+                                peerConnectionRef.current.close();
+                            }
+                            setIsVideoCallActive(false);
+                            setIsCallAccepted(false);
+                            setIncomingCall(null);
+                        } else if (t === 'ice' || t === 'ice-candidate') {
+                            const pc = peerConnectionRef.current;
+                            if (!pc) return;
+                            await pc.addIceCandidate(new RTCIceCandidate(signal.signalData.candidate));
+                        } else if (t === 'offer') {
+                            const pc = peerConnectionRef.current;
+                            if (!pc) return;
+                            await pc.setRemoteDescription(new RTCSessionDescription(signal.signalData));
+                            const answer = await pc.createAnswer();
+                            await pc.setLocalDescription(answer);
+                            // send answer back
+                            stompService.sendAnswerCall({ type: 'answer-call', chatId: chatId, fromUser: user?._id || user?.id, toUser: signal.fromUser, signalData: answer });
+                        } else if (t === 'answer') {
+                            const pc = peerConnectionRef.current;
+                            if (!pc) return;
+                            await pc.setRemoteDescription(new RTCSessionDescription(signal.signalData));
+                        }
+                    } catch (e) {
+                        console.error('call signal handling error', e);
+                    }
+                });
+
                 return () => {
                     try { if (unsubscribe) unsubscribe(); } catch (e) {}
                     try { if (unsubTyping) unsubTyping(); } catch (e) {}
                     try { if (unsubMsgRead) unsubMsgRead(); } catch (e) {}
+                    try { if (unsubCall) unsubCall(); } catch (e) {}
                 };
             }
         }

@@ -31,12 +31,33 @@ public class WebSocketPresenceController {
         messagingTemplate.convertAndSend("/topic/typing/" + chatId, Map.of("chatId", chatId, "stopped", true));
     }
 
+    @Autowired
+    private com.chitchat.backend.service.MessageService messageService;
+
     @MessageMapping("/message.read")
     public void messageRead(Map<String, Object> payload) {
         if (payload == null) return;
         Object chatIdObj = payload.get("chatId");
         if (chatIdObj == null) return;
         String chatId = chatIdObj.toString();
+
+        // Attempt to mark messages as read in DB if messageIds provided
+        Object idsObj = payload.get("messageIds");
+        Object readerObj = payload.get("readerId");
+        try {
+            if (idsObj instanceof java.util.List) {
+                java.util.List<String> ids = new java.util.ArrayList<>();
+                for (Object o : (java.util.List<?>) idsObj) {
+                    if (o != null) ids.add(o.toString());
+                }
+                String readerId = readerObj != null ? readerObj.toString() : null;
+                messageService.markMessagesRead(chatId, ids, readerId);
+            }
+        } catch (Exception e) {
+            // swallow to avoid breaking websocket flow
+            e.printStackTrace();
+        }
+
         messagingTemplate.convertAndSend("/topic/message-read/" + chatId, payload);
     }
 }

@@ -132,8 +132,11 @@ const ChatPage = () => {
 
       globalSocket = shim;
       window.__auraSocket = globalSocket;
+      // Expose stompService for components that prefer direct STOMP helpers
+      window.stompService = stompService;
     } else {
       window.__auraSocket = globalSocket;
+      window.stompService = stompService;
     }
 
     // Load stored pending chat requests into Redux on mount

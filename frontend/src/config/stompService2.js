@@ -185,6 +185,33 @@ class StompService {
     this.client.publish({ destination: '/app/message.read', body: JSON.stringify(payload) });
   }
 
+  // Call signalling helpers
+  sendCallUser(signal) {
+    if (!this.client?.connected) return;
+    this.client.publish({ destination: '/app/call-user', body: JSON.stringify(signal) });
+  }
+
+  sendAnswerCall(signal) {
+    if (!this.client?.connected) return;
+    this.client.publish({ destination: '/app/answer-call', body: JSON.stringify(signal) });
+  }
+
+  sendIceCandidate(signal) {
+    if (!this.client?.connected) return;
+    this.client.publish({ destination: '/app/ice-candidate', body: JSON.stringify(signal) });
+  }
+
+  sendEndCall(signal) {
+    if (!this.client?.connected) return;
+    this.client.publish({ destination: '/app/end-call', body: JSON.stringify(signal) });
+  }
+
+  subscribeToCall(chatId, callback) {
+    if (!chatId) return null;
+    const topic = `/topic/call/${chatId}`;
+    return this.subscribeToTopic(topic, callback);
+  }
+
   sendMessage(chatId, content, clientMessageId = null) {
     if (!this.client?.connected) throw new Error('WebSocket is not connected');
     if (!chatId) throw new Error('chatId is required');
