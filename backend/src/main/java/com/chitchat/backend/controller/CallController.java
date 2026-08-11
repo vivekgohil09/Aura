@@ -17,6 +17,12 @@ public class CallController {
     public void callUser(@Payload CallSignalDto signal) {
         // Relay call offer signal to chat topic or specific queue
         messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        // Also broadcast to a global call announcements topic so legacy socket-style listeners can receive ringing
+        try {
+            messagingTemplate.convertAndSend("/topic/call-global", signal);
+        } catch (Exception e) {
+            // swallow
+        }
     }
 
     @MessageMapping("/answer-call")

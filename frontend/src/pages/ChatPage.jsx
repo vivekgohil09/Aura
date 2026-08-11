@@ -107,6 +107,7 @@ const ChatPage = () => {
       };
 
       // on/off are chainable in socket.io; preserve that by returning shim.
+      shim._stompSubs = new Map();
       shim.on = (event, cb) => {
         try {
           if (event === 'connected') {
@@ -116,14 +117,45 @@ const ChatPage = () => {
             });
             // If already connected, call immediately
             if (stompService.isConnected()) cb();
+            return shim;
           }
-          // Other events (call-user, end-call, chat-request-*) are not auto-shimmed here.
-        } catch (e) {}
+
+          // Legacy global call events: subscribe to a global STOMP announcement topic
+          if (event === 'call-user' || event === 'end-call' || event === 'accept-call' || event === 'call-accepted') {
+            // Avoid duplicate subscription
+            if (shim._stompSubs.has(event)) return shim;
+            const unsub = stompService.subscribeToTopic('/topic/call-global', (msg) => {
+              try {
+                // STOMP message may be the CallSignalDto or a wrapped object
+                const data = msg && msg.body ? msg.body : msg;
+                // If the message type matches the event or is a general call offer, invoke callback
+                if (data && (data.type === event || (event === 'call-user' && data.type === 'call-user') || event === 'end-call' && data.type === 'end-call')) {
+                  cb(data);
+                } else if (data && !data.type && event === 'call-user') {
+                  // fallback: many callers expect raw payload
+                  cb(data);
+                }
+              } catch (e) {
+                console.error('call-global handler error', e);
+              }
+            });
+            shim._stompSubs.set(event, unsub);
+            return shim;
+          }
+
+          // Other events (chat-request-*) are left as no-ops — add as needed
+        } catch (e) { console.error(e); }
         return shim;
       };
 
       shim.off = (event) => {
-        // No-op but chainable
+        try {
+          const unsub = shim._stompSubs.get(event);
+          if (unsub) {
+            try { unsub(); } catch (e) {}
+            shim._stompSubs.delete(event);
+          }
+        } catch (e) { }
         return shim;
       };
 
