@@ -127,6 +127,9 @@ const ChatPage = () => {
         return shim;
       };
 
+      // Mark this object so components can prefer STOMP subscriptions
+      shim.__isStompShim = true;
+
       globalSocket = shim;
       window.__auraSocket = globalSocket;
     } else {

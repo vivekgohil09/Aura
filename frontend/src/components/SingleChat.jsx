@@ -1157,7 +1157,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 } catch (e) { console.error('handleNewMessage error', e); }
             };
 
-            if (socket) {
+            // If a real socket.io client is present and not our STOMP shim, use its events.
+            if (socket && !socket.__isStompShim) {
                 // listen for several common event names (server may use any)
                 socket.off("new message").on("new message", handleNewMessage);
                 socket.off("message").on("message", handleNewMessage);
@@ -1174,6 +1175,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     } catch (e) {}
                 };
             } else {
+                // Use STOMP subscription per-conversation
                 unsubscribe = stompService.subscribeToConversation(chatId, handleNewMessage);
                 return () => { if (unsubscribe) unsubscribe(); };
             }
