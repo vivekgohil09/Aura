@@ -182,7 +182,7 @@ const ChatPage = () => {
     } catch (e) {}
 
     // Incoming call & chat requests — always listen globally
-    globalSocket.off("call-user").on("call-user", (data) => {
+    globalSocket.off("call-user").on("call-user", async (data) => {
       const myId = userInfo._id || userInfo.id;
       if (data) {
         if (data.fromUserId && String(data.fromUserId) === String(myId)) {
@@ -191,6 +191,35 @@ const ChatPage = () => {
         if (data.targetUserId && String(data.targetUserId) !== String(myId)) {
           return; // Ignore calls targeted for someone else
         }
+
+        // Auto-open the chat so callee sees full calling screen immediately
+        try {
+          const chatId = data.chatId || data.chat?.id || data.chat?._id;
+          if (chatId) {
+            const chatsList = window.__auraChats || [];
+            let chatToOpen = chatsList.find(c => String(c._id || c.id) === String(chatId));
+            if (!chatToOpen) {
+              // fetch chat from backend
+              try {
+                const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+                const { data: fetched } = await axios.get(`/api/chat/${chatId}`, config);
+                if (fetched) {
+                  chatToOpen = fetched;
+                  const existing = window.__auraChats || [];
+                  window.__auraChats = [fetched, ...existing.filter(c => String(c._id || c.id) !== String(fetched._id || fetched.id))];
+                  dispatch(setChats(window.__auraChats));
+                }
+              } catch (e) {
+                // ignore fetch errors — still show incoming call modal
+              }
+            }
+
+            if (chatToOpen) {
+              dispatch(setSelectedChat(chatToOpen));
+            }
+          }
+        } catch (e) {}
+
         setIncomingCall(data);
       }
     });
