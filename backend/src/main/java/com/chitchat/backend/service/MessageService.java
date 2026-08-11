@@ -69,7 +69,7 @@ public class MessageService {
             Optional<Message> mOpt = messageRepository.findById(id);
             if (mOpt.isPresent()) {
                 Message m = mOpt.get();
-                m.setIsRead(true);
+                m.setRead(true);
                 m.setSeenAt(LocalDateTime.now());
                 updated.add(m);
             }
