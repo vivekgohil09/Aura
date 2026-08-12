@@ -80,4 +80,29 @@ public class MessageService {
         }
         return updated;
     }
+
+    public java.util.Map<String, Long> getUnreadCounts(List<String> chatIds, String userId) {
+        java.util.Map<String, Long> result = new java.util.HashMap<>();
+        if (chatIds == null || chatIds.isEmpty()) return result;
+        List<Object[]> rows = messageRepository.countUnreadByChatIds(chatIds, userId);
+        for (Object[] row : rows) {
+            String chatId = (String) row[0];
+            Long count = (Long) row[1];
+            result.put(chatId, count);
+        }
+        return result;
+    }
+
+    public void markChatAsRead(String chatId, String userId) {
+        List<Message> unread = messageRepository.findUnreadByChatAndUser(chatId, userId);
+        if (unread.isEmpty()) return;
+        List<String> ids = new ArrayList<>();
+        for (Message m : unread) {
+            m.setRead(true);
+            m.setSeenAt(LocalDateTime.now());
+            ids.add(m.getId());
+        }
+        messageRepository.saveAll(unread);
+        messagingTemplate.convertAndSend("/topic/message-read/" + chatId, java.util.Map.of("messageIds", ids));
+    }
 }

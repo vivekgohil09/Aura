@@ -9,7 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/message")
@@ -28,5 +30,21 @@ public class MessageController {
     @GetMapping("/{chatId}")
     public ResponseEntity<List<Message>> allMessages(@PathVariable String chatId) {
         return ResponseEntity.ok(messageService.allMessages(chatId));
+    }
+
+    @GetMapping("/unread-counts")
+    public ResponseEntity<Map<String, Long>> getUnreadCounts(
+            @RequestParam String chatIds,
+            @AuthenticationPrincipal User currentUser) {
+        List<String> ids = Arrays.asList(chatIds.split(","));
+        return ResponseEntity.ok(messageService.getUnreadCounts(ids, currentUser.getId()));
+    }
+
+    @PutMapping("/mark-read/{chatId}")
+    public ResponseEntity<Void> markChatAsRead(
+            @PathVariable String chatId,
+            @AuthenticationPrincipal User currentUser) {
+        messageService.markChatAsRead(chatId, currentUser.getId());
+        return ResponseEntity.ok().build();
     }
 }

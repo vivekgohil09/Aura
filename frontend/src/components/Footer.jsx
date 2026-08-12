@@ -65,15 +65,51 @@ export default function Footer() {
                 Quick Links
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, fontFamily: "'Inter', sans-serif" }}>
-                <Link to="/login" style={{ textDecoration: 'none', color: '#D4AF37', fontSize: '0.875rem', fontWeight: 700 }}>
-                  Sign In
-                </Link>
-                <Link to="/signup" style={{ textDecoration: 'none', color: '#D4AF37', fontSize: '0.875rem', fontWeight: 700 }}>
-                  Sign Up
-                </Link>
-                <Link to="/change-password" style={{ textDecoration: 'none', color: '#D4AF37', fontSize: '0.875rem', fontWeight: 700 }}>
-                  Reset Password
-                </Link>
+                {[
+                  { to: '/login', label: 'Sign In' },
+                  { to: '/signup', label: 'Sign Up' },
+                  { to: '/change-password', label: 'Reset Password' },
+                ].map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    style={{
+                      textDecoration: 'none',
+                      color: '#D4AF37',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      position: 'relative',
+                      display: 'inline-block',
+                      width: 'fit-content',
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#B8941E';
+                      const underline = e.currentTarget.querySelector('.footer-underline');
+                      if (underline) underline.style.width = '100%';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#D4AF37';
+                      const underline = e.currentTarget.querySelector('.footer-underline');
+                      if (underline) underline.style.width = '0%';
+                    }}
+                  >
+                    {link.label}
+                    <span
+                      className="footer-underline"
+                      style={{
+                        position: 'absolute',
+                        bottom: -2,
+                        left: 0,
+                        width: '0%',
+                        height: '2px',
+                        background: 'linear-gradient(90deg, #D4AF37, #F59E0B)',
+                        borderRadius: '2px',
+                        transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                    />
+                  </Link>
+                ))}
               </Box>
             </Grid>
 

@@ -491,9 +491,6 @@ export default function AuraLandingPage() {
       {/* Floating Ambient Aurora Glow Orbs VFX */}
       <AuroraGlowOrbs />
 
-      {/* Full Page Floating Sparkles VFX */}
-      <FullPageVFX />
-
       {/* ── STICKY GLASSMORPHIC NAVIGATION HEADER ── */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -788,6 +785,34 @@ export default function AuraLandingPage() {
               </div>
             </Link>
           </motion.div>
+        </motion.div>
+
+        {/* Scroll-to-features indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, y: [0, 8, 0] }}
+          transition={{ opacity: { delay: 1.2 }, y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }}
+          onClick={() => featuresRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          style={{
+            marginTop: '48px',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span style={{
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            color: '#94A3B8',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            fontFamily: "'Inter', sans-serif",
+          }}>Explore Features</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </motion.div>
       </section>
 

@@ -9,6 +9,7 @@ const defaultTheme = createTheme();
 export default function Header() {
   const location = useLocation();
   const isLogin = location.pathname === '/login';
+  const isHome = location.pathname === '/' || location.pathname === '/aura' || location.pathname === '/landing';
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -35,11 +36,11 @@ export default function Header() {
               alignItems: 'center',
               justifyContent: 'space-between',
               py: 1.8,
-              px: { xs: 2, sm: 4 }
+              px: { xs: 1.5, sm: 4 }
             }}
           >
             {/* Brand Logo - Landing Page Theme */}
-            <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
               <motion.div
                 whileHover={{ rotate: 12, scale: 1.08 }}
                 transition={{ type: 'spring', stiffness: 300 }}
@@ -94,24 +95,38 @@ export default function Header() {
             </Link>
 
             {/* Navigation Actions */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   component={Link}
                   to="/"
                   style={{
                     background: 'transparent',
-                    color: '#334155',
+                    color: isHome ? '#0F172A' : '#334155',
                     fontFamily: "'Outfit', sans-serif",
-                    fontWeight: 700,
+                    fontWeight: isHome ? 800 : 700,
                     fontSize: '0.9rem',
                     textTransform: 'none',
                     padding: '8px 18px',
                     borderRadius: '99px',
-                    minWidth: 0
+                    minWidth: 0,
+                    position: 'relative',
                   }}
                 >
                   Home
+                  {isHome && (
+                    <span style={{
+                      position: 'absolute',
+                      bottom: 4,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: '#D4AF37',
+                      boxShadow: '0 0 8px rgba(212, 175, 55, 0.6)',
+                    }} />
+                  )}
                 </Button>
               </motion.div>
 

@@ -1,28 +1,49 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Warm Ivory Cream & Warm White Editorial System */
-  --bg-main: #FFF9F2;
-  --bg-secondary: #FDF1E4;
-  --bg-card: #FFFDF9;
-  --bg-section: #FAE8D5;
+  /* ═══════════════════════════════════════════════
+     AURA DESIGN SYSTEM — Gold + Slate Luxury Palette
+     ═══════════════════════════════════════════════ */
 
-  --text-primary: #3D2B26;
-  --text-secondary: #806C65;
-  --text-muted: #A39088;
+  /* Core Backgrounds */
+  --bg-main: #FAFAFC;
+  --bg-secondary: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-surface: #F1F5F9;
 
-  --accent-primary: #E63946;
-  --accent-secondary: #d62839;
-  --accent-soft: #FFF0F2;
+  /* Core Text */
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-faint: #94A3B8;
+
+  /* Accent — Gold */
+  --accent-gold: #D4AF37;
+  --accent-gold-light: #F59E0B;
+  --accent-gold-soft: rgba(212, 175, 55, 0.12);
+  --accent-gold-border: rgba(212, 175, 55, 0.35);
+  --accent-gold-glow: rgba(212, 175, 55, 0.18);
+
+  /* Accent — Semantic */
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --info: #0284C7;
 
   /* Typography */
   --font-heading: 'Outfit', 'Inter', sans-serif;
   --font-body: 'Inter', 'Outfit', sans-serif;
 
   /* Cards & Shadows */
-  --border-card: 1px solid rgba(61, 43, 38, 0.08);
-  --shadow-card: 0 14px 40px rgba(61, 43, 38, 0.06);
+  --border-subtle: 1px solid rgba(226, 232, 240, 0.9);
+  --border-gold: 1px solid rgba(212, 175, 55, 0.3);
+  --shadow-card: 0 14px 40px rgba(15, 23, 42, 0.06);
+  --shadow-elevated: 0 20px 50px rgba(15, 23, 42, 0.08), 0 0 20px rgba(212, 175, 55, 0.1);
+  --shadow-hover: 0 20px 48px rgba(15, 23, 42, 0.1);
+
+  /* Transitions */
   --transition-smooth: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: all 150ms ease;
 }
 
 *, *::before, *::after {
@@ -30,7 +51,7 @@
 }
 
 html {
-  font-size: 80%;
+  font-size: 100%;
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -46,6 +67,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -69,132 +91,127 @@ label {
   font-family: var(--font-body) !important;
 }
 
+/* ═══════════════════════════════════════════════
+   GRADIENT TEXT
+   ═══════════════════════════════════════════════ */
 .gradient-text {
-  background: linear-gradient(135deg, #3D2B26 0%, #E63946 60%, #d62839 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
-}
-
-/* ==================================================
-   IVORY CREAM & RED BUTTON SYSTEM
-   ================================================= */
-
-/* PRIMARY BUTTON */
-.btn-primary-sunset,
-.btn-primary-aura {
-  background: linear-gradient(135deg, #E63946 0%, #d62839 100%) !important;
-  color: #FFFFFF !important;
-  border-radius: 12px !important;
-  font-weight: 700 !important;
-  font-family: var(--font-body) !important;
-  border: none !important;
-  padding: 12px 28px !important;
-  transition: var(--transition-smooth) !important;
-  box-shadow: 0 6px 20px rgba(230, 57, 70, 0.3) !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-}
-
-.btn-primary-sunset:hover,
-.btn-primary-aura:hover {
-  background: linear-gradient(135deg, #ef233c 0%, #d90429 100%) !important;
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 10px 28px rgba(230, 57, 70, 0.45) !important;
-}
-
-/* SECONDARY BUTTON */
-.btn-secondary-sunset,
-.btn-secondary-aura {
-  background-color: #3D2B26 !important;
-  color: #FFFFFF !important;
-  border-radius: 12px !important;
-  font-weight: 600 !important;
-  font-family: var(--font-body) !important;
-  border: none !important;
-  padding: 12px 28px !important;
-  transition: var(--transition-smooth) !important;
-  box-shadow: 0 4px 15px rgba(61, 43, 38, 0.2) !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-}
-
-.btn-secondary-sunset:hover,
-.btn-secondary-aura:hover {
-  background-color: #543E38 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 22px rgba(61, 43, 38, 0.3) !important;
-}
-
-/* SOFT BUTTON */
-.btn-accent-sunset,
-.btn-soft-aura {
-  background-color: #FFF0F2 !important;
-  color: #E63946 !important;
-  border-radius: 12px !important;
-  font-weight: 700 !important;
-  font-family: var(--font-body) !important;
-  border: 1px solid #FFE3E6 !important;
-  padding: 12px 28px !important;
-  transition: var(--transition-smooth) !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-}
-
-.btn-accent-sunset:hover,
-.btn-soft-aura:hover {
-  background-color: #FFCCD5 !important;
-  transform: translateY(-2px) !important;
-}
-
-/* Ivory Cream & Warm White Card */
-.sunset-card,
-.aura-card {
-  background-color: #FFFDF9 !important;
-  border: 1px solid rgba(61, 43, 38, 0.08) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 14px 40px rgba(61, 43, 38, 0.06) !important;
-  transition: var(--transition-smooth) !important;
-}
-
-.sunset-card:hover,
-.aura-card:hover {
-  transform: translateY(-4px) !important;
-  box-shadow: 0 20px 48px rgba(61, 43, 38, 0.1) !important;
-}
-
-/* Glassmorphic Light Paper Cards */
-.glass-panel {
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-paper);
-  border-radius: 24px;
-  transition: var(--transition-smooth);
-}
-
-.glass-panel:hover {
-  border-color: var(--sage-secondary);
-  box-shadow: var(--shadow-hover);
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #3D2B26 0%, #9A6B82 50%, #C98282 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #D4AF37 60%, #F59E0B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
-/* Premium Buttons & Hover Animations */
+/* ═══════════════════════════════════════════════
+   BUTTON SYSTEM — Gold + Slate
+   ═══════════════════════════════════════════════ */
+
+/* PRIMARY BUTTON — Dark Slate with Gold accent */
+.btn-primary-aura {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+  color: #FFFFFF !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  font-family: var(--font-heading) !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+  padding: 12px 28px !important;
+  transition: var(--transition-smooth) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.btn-primary-aura:hover {
+  background: linear-gradient(135deg, #1E293B 0%, #334155 100%) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.24) !important;
+}
+
+/* SECONDARY BUTTON — Gold Gradient */
+.btn-secondary-aura {
+  background: linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%) !important;
+  color: #FFFFFF !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  font-family: var(--font-heading) !important;
+  border: none !important;
+  padding: 12px 28px !important;
+  transition: var(--transition-smooth) !important;
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.btn-secondary-aura:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 12px 32px rgba(212, 175, 55, 0.4) !important;
+}
+
+/* SOFT/GHOST BUTTON */
+.btn-soft-aura {
+  background-color: rgba(212, 175, 55, 0.08) !important;
+  color: #D4AF37 !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  font-family: var(--font-heading) !important;
+  border: 1px solid rgba(212, 175, 55, 0.25) !important;
+  padding: 12px 28px !important;
+  transition: var(--transition-smooth) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.btn-soft-aura:hover {
+  background-color: rgba(212, 175, 55, 0.16) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   CARD SYSTEM
+   ═══════════════════════════════════════════════ */
+
+.aura-card {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.aura-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-hover) !important;
+  border-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+/* Glassmorphic Panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: var(--shadow-card);
+  border-radius: 24px;
+  transition: var(--transition-smooth);
+}
+
+.glass-panel:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* ═══════════════════════════════════════════════
+   BUTTON BASE & HOVER
+   ═══════════════════════════════════════════════ */
 button,
 .chakra-button {
   transition: var(--transition-smooth) !important;
@@ -204,7 +221,7 @@ button,
 button:hover,
 .chakra-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(61, 43, 38, 0.15) !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12) !important;
 }
 
 button:active,
@@ -212,7 +229,36 @@ button:active,
   transform: translateY(0);
 }
 
-/* Hide Scrollbars completely while allowing smooth scroll */
+/* ═══════════════════════════════════════════════
+   FOCUS RING — Accessibility
+   ═══════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════
+   LINK HOVER TRANSITIONS
+   ═══════════════════════════════════════════════ */
+a {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR — Hidden but functional
+   ═══════════════════════════════════════════════ */
 ::-webkit-scrollbar {
   width: 0px !important;
   height: 0px !important;
@@ -221,9 +267,67 @@ button:active,
 
 * {
   -ms-overflow-style: none !important;
-  /* IE and Edge */
   scrollbar-width: none !important;
-  /* Firefox */
+}
+
+/* ═══════════════════════════════════════════════
+   PERFORMANCE & SMOOTHNESS ENGINE
+   ═══════════════════════════════════════════════ */
+
+/* GPU-accelerated layers for animated elements */
+.aura-conversation-row,
+.aura-chat-panel,
+.chat-item-card,
+.card-3d-tilt,
+.vfx-float-3d {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Smooth momentum scrolling for all scrollable containers */
+.aura-chat-panel,
+[class*="overflow"] {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Content-visibility for offscreen optimization */
+.aura-conversation-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 76px;
+}
+
+/* Contain layout/paint to prevent reflow cascades */
+.aura-chat-main-panel {
+  contain: layout style;
+}
+
+/* Reduce motion for accessibility & battery savings */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .vfx-float-3d,
+  .vfx-pulse-glow,
+  .vfx-rotate-spin {
+    animation: none !important;
+  }
+}
+
+/* Smooth transition curves for interactive elements */
+.aura-conversation-row {
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+/* Image rendering optimization */
+img, .chakra-avatar__img {
+  image-rendering: -webkit-optimize-contrast;
+  will-change: auto;
 }
 
 /* Chat Item Styles */
@@ -238,6 +342,10 @@ button:active,
   outline: none !important;
 }
 
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════ */
+
 /* Message Bubble Animation */
 @keyframes slideUpFade {
   from {
@@ -251,7 +359,7 @@ button:active,
   }
 }
 
-/* 2026 Micro-Animations & Page Entrances */
+/* Page Entrance */
 @keyframes pageEntrance {
   0% {
     opacity: 0;
@@ -266,9 +374,9 @@ button:active,
   }
 }
 
-/* ==================================================
-   ULTRA 3D REALISTIC VFX & PERSPECTIVE ENGINE
-   ================================================== */
+/* ═══════════════════════════════════════════════
+   3D VFX & PERSPECTIVE ENGINE
+   ═══════════════════════════════════════════════ */
 @keyframes float3DRealistic {
 
   0%,
@@ -364,7 +472,7 @@ button:active,
 
 .image-logo,
 .image-logo2 {
-  filter: drop-shadow(0 4px 10px rgba(99, 102, 241, 0.4));
+  filter: drop-shadow(0 4px 10px rgba(212, 175, 55, 0.4));
   transition: var(--transition-smooth);
 }
 
@@ -372,6 +480,10 @@ button:active,
 .image-logo2:hover {
   transform: scale(1.05) rotate(-2deg);
 }
+
+/* ═══════════════════════════════════════════════
+   TOAST SYSTEM — Premium Glassmorphic
+   ═══════════════════════════════════════════════ */
 
 @keyframes toastPremiumEntrance {
   0% {
@@ -405,6 +517,9 @@ button:active,
   padding: 12px 24px !important;
   letter-spacing: -0.01em !important;
   min-height: 48px !important;
+  cursor: default !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
 }
 
 .Toastify__toast--success {
@@ -422,15 +537,15 @@ button:active,
 
 .Toastify__toast--error {
   background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(230, 57, 70, 0.25) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
   border-left: none !important;
   color: #18181B !important;
-  box-shadow: 0 16px 40px rgba(230, 57, 70, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 16px 40px rgba(239, 68, 68, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 .Toastify__toast--error .Toastify__toast-icon svg {
-  fill: #E63946 !important;
-  filter: drop-shadow(0 3px 6px rgba(230, 57, 70, 0.3));
+  fill: #EF4444 !important;
+  filter: drop-shadow(0 3px 6px rgba(239, 68, 68, 0.3));
 }
 
 .Toastify__toast--warning {
@@ -467,12 +582,6 @@ button:active,
     border-radius: 99px !important;
     padding: 10px 20px !important;
   }
-}
-
-.Toastify__toast {
-  cursor: default !important;
-  pointer-events: auto !important;
-  touch-action: manipulation !important;
 }
 
 .Toastify__close-button {
@@ -520,7 +629,9 @@ button:active,
   pointer-events: none !important;
 }
 
-/* MUI Soft Luxury Input & Autofill Overrides */
+/* ═══════════════════════════════════════════════
+   INPUT AUTOFILL OVERRIDES
+   ═══════════════════════════════════════════════ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -528,10 +639,10 @@ input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px #FFFFFF inset !important;
   -webkit-text-fill-color: #1A1D20 !important;
   transition: background-color 5000s ease-in-out 0s;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
-/* Chakra UI Avatar Fallback Luxury Styling Override */
+/* Chakra UI Avatar Fallback */
 .chakra-avatar,
 .chakra-avatar__initials {
   background-color: #0F172A !important;
@@ -540,7 +651,7 @@ input:-webkit-autofill:active {
   font-weight: 800 !important;
 }
 
-/* Landing Page Dashboard Mockup Mobile Optimizations */
+/* Landing Page Dashboard Mockup Mobile */
 @media (max-width: 768px) {
   .preview-dashboard-sidebar {
     display: none !important;
@@ -551,8 +662,12 @@ input:-webkit-autofill:active {
   }
 }
 
-/* Mobile Viewport & Keyboard Focus Stability */
-html, body {
+/* ═══════════════════════════════════════════════
+   CHAT LAYOUT — Fixed viewport (only for chat page)
+   ═══════════════════════════════════════════════ */
+.chat-layout,
+.chat-layout html,
+.chat-layout body {
   height: 100%;
   height: 100dvh;
   overflow: hidden;
@@ -564,9 +679,22 @@ html, body {
 
 #root {
   height: 100%;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  contain: layout style;
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE TOUCH TARGETS
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

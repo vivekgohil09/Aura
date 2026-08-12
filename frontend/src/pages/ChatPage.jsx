@@ -461,7 +461,7 @@ const ChatPage = () => {
   }, [user, history, dispatch]);
 
   return (
-    <div style={{
+    <div className="chat-layout" style={{
       width: "100%",
       height: "100dvh",
       maxHeight: "100dvh",

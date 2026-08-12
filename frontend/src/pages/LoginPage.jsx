@@ -19,6 +19,10 @@ import { styled } from '@mui/system';
 import ModalUnstyled from '@mui/base/ModalUnstyled';
 import EmailIcon from '@mui/icons-material/Email';
 import PasswordIcon from '@mui/icons-material/Password';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { MDBBtn } from 'mdb-react-ui-kit';
 import { MDBTypography } from 'mdb-react-ui-kit';
 import { ToastContainer, toast } from 'react-toastify';
@@ -154,12 +158,14 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const history = useHistory();
   const dispatch = useDispatch();
 
   const isGoogleInitialized = useRef(false);
   const googleButtonRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   useEffect(() => {
     document.title = "Aura | Login";
@@ -170,16 +176,32 @@ export default function LoginPage() {
           window.google.accounts.id.initialize({
             client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
             callback: handleGoogleLogin,
-            auto_select: false,
+            auto_select: true,
+            use_fedcm_for_prompt: true,
+            itp_support: true,
+            cancel_on_tap_outside: false,
+            context: 'signin',
           });
           isGoogleInitialized.current = true;
-          if (googleButtonRef.current) {
-            window.google.accounts.id.renderButton(googleButtonRef.current, {
-              theme: "outline",
-              size: "large",
-              type: "standard"
-            });
-          }
+
+          // Auto-show One Tap prompt on page load (especially useful on mobile)
+          window.google.accounts.id.prompt((notification) => {
+            if (notification.isDisplayed()) {
+              console.log('One Tap prompt displayed');
+            } else if (notification.isNotDisplayed()) {
+              console.log('One Tap not displayed:', notification.getNotDisplayedReason());
+              // Render hidden button as fallback
+              if (googleButtonRef.current) {
+                window.google.accounts.id.renderButton(googleButtonRef.current, {
+                  theme: "outline",
+                  size: "large",
+                  type: "standard"
+                });
+              }
+            } else if (notification.isSkippedMoment()) {
+              console.log('One Tap skipped:', notification.getSkippedReason());
+            }
+          });
         } catch (err) {
           console.error("Google Sign-In initialization failed:", err);
         }
@@ -195,7 +217,13 @@ export default function LoginPage() {
       }
     }, 500);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      // Cancel One Tap prompt on unmount
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.cancel();
+      }
+    };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -370,45 +398,47 @@ export default function LoginPage() {
 
   const triggerGooglePrompt = () => {
     toast.dismiss();
-    const hiddenBtn = googleButtonRef.current?.querySelector('div[role="button"], button, iframe');
-    if (hiddenBtn) {
-      hiddenBtn.click();
-      return;
-    }
 
     if (window.google && window.google.accounts && window.google.accounts.id) {
+      // Re-initialize if not already done
       if (!isGoogleInitialized.current) {
         try {
           window.google.accounts.id.initialize({
             client_id: "1012565781444-eok0rpma515el0i2pvg2j6o58lacb228.apps.googleusercontent.com",
             callback: handleGoogleLogin,
-            auto_select: false,
+            auto_select: true,
+            use_fedcm_for_prompt: true,
+            itp_support: true,
+            cancel_on_tap_outside: false,
+            context: 'signin',
           });
           isGoogleInitialized.current = true;
-          if (googleButtonRef.current) {
-            window.google.accounts.id.renderButton(googleButtonRef.current, {
-              theme: "outline",
-              size: "large",
-              type: "standard"
-            });
-          }
         } catch (err) {
           console.error("Google Sign-In initialization failed:", err);
         }
       }
 
+      // Trigger the One Tap prompt directly
       try {
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // Re-check hidden btn after prompt fallback
-            const btn = googleButtonRef.current?.querySelector('div[role="button"], button, iframe');
-            if (btn) {
-              btn.click();
+            // Fallback: click the hidden rendered button
+            const hiddenBtn = googleButtonRef.current?.querySelector('div[role="button"], button, iframe');
+            if (hiddenBtn) {
+              hiddenBtn.click();
             } else {
-              toast.error("Please click the Google button again or allow popups.", {
-                position: "top-right",
-                autoClose: 3000
-              });
+              // Last resort: re-render and click
+              if (googleButtonRef.current) {
+                window.google.accounts.id.renderButton(googleButtonRef.current, {
+                  theme: "outline",
+                  size: "large",
+                  type: "standard"
+                });
+                setTimeout(() => {
+                  const btn = googleButtonRef.current?.querySelector('div[role="button"], button, iframe');
+                  if (btn) btn.click();
+                }, 300);
+              }
             }
           }
         });
@@ -723,17 +753,31 @@ export default function LoginPage() {
                   fullWidth
                   name="password"
                   label="Password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   autoComplete="current-password"
                   variant="outlined"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          sx={{ color: '#94A3B8', '&:hover': { color: '#D4AF37' } }}
+                        >
+                          {showPassword ? <VisibilityOff sx={{ fontSize: 20 }} /> : <Visibility sx={{ fontSize: 20 }} />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       color: '#0F172A',
                       backgroundColor: '#FFFFFF',
-                      borderRadius: '16px',
+                      borderRadius: '14px',
                       fontFamily: "'Inter', sans-serif",
                       fontWeight: 600,
                       '& fieldset': {
@@ -787,6 +831,13 @@ export default function LoginPage() {
                     ) : 'Sign In'}
                   </Button>
                 </motion.div>
+
+                {/* ─── OR Divider ─── */}
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', my: 1.5 }}>
+                  <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent)' }} />
+                  <Typography sx={{ px: 2, color: '#94A3B8', fontSize: '0.78rem', fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>or</Typography>
+                  <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent)' }} />
+                </Box>
 
                 {/* Hidden container for official Google rendered button */}
                 <div ref={googleButtonRef} style={{ display: 'none' }} id="google-hidden-btn" />

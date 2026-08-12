@@ -98,6 +98,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
   const [chatFilter, setChatFilter] = useState('all'); // 'all' or 'friends'
   const [pinnedChatIds, setPinnedChatIds] = useState([]);
   const [mutedChatIds, setMutedChatIds] = useState([]);
+  const [unreadCounts, setUnreadCounts] = useState({});
   const [deletedChatIds, setDeletedChatIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aura_deleted_chats") || "[]"); } catch { return []; }
   });
@@ -211,6 +212,16 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
+  const fetchUnreadCounts = async (chatList) => {
+    try {
+      const ids = (chatList || []).map(c => c.id || c._id).filter(Boolean);
+      if (ids.length === 0) return;
+      const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+      const { data } = await axios.get(`/api/message/unread-counts?chatIds=${ids.join(',')}`, config);
+      setUnreadCounts(data || {});
+    } catch (e) { }
+  };
+
   useEffect(() => {
     const fetchChatsBackground = async () => {
       try {
@@ -221,6 +232,9 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         };
         const { data } = await axios.get(`/api/chat`, config);
         dispatch(setChats(getFilteredChats(data)));
+
+        // Fetch persistent unread counts from DB
+        fetchUnreadCounts(data);
 
         // Polling Option A: Fetch Pending Chat Requests from DB
         try {
@@ -657,7 +671,10 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                     return String(notifChatId) === currentChatId;
                   });
 
-                  let unreadCount = isLatestMsgVisible ? unreadNotifs.length : 0;
+                  // DB count is the source of truth; layer in-memory notifications on top for real-time
+                  const dbUnread = unreadCounts[currentChatId] || 0;
+                  // Don't show badge for the currently-selected (open) chat
+                  let unreadCount = isSelected ? 0 : (isLatestMsgVisible ? Math.max(dbUnread, unreadNotifs.length) : 0);
 
                   const formatDateTime = (dateStr) => {
                     if (!dateStr) return 'Now';
@@ -685,12 +702,17 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                         className={`aura-conversation-row ${isSelected ? 'is-selected' : ''} ${unreadCount > 0 ? 'has-unread' : ''}`}
                         onClick={() => {
                           dispatch(setSelectedChat(chat));
-                          if (unreadCount > 0) {
-                            dispatch(setNotification(notification.filter(n => {
-                              const notifChatId = n.chat?.id || n.chat?._id || n.chatId;
-                              return String(notifChatId) !== currentChatId;
-                            })));
-                          }
+                          // Always clear notifications & mark read when opening a chat
+                          dispatch(setNotification(notification.filter(n => {
+                            const notifChatId = n.chat?.id || n.chat?._id || n.chatId;
+                            return String(notifChatId) !== currentChatId;
+                          })));
+                          // Mark all messages as read in DB
+                          setUnreadCounts(prev => ({ ...prev, [currentChatId]: 0 }));
+                          try {
+                            const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+                            axios.put(`/api/message/mark-read/${currentChatId}`, {}, config);
+                          } catch (e) { }
                         }}
                         cursor="pointer"
                         bg={isSelected ? "#F8FAFC" : unreadCount > 0 ? "rgba(245, 158, 11, 0.03)" : "#FFFFFF"}
@@ -764,41 +786,11 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                               )}
                             </Box>
 
-                            <Box d="flex" alignItems="center" gap={1}>
-                              {unreadCount > 0 && !isMuted && (
-                                <motion.span
-                                  animate={{ scale: [1, 1.15, 1] }}
-                                  transition={{ duration: 1.2, repeat: Infinity }}
-                                  style={{
-                                    background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
-                                    color: "#FFFFFF",
-                                    borderRadius: "99px",
-                                    padding: "2px 8px",
-                                    fontSize: "0.68rem",
-                                    fontWeight: 800,
-                                    boxShadow: "0 2px 8px rgba(212, 175, 55, 0.4)"
-                                  }}
-                                >
-                                  {unreadCount} NEW
-                                </motion.span>
-                              )}
-                              <Text fontSize="0.72rem" fontWeight="700" color={unreadCount > 0 ? "#D4AF37" : "#64748B"}>
+                            <Box d="flex" alignItems="center" gap={1.5} flexShrink={0}>
+                              <Text fontSize="0.72rem" fontWeight="600" color={unreadCount > 0 ? "#D4AF37" : "#94A3B8"} whiteSpace="nowrap">
                                 {isLatestMsgVisible ? formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt) : ""}
                               </Text>
 
-                            {/* Show "Seen" for latest message if it was sent by current user and marked read */}
-                            {chat.latestMessage && (() => {
-                              const latestSenderId = (chat.latestMessage.sender && (chat.latestMessage.sender._id || chat.latestMessage.sender.id)) || chat.latestMessage.senderId || null;
-                              const myId = currentUserObj._id || currentUserObj.id;
-                              const latestIsMine = latestSenderId && myId && String(latestSenderId) === String(myId);
-                              const latestSeen = chat.latestMessage.isRead || chat.latestMessage.seen || chat.latestMessage.read;
-                              if (latestIsMine && latestSeen) {
-                                return (
-                                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0EA5E9', marginLeft: 8 }}>Seen</span>
-                                );
-                              }
-                              return null;
-                            })()}
 
                             {/* Ultra-Clean Luxurious Three Dots Menu */}
                               <Menu placement="bottom-end" isLazy strategy="fixed">
@@ -903,16 +895,46 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                               </Menu>
                             </Box>
                           </Box>
-                          <Text
-                            fontSize="0.82rem"
-                            color={unreadCount > 0 ? "#0F172A" : "#475569"}
-                            fontWeight={unreadCount > 0 ? "700" : "500"}
-                            isTruncated
-                            mt={0.5}
-                            style={{ fontStyle: chat.latestMessage?.content?.startsWith('[view-once]') ? 'italic' : 'normal' }}
-                          >
-                            {isLatestMsgVisible ? <DecryptedLatestMessage msg={chat.latestMessage} /> : "No messages yet"}
-                          </Text>
+                          <Box d="flex" alignItems="center" justifyContent="space-between" gap={2}>
+                            <Text
+                              fontSize="0.82rem"
+                              color={unreadCount > 0 ? "#0F172A" : "#475569"}
+                              fontWeight={unreadCount > 0 ? "700" : "400"}
+                              isTruncated
+                              mt={0.5}
+                              flex="1"
+                              style={{ fontStyle: chat.latestMessage?.content?.startsWith('[view-once]') ? 'italic' : 'normal' }}
+                            >
+                              {isLatestMsgVisible ? <DecryptedLatestMessage msg={chat.latestMessage} /> : "No messages yet"}
+                            </Text>
+                            {unreadCount > 0 && (
+                              <motion.div
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                                style={{
+                                  background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
+                                  color: "#FFFFFF",
+                                  borderRadius: "50%",
+                                  minWidth: "22px",
+                                  height: "22px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "0.7rem",
+                                  fontWeight: 800,
+                                  fontFamily: "'Outfit', sans-serif",
+                                  padding: unreadCount > 9 ? "0 6px" : "0",
+                                  borderRadius: unreadCount > 9 ? "11px" : "50%",
+                                  boxShadow: "0 2px 8px rgba(212, 175, 55, 0.45)",
+                                  flexShrink: 0
+                                }}
+                              >
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                              </motion.div>
+                            )}
+                          </Box>
                         </Box>
                       </Box>
                     </motion.div>

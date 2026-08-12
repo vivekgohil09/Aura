@@ -20,7 +20,8 @@ import AuraLandingPage from "./pages/AuraLandingPage";
 
 function LayoutWrapper() {
   const location = useLocation();
-  const isChatRoute = location.pathname === '/' || location.pathname === '/chats' || location.pathname === '/sunset' || location.pathname === '/aura' || location.pathname === '/landing';
+  const hideHeader = location.pathname === '/' || location.pathname === '/chats' || location.pathname === '/sunset' || location.pathname === '/aura' || location.pathname === '/landing';
+  const hideFooter = location.pathname === '/chats';
 
   useEffect(() => {
     toast.dismiss();
@@ -28,7 +29,7 @@ function LayoutWrapper() {
 
   return (
     <>
-      {!isChatRoute && <Header />}
+      {!hideHeader && <Header />}
       <Switch>
         <Route exact path="/" component={AuraLandingPage} />
         <Route path="/chats" component={ChatPage} />
@@ -42,7 +43,7 @@ function LayoutWrapper() {
         <Route path="/loged-out" component={LoginPage} />
         <Route path="/review-page" component={Review} />
       </Switch>
-      {!isChatRoute && <Footer />}
+      {!hideFooter && <Footer />}
     </>
   );
 }
