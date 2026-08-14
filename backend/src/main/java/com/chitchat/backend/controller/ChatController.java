@@ -70,7 +70,7 @@ public class ChatController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/request/send")
+    @PostMapping({"/request/send", "/request"})
     public ResponseEntity<com.chitchat.backend.model.ChatRequest> sendRequest(
             @RequestBody ChatDto.SendRequestDto request,
             @AuthenticationPrincipal User currentUser) {
@@ -81,6 +81,12 @@ public class ChatController {
     public ResponseEntity<List<com.chitchat.backend.model.ChatRequest>> getPendingRequests(
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(chatService.getPendingRequests(currentUser));
+    }
+
+    @GetMapping("/requests/sent")
+    public ResponseEntity<List<com.chitchat.backend.model.ChatRequest>> getSentRequests(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(chatService.getSentPendingRequests(currentUser));
     }
 
     @PostMapping("/request/respond")

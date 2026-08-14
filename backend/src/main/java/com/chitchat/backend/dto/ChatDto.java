@@ -48,5 +48,14 @@ public class ChatDto {
     @AllArgsConstructor
     public static class SendRequestDto {
         private String targetUserId;
+        private String userId;
+        private String _id;
+
+        public String getTargetUserId() {
+            if (targetUserId != null && !targetUserId.trim().isEmpty()) return targetUserId.trim();
+            if (userId != null && !userId.trim().isEmpty()) return userId.trim();
+            if (_id != null && !_id.trim().isEmpty()) return _id.trim();
+            return null;
+        }
     }
 }

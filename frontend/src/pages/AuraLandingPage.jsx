@@ -2,158 +2,230 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Feather, MessageCircle, Video, ShieldCheck, Zap, Globe, ArrowRight, Sparkles, Star, Lock } from 'lucide-react';
-import * as THREE from 'three';
-
-// ── Three.js Interactive 3D Canvas Background Component ──
+// ── Ultra-Luxury 3D Projected Sacred Geometry & Particle VFX Canvas Background ──
 function ThreeVFXBackground() {
-  const mountRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
-    const container = mountRef.current;
-    if (!container) return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 16;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    // Create 3D floating luxury golden geometry knot
-    const geometry = new THREE.TorusKnotGeometry(4.8, 0.9, 128, 32);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xD4AF37,
-      metalness: 0.88,
-      roughness: 0.12,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.16,
-    });
-    const knot = new THREE.Mesh(geometry, material);
-    scene.add(knot);
-
-    // Add an outer Icosahedron wireframe
-    const icosaGeo = new THREE.IcosahedronGeometry(12, 1);
-    const icosaMat = new THREE.MeshStandardMaterial({
-      color: 0x38BDF8,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.08,
-    });
-    const icosahedron = new THREE.Mesh(icosaGeo, icosaMat);
-    scene.add(icosahedron);
-
-    // Add a glowing Torus ring
-    const ringGeo = new THREE.TorusGeometry(8, 0.02, 16, 100);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xD4AF37, transparent: true, opacity: 0.25 });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    scene.add(ring);
-
-    // Floating particles VFX (golden & diamond dust)
-    const particleCount = 400; // Increased particle count
-    const posArray = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 45; // Wider spread
-    }
-    const particleGeo = new THREE.BufferGeometry();
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    const particleMat = new THREE.PointsMaterial({
-      size: 0.09,
-      color: 0xE2C044,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
-    scene.add(ambientLight);
-
-    const pointLight1 = new THREE.PointLight(0xD4AF37, 2.2, 50);
-    pointLight1.position.set(12, 12, 12);
-    scene.add(pointLight1);
-
-    const pointLight2 = new THREE.PointLight(0x38BDF8, 1.6, 50);
-    pointLight2.position.set(-12, -12, -12);
-    scene.add(pointLight2);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     let animationFrameId;
-    const clock = new THREE.Clock();
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetX = 0;
-    let targetY = 0;
+    // Mouse coordinates with smooth damping (Lerp)
+    let mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
 
-    const onMouseMove = (e) => {
-      mouseX = (e.clientX - window.innerWidth / 2) * 0.0006;
-      mouseY = (e.clientY - window.innerHeight / 2) * 0.0006;
+    const handleMouseMove = (e) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
     };
-    window.addEventListener('mousemove', onMouseMove);
-
-    const animate = () => {
-      const elapsedTime = clock.getElapsedTime();
-
-      targetX += (mouseX - targetX) * 0.05;
-      targetY += (mouseY - targetY) * 0.05;
-
-      knot.rotation.x = elapsedTime * 0.12 + targetY * 2;
-      knot.rotation.y = elapsedTime * 0.18 + targetX * 2;
-      
-      icosahedron.rotation.x = elapsedTime * 0.05 - targetY * 1.5;
-      icosahedron.rotation.y = elapsedTime * 0.08 + targetX * 1.5;
-      
-      ring.rotation.y = elapsedTime * 0.1 + targetX * 3;
-      ring.rotation.z = elapsedTime * -0.05;
-
-      particles.rotation.y = elapsedTime * 0.04 + targetX * 1.2;
-      particles.rotation.x = elapsedTime * 0.02 + targetY * 1.2;
-
-      camera.position.x += (targetX * 6 - camera.position.x) * 0.05;
-      camera.position.y += (-targetY * 6 - camera.position.y) * 0.05;
-      camera.lookAt(scene.position);
-
-      renderer.render(scene, camera);
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animate();
 
     const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
     };
 
+    window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('resize', handleResize);
 
+    // ── Generate 3D Torus Knot Vertices ──
+    const torusKnotPoints = [];
+    const p = 2, q = 3;
+    const samples = 140;
+    const R = 220; // major radius
+    const r = 70;  // minor radius
+    for (let i = 0; i < samples; i++) {
+      const phi = (i / samples) * Math.PI * 2;
+      const r_tube = r * (0.8 + 0.2 * Math.cos(q * phi));
+      const x = (R + r_tube * Math.cos(q * phi)) * Math.cos(p * phi);
+      const y = (R + r_tube * Math.cos(q * phi)) * Math.sin(p * phi);
+      const z = -r_tube * Math.sin(q * phi) * 2.8;
+      torusKnotPoints.push({ x, y, z });
+    }
+
+    // ── Generate Stardust Floating Particles in 3D ──
+    const particleCount = 75;
+    const particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: (Math.random() - 0.5) * width * 1.4,
+        y: (Math.random() - 0.5) * height * 1.4,
+        z: (Math.random() - 0.5) * 600,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        vz: (Math.random() - 0.5) * 0.3,
+        size: Math.random() * 2.2 + 0.8,
+        color: Math.random() > 0.35 ? '#D4AF37' : '#38BDF8',
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+
+    let rotX = 0;
+    let rotY = 0;
+    let time = 0;
+
+    // ── 3D Projection Math ──
+    const fov = 480;
+    const project = (x, y, z, cx, cy) => {
+      const depth = fov + z;
+      if (depth <= 10) return null;
+      const scale = fov / depth;
+      return {
+        x: cx + x * scale,
+        y: cy + y * scale,
+        scale,
+        depth
+      };
+    };
+
+    const render = () => {
+      time += 0.012;
+      // Damped smooth mouse tracking
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      const tiltX = ((mouse.y - height / 2) / height) * 0.8;
+      const tiltY = ((mouse.x - width / 2) / width) * 0.8;
+
+      rotX = time * 0.35 + tiltX;
+      rotY = time * 0.45 + tiltY;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const centerX = width / 2 + (mouse.x - width / 2) * 0.04;
+      const centerY = height / 2 + (mouse.y - height / 2) * 0.04;
+
+      // ── 1. Draw Golden Torus Knot 3D Wireframe ──
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+      const projectedKnot = [];
+      for (let i = 0; i < torusKnotPoints.length; i++) {
+        const pt = torusKnotPoints[i];
+        // Rotate Y
+        let x1 = pt.x * cosY + pt.z * sinY;
+        let y1 = pt.y;
+        let z1 = -pt.x * sinY + pt.z * cosY;
+        // Rotate X
+        let x2 = x1;
+        let y2 = y1 * cosX - z1 * sinX;
+        let z2 = y1 * sinX + z1 * cosX;
+
+        const proj = project(x2, y2, z2, centerX, centerY);
+        if (proj) projectedKnot.push(proj);
+      }
+
+      if (projectedKnot.length > 2) {
+        ctx.beginPath();
+        for (let i = 0; i < projectedKnot.length; i++) {
+          const p1 = projectedKnot[i];
+          const nextIdx = (i + 1) % projectedKnot.length;
+          const p2 = projectedKnot[nextIdx];
+
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+        }
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.13)';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+
+        // Glowing highlights at key nodes
+        for (let i = 0; i < projectedKnot.length; i += 6) {
+          const p1 = projectedKnot[i];
+          const alpha = Math.max(0.1, Math.min(0.55, (p1.scale - 0.7) * 1.5));
+          ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, Math.max(1, p1.scale * 2.5), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // ── 2. Draw 3D Floating Particles & Constellations ──
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.z += p.vz;
+        p.pulse += 0.03;
+
+        // Wrap around bounds
+        if (p.x > width * 0.7) p.x = -width * 0.7;
+        if (p.x < -width * 0.7) p.x = width * 0.7;
+        if (p.y > height * 0.7) p.y = -height * 0.7;
+        if (p.y < -height * 0.7) p.y = height * 0.7;
+        if (p.z > 300) p.z = -300;
+        if (p.z < -300) p.z = 300;
+
+        // Rotate particles slightly
+        let px = p.x * Math.cos(time * 0.08) - p.z * Math.sin(time * 0.08);
+        let pz = p.x * Math.sin(time * 0.08) + p.z * Math.cos(time * 0.08);
+        let py = p.y;
+
+        const proj = project(px, py, pz, centerX, centerY);
+        if (!proj) continue;
+
+        const currentSize = p.size * proj.scale * (1 + 0.25 * Math.sin(p.pulse));
+        const alpha = Math.max(0.12, Math.min(0.75, (proj.scale - 0.5) * 0.8));
+
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, Math.max(0.6, currentSize), 0, Math.PI * 2);
+        ctx.fillStyle = p.color === '#D4AF37' 
+          ? `rgba(212, 175, 55, ${alpha})`
+          : `rgba(56, 189, 248, ${alpha})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+        ctx.shadowBlur = 0; // Reset shadow
+
+        // Connect nearby particles with subtle golden filament threads
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 110) {
+            const p2x = p2.x * Math.cos(time * 0.08) - p2.z * Math.sin(time * 0.08);
+            const p2z = p2.x * Math.sin(time * 0.08) + p2.z * Math.cos(time * 0.08);
+            const proj2 = project(p2x, p2.y, p2z, centerX, centerY);
+            if (proj2) {
+              const lineAlpha = (1 - dist / 110) * 0.12 * alpha;
+              ctx.beginPath();
+              ctx.moveTo(proj.x, proj.y);
+              ctx.lineTo(proj2.x, proj2.y);
+              ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-      geometry.dispose();
-      material.dispose();
-      particleGeo.dispose();
-      particleMat.dispose();
     };
   }, []);
 
   return (
-    <div
-      ref={mountRef}
+    <canvas
+      ref={canvasRef}
       style={{
         position: 'fixed',
         inset: 0,
         pointerEvents: 'none',
         zIndex: 0,
+        width: '100%',
+        height: '100%',
       }}
     />
   );
@@ -491,6 +563,79 @@ export default function AuraLandingPage() {
       {/* Floating Ambient Aurora Glow Orbs VFX */}
       <AuroraGlowOrbs />
 
+      {/* Global & Responsive Landing Styles */}
+      <style>{`
+        .aura-nav-container {
+          max-width: 1240px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 28px;
+        }
+        .aura-nav-signin {
+          background: transparent;
+          border: none;
+          color: #334155;
+          font-family: 'Outfit', sans-serif;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          padding: 10px 18px;
+          transition: all 0.2s;
+        }
+        .aura-nav-getstarted {
+          background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+          color: #FFFFFF;
+          border: 1px solid rgba(212, 175, 55, 0.4);
+          font-family: 'Outfit', sans-serif;
+          font-weight: 700;
+          font-size: 0.9rem;
+          padding: 10px 22px;
+          border-radius: 99px;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+        }
+        .aura-hero-cta-btn {
+          width: auto;
+        }
+        @media (max-width: 640px) {
+          .aura-nav-container {
+            padding: 12px 16px;
+          }
+          .aura-nav-signin {
+            padding: 8px 12px;
+            font-size: 0.82rem;
+          }
+          .aura-nav-getstarted {
+            padding: 8px 16px;
+            font-size: 0.82rem;
+          }
+          .aura-hero-cta-group {
+            flex-direction: column;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+          }
+          .aura-hero-cta-btn {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .aura-badge-group {
+            gap: 8px !important;
+            margin-bottom: 24px !important;
+          }
+          .aura-badge-item {
+            padding: 8px 14px !important;
+            font-size: 0.72rem !important;
+          }
+        }
+      `}</style>
+
       {/* ── STICKY GLASSMORPHIC NAVIGATION HEADER ── */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -509,33 +654,27 @@ export default function AuraLandingPage() {
           transition: 'all 0.3s ease'
         }}
       >
-        <div style={{
-          maxWidth: '1240px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 28px'
-        }}>
+        <div className="aura-nav-container">
           {/* Brand Logo */}
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: 42,
-              height: 42,
-              borderRadius: '14px',
+              width: 38,
+              height: 38,
+              borderRadius: '12px',
               background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)'
+              boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
+              flexShrink: 0
             }}>
-              <Feather size={22} color="#FFFFFF" strokeWidth={2} />
+              <Feather size={20} color="#FFFFFF" strokeWidth={2} />
             </div>
             <div>
               <span style={{
                 fontFamily: "'Outfit', sans-serif",
                 fontWeight: 900,
-                fontSize: '1.5rem',
+                fontSize: '1.35rem',
                 letterSpacing: '-0.03em',
                 background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
                 WebkitBackgroundClip: 'text',
@@ -545,48 +684,23 @@ export default function AuraLandingPage() {
               }}>
                 AURA
               </span>
-              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#D4AF37', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#D4AF37', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
                  MESSAGING
               </span>
             </div>
           </Link>
 
           {/* Action CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Link to="/login" style={{ textDecoration: 'none' }}>
-              <button style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#334155',
-                fontFamily: "'Outfit', sans-serif",
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                padding: '10px 20px',
-                transition: 'all 0.2s'
-              }}>
+              <button className="aura-nav-signin">
                 Sign In
               </button>
             </Link>
             <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
               <Link to="/signup" style={{ textDecoration: 'none' }}>
-                <button style={{
-                  background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(212, 175, 55, 0.4)',
-                  fontFamily: "'Outfit', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  padding: '11px 24px',
-                  borderRadius: '99px',
-                  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.15)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  whiteSpace: 'nowrap'
-                }}>
-                  Get Started <ArrowRight size={16} color="#D4AF37" />
+                <button className="aura-nav-getstarted">
+                  Get Started <ArrowRight size={15} color="#D4AF37" />
                 </button>
               </Link>
             </motion.div>
@@ -624,22 +738,24 @@ export default function AuraLandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px', marginBottom: '36px', flexWrap: 'wrap' }}
+          className="aura-badge-group"
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginBottom: '32px', flexWrap: 'wrap' }}
         >
           {/* Chat Icon Badge */}
           <motion.div
             animate={{
-              y: [0, -10, 0],
+              y: [0, -8, 0],
             }}
             transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut', delay: 0 }}
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.06 }}
+            className="aura-badge-item"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '12px 22px',
+              gap: '8px',
+              padding: '10px 18px',
               borderRadius: '99px',
-              background: 'rgba(255, 255, 255, 0.4)',
+              background: 'rgba(255, 255, 255, 0.5)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid rgba(212, 175, 55, 0.35)',
@@ -647,24 +763,25 @@ export default function AuraLandingPage() {
               cursor: 'default',
             }}
           >
-            <MessageCircle size={18} color="#D4AF37" strokeWidth={2} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>SECURE CHAT</span>
+            <MessageCircle size={16} color="#D4AF37" strokeWidth={2} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>SECURE CHAT</span>
           </motion.div>
 
           {/* Video Icon Badge */}
           <motion.div
             animate={{
-              y: [0, -15, 0],
+              y: [0, -10, 0],
             }}
             transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut', delay: 0.3 }}
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.06 }}
+            className="aura-badge-item"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '12px 22px',
+              gap: '8px',
+              padding: '10px 18px',
               borderRadius: '99px',
-              background: 'rgba(255, 255, 255, 0.4)',
+              background: 'rgba(255, 255, 255, 0.5)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid rgba(212, 175, 55, 0.35)',
@@ -672,24 +789,25 @@ export default function AuraLandingPage() {
               cursor: 'default',
             }}
           >
-            <Video size={18} color="#D4AF37" strokeWidth={2} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>HD CALLS</span>
+            <Video size={16} color="#D4AF37" strokeWidth={2} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>HD CALLS</span>
           </motion.div>
 
           {/* Security Icon Badge */}
           <motion.div
             animate={{
-              y: [0, -8, 0],
+              y: [0, -6, 0],
             }}
             transition={{ repeat: Infinity, duration: 3.8, ease: 'easeInOut', delay: 0.6 }}
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.06 }}
+            className="aura-badge-item"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '12px 22px',
+              gap: '8px',
+              padding: '10px 18px',
               borderRadius: '99px',
-              background: 'rgba(255, 255, 255, 0.4)',
+              background: 'rgba(255, 255, 255, 0.5)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid rgba(212, 175, 55, 0.35)',
@@ -697,8 +815,8 @@ export default function AuraLandingPage() {
               cursor: 'default',
             }}
           >
-            <ShieldCheck size={18} color="#D4AF37" strokeWidth={2} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>P2P PRIVACY</span>
+            <ShieldCheck size={16} color="#D4AF37" strokeWidth={2} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>P2P PRIVACY</span>
           </motion.div>
         </motion.div>
 
@@ -710,15 +828,16 @@ export default function AuraLandingPage() {
           style={{
             fontFamily: "'Outfit', sans-serif",
             fontWeight: 900,
-            fontSize: 'clamp(3rem, 7.5vw, 5.5rem)',
-            lineHeight: 1.02,
+            fontSize: 'clamp(2.3rem, 7.5vw, 5.5rem)',
+            lineHeight: 1.04,
             letterSpacing: '-0.04em',
             textAlign: 'center',
             background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #D4AF37 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             maxWidth: 900,
-            marginBottom: '20px',
+            marginBottom: '18px',
+            padding: '0 8px'
           }}
         >
           Elegance at the Speed of Light
@@ -730,12 +849,13 @@ export default function AuraLandingPage() {
           transition={{ duration: 0.7, delay: 0.4 }}
           style={{
             fontFamily: "'Inter', sans-serif",
-            fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+            fontSize: 'clamp(0.95rem, 2vw, 1.2rem)',
             color: '#64748B',
             textAlign: 'center',
             maxWidth: 580,
             lineHeight: 1.65,
-            marginBottom: '36px',
+            marginBottom: '32px',
+            padding: '0 12px'
           }}
         >
           The next-generation messaging platform engineered with pristine white luxury, Three.js 3D VFX, and instant socket synchronization.
@@ -746,35 +866,36 @@ export default function AuraLandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.6 }}
-          style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}
+          className="aura-hero-cta-group"
+          style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center' }}
         >
-          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
-            <Link to="/signup" style={{ textDecoration: 'none' }}>
-              <div style={{
+          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }} style={{ display: 'flex' }}>
+            <Link to="/signup" style={{ textDecoration: 'none', display: 'flex', width: '100%' }}>
+              <div className="aura-hero-cta-btn" style={{
                 background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                 color: '#FFFFFF',
                 fontFamily: "'Outfit', sans-serif",
                 fontWeight: 800,
-                fontSize: '1rem',
-                padding: '16px 36px',
+                fontSize: '0.98rem',
+                padding: '14px 32px',
                 borderRadius: '99px',
                 border: '1px solid rgba(212, 175, 55, 0.5)',
                 boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18)',
-                display: 'flex', alignItems: 'center', gap: '10px',
+                display: 'flex', alignItems: 'center', gap: '8px',
               }}>
-                Start Messaging Free <ArrowRight size={18} color="#D4AF37" />
+                Start Messaging Free <ArrowRight size={17} color="#D4AF37" />
               </div>
             </Link>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
-            <Link to="/login" style={{ textDecoration: 'none' }}>
-              <div style={{
+          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }} style={{ display: 'flex' }}>
+            <Link to="/login" style={{ textDecoration: 'none', display: 'flex', width: '100%' }}>
+              <div className="aura-hero-cta-btn" style={{
                 background: 'rgba(255, 255, 255, 0.9)',
                 color: '#0F172A',
                 fontFamily: "'Outfit', sans-serif",
                 fontWeight: 700,
-                fontSize: '1rem',
-                padding: '16px 36px',
+                fontSize: '0.98rem',
+                padding: '14px 32px',
                 borderRadius: '99px',
                 border: '1.5px solid rgba(226, 232, 240, 0.9)',
                 backdropFilter: 'blur(16px)',
@@ -860,14 +981,53 @@ export default function AuraLandingPage() {
             perspective: 1200,
           }}
         >
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(30px)',
-            borderRadius: '28px',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
-            boxShadow: '0 30px 90px rgba(15, 23, 42, 0.08), 0 10px 30px rgba(212, 175, 55, 0.1)',
-            overflow: 'hidden',
-          }}>
+          <style>{`
+            .aura-mockup-wrapper {
+              background: rgba(255, 255, 255, 0.95);
+              backdrop-filter: blur(30px);
+              border-radius: 28px;
+              border: 1px solid rgba(212, 175, 55, 0.3);
+              box-shadow: 0 30px 90px rgba(15, 23, 42, 0.08), 0 10px 30px rgba(212, 175, 55, 0.1);
+              overflow: hidden;
+            }
+            .aura-mockup-body {
+              display: flex;
+              min-height: 480px;
+            }
+            .aura-mockup-sidebar {
+              width: 270px;
+              min-width: 260px;
+              background: #F8FAFC;
+              border-right: 1px solid rgba(226, 232, 240, 0.8);
+              padding: 16px 0;
+              display: flex;
+              flex-direction: column;
+            }
+            .aura-mockup-chatview {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              background: #FFFFFF;
+              min-width: 0;
+            }
+            @media (max-width: 720px) {
+              .aura-mockup-body {
+                flex-direction: column;
+                min-height: auto;
+              }
+              .aura-mockup-sidebar {
+                width: 100%;
+                min-width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+                padding: 12px 0;
+              }
+              .aura-mockup-chatview {
+                width: 100%;
+              }
+            }
+          `}</style>
+          <div className="aura-mockup-wrapper">
             {/* Window title bar */}
             <div style={{
               background: 'linear-gradient(90deg, #0F172A 0%, #1E293B 100%)',
@@ -886,19 +1046,16 @@ export default function AuraLandingPage() {
             </div>
 
             {/* Dashboard body */}
-            <div style={{ display: 'flex', minHeight: 480 }}>
+            <div className="aura-mockup-body">
               {/* Sidebar */}
-              <div style={{
-                width: 270, background: '#F8FAFC',
-                borderRight: '1px solid rgba(226, 232, 240, 0.8)',
-                padding: '16px 0', display: 'flex', flexDirection: 'column',
-              }}>
+              <div className="aura-mockup-sidebar">
                 <div style={{ padding: '0 18px 14px', borderBottom: '1px solid rgba(226, 232, 240, 0.8)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
                       width: 36, height: 36, borderRadius: '10px',
                       background: 'linear-gradient(135deg, #D4AF37, #F59E0B)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(212, 175, 55, 0.25)'
                     }}>
                       <Feather size={18} color="#FFF" />
                     </div>
@@ -922,15 +1079,16 @@ export default function AuraLandingPage() {
                       background: chat.active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
                       borderLeft: chat.active ? '3px solid #D4AF37' : '3px solid transparent',
                       display: 'flex', alignItems: 'center', gap: '10px',
+                      transition: 'all 0.2s ease'
                     }}>
                       <div style={{
                         width: 34, height: 34, borderRadius: '50%',
                         background: `${chat.color}22`, color: chat.color,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 800, fontSize: '0.85rem'
+                        fontWeight: 800, fontSize: '0.85rem', flexShrink: 0
                       }}>{chat.name[0]}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F172A' }}>{chat.name}</span>
                           <span style={{ fontSize: '0.65rem', color: '#94A3B8' }}>{chat.time}</span>
                         </div>
@@ -942,10 +1100,10 @@ export default function AuraLandingPage() {
               </div>
 
               {/* Chat View */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#FFFFFF' }}>
+              <div className="aura-mockup-chatview">
                 <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(226, 232, 240, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#D4AF3722', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>A</div>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#D4AF3722', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>A</div>
                     <div>
                       <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A' }}>Alex Rivera</div>
                       <div style={{ fontSize: '0.68rem', color: '#10B981', fontWeight: 700 }}>● Online &bull; Encrypted</div>
@@ -954,17 +1112,17 @@ export default function AuraLandingPage() {
                 </div>
 
                 <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ alignSelf: 'flex-start', background: '#F1F5F9', padding: '10px 16px', borderRadius: '16px 16px 16px 4px', fontSize: '0.82rem', color: '#0F172A', maxWidth: '70%' }}>
+                  <div style={{ alignSelf: 'flex-start', background: '#F1F5F9', padding: '10px 16px', borderRadius: '16px 16px 16px 4px', fontSize: '0.82rem', color: '#0F172A', maxWidth: '85%' }}>
                     Hey! Have you seen the new white luxury theme with Three.js graphics? 🎨
                   </div>
-                  <div style={{ alignSelf: 'flex-end', background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#FFFFFF', padding: '10px 16px', borderRadius: '16px 16px 4px 16px', fontSize: '0.82rem', maxWidth: '70%', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)' }}>
+                  <div style={{ alignSelf: 'flex-end', background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#FFFFFF', padding: '10px 16px', borderRadius: '16px 16px 4px 16px', fontSize: '0.82rem', maxWidth: '85%', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)' }}>
                     Yes! The golden light sparkles, smooth motion animations, and 3D knot VFX make it look incredibly prestigious. 👑
                   </div>
                 </div>
 
-                <div style={{ padding: '12px 18px', borderTop: '1px solid rgba(226, 232, 240, 0.8)', display: 'flex', gap: '10px' }}>
-                  <input placeholder="Type a secure message…" style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: '99px', padding: '8px 16px', outline: 'none', fontSize: '0.8rem', background: '#F8FAFC' }} readOnly />
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #F59E0B)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ padding: '12px 18px', borderTop: '1px solid rgba(226, 232, 240, 0.8)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input placeholder="Type a secure message…" style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: '99px', padding: '8px 16px', outline: 'none', fontSize: '0.8rem', background: '#F8FAFC', minWidth: 0 }} readOnly />
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #F59E0B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <ArrowRight size={16} color="#FFF" />
                   </div>
                 </div>

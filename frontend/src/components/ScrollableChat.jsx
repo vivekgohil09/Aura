@@ -68,21 +68,7 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
   if (text.startsWith('[call] ')) {
     const callText = text.replace('[call] ', '').toLowerCase();
     const isNegative = callText.includes('declined') || callText.includes('cancelled') || callText.includes('missed');
-
-    const cardBg = isNegative
-      ? 'rgba(239, 68, 68, 0.12)'
-      : 'rgba(16, 185, 129, 0.12)';
-
-    const cardBorder = isNegative
-      ? '1.5px solid rgba(239, 68, 68, 0.35)'
-      : '1.5px solid rgba(16, 185, 129, 0.35)';
-
-    const titleColor = isNegative ? '#EF4444' : '#10B981';
-    const subtitleColor = isNegative ? '#EF4444' : '#10B981';
-
-    const iconBadgeBg = isNegative
-      ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
-      : 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+    const isVideo = callText.includes('video');
 
     const IconComponent = isNegative ? PhoneOff : PhoneCall;
 
@@ -90,39 +76,67 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: '14px',
         padding: '12px 18px',
-        background: cardBg,
-        borderRadius: '16px',
-        border: cardBorder,
-        boxShadow: isNegative
-          ? '0 4px 16px rgba(239, 68, 68, 0.18)'
-          : '0 4px 16px rgba(16, 185, 129, 0.18)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        minWidth: '220px'
+        background: isMe
+          ? 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)'
+          : '#FFFFFF',
+        borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
+        border: isMe
+          ? '1.5px solid rgba(212, 175, 55, 0.45)'
+          : (isNegative ? '1.5px solid rgba(254, 202, 202, 0.9)' : '1.5px solid rgba(167, 243, 208, 0.9)'),
+        boxShadow: isMe
+          ? '0 6px 20px rgba(212, 175, 55, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03)'
+          : '0 6px 20px rgba(15, 23, 42, 0.06)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        minWidth: '250px',
+        fontFamily: "'Outfit', 'Inter', sans-serif"
       }}>
         <div style={{
-          width: '38px',
-          height: '38px',
-          borderRadius: '12px',
-          background: iconBadgeBg,
+          width: '42px',
+          height: '42px',
+          borderRadius: '14px',
+          background: isNegative
+            ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+            : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: isNegative
-            ? '0 4px 12px rgba(239, 68, 68, 0.35)'
-            : '0 4px 12px rgba(16, 185, 129, 0.35)',
+            ? '0 4px 14px rgba(239, 68, 68, 0.35)'
+            : '0 4px 14px rgba(16, 185, 129, 0.35)',
           flexShrink: 0
         }}>
-          <IconComponent size={19} color="#FFFFFF" />
+          <IconComponent size={20} color="#FFFFFF" strokeWidth={2.4} />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: titleColor, textTransform: 'capitalize', letterSpacing: '-0.01em' }}>
-            Call {callText}
-          </span>
-          <span style={{ fontSize: '0.74rem', fontWeight: 600, color: subtitleColor, marginTop: '2px', opacity: 0.9 }}>
-            {isNegative ? 'Voice call • Unanswered' : 'Voice call • Connected'}
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <span style={{
+              fontSize: '0.94rem',
+              fontWeight: 800,
+              color: '#0F172A',
+              textTransform: 'capitalize',
+              letterSpacing: '-0.01em',
+              lineHeight: 1.2
+            }}>
+              Call {callText}
+            </span>
+            <span style={{
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              background: isNegative ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+              color: isNegative ? '#DC2626' : '#059669',
+              padding: '2px 8px',
+              borderRadius: '99px'
+            }}>
+              {isNegative ? 'Unanswered' : 'Connected'}
+            </span>
+          </div>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: isMe ? '#B45309' : '#64748B', marginTop: '3px' }}>
+            {isVideo ? 'HD Video Call' : 'HD Voice Call'}
           </span>
         </div>
       </div>
@@ -138,25 +152,162 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
   if (text.startsWith('data:audio') || text.includes('audio/mp3') || text.includes('audio/mpeg') || text.includes('.mp3')) {
     return <audio src={text} controls style={{ maxWidth: '280px', borderRadius: '12px', marginTop: '4px' }} />;
   }
-  if (text.startsWith('data:application') || text.startsWith('data:text')) {
-    let icon = '📄';
-    let docLabel = 'Download Document';
-    if (text.includes('pdf')) { icon = '📕'; docLabel = 'PDF Document'; }
-    else if (text.includes('word') || text.includes('officedocument.wordprocessingml')) { icon = '📝'; docLabel = 'Word Document (.docx)'; }
-    else if (text.includes('sheet') || text.includes('excel') || text.includes('csv')) { icon = '📊'; docLabel = 'Excel Spreadsheet (.xlsx)'; }
-    else if (text.includes('presentation') || text.includes('powerpoint')) { icon = '📽'; docLabel = 'PowerPoint Deck (.pptx)'; }
-    else if (text.includes('zip') || text.includes('compressed') || text.includes('rar')) { icon = '📦'; docLabel = 'Zip Archive'; }
+  if (text.startsWith('[doc] ') || text.startsWith('data:application') || text.startsWith('data:text') || text.includes('application/pdf')) {
+    let fileName = 'Document';
+    let fileSize = '';
+    let docType = 'PDF Document';
+    let fileData = text;
+    let icon = '📕';
+    let extBadge = 'PDF';
+    let themeColor = '#EF4444';
+    let themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
+
+    if (text.startsWith('[doc] ')) {
+      try {
+        const jsonStr = text.replace('[doc] ', '');
+        const meta = JSON.parse(jsonStr);
+        fileName = meta.name || 'PDF Document';
+        fileSize = meta.size || '';
+        fileData = meta.data || '';
+        if (meta.isPdf || fileName.toLowerCase().endsWith('.pdf')) {
+          docType = 'PDF Document';
+          extBadge = 'PDF';
+          icon = '📕';
+          themeColor = '#EF4444';
+          themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
+        } else if (fileName.match(/\.(docx?|doc)$/i)) {
+          docType = 'Word Document';
+          extBadge = 'DOCX';
+          icon = '📝';
+          themeColor = '#2563EB';
+          themeBg = 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)';
+        } else if (fileName.match(/\.(xlsx?|csv)$/i)) {
+          docType = 'Excel Spreadsheet';
+          extBadge = 'XLSX';
+          icon = '📊';
+          themeColor = '#10B981';
+          themeBg = 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)';
+        } else if (fileName.match(/\.(pptx?|ppt)$/i)) {
+          docType = 'Presentation';
+          extBadge = 'PPTX';
+          icon = '📽';
+          themeColor = '#F59E0B';
+          themeBg = 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)';
+        } else {
+          docType = 'File Document';
+          extBadge = 'FILE';
+          icon = '📄';
+          themeColor = '#64748B';
+          themeBg = 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)';
+        }
+      } catch (e) {
+        fileData = text;
+      }
+    } else {
+      if (text.includes('pdf')) {
+        fileName = 'Aura_Document.pdf';
+        extBadge = 'PDF';
+        icon = '📕';
+        themeColor = '#EF4444';
+        themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
+      }
+    }
 
     return (
-      <a href={text} download="attachment" style={{ color: isMe ? '#FFFFFF' : '#E63946', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, background: isMe ? 'rgba(255,255,255,0.15)' : '#FFF0F2', padding: '8px 14px', borderRadius: '12px', border: isMe ? '1px solid rgba(255,255,255,0.25)' : '1px solid #FFE3E6' }}>
-        <span style={{ fontSize: '18px' }}>{icon}</span>
-        <span style={{ fontSize: '13px' }}>{docLabel}</span>
-        <span style={{ fontSize: '12px', opacity: 0.8 }}>⬇</span>
+      <a
+        href={fileData}
+        download={fileName}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          textDecoration: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          background: isMe
+            ? 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)'
+            : '#FFFFFF',
+          padding: '13px 18px',
+          borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
+          border: isMe
+            ? '1.5px solid rgba(212, 175, 55, 0.45)'
+            : '1.5px solid rgba(226, 232, 240, 0.95)',
+          boxShadow: isMe
+            ? '0 8px 24px rgba(212, 175, 55, 0.14), 0 2px 6px rgba(0, 0, 0, 0.03)'
+            : '0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)',
+          width: '300px',
+          maxWidth: '100%',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          cursor: 'pointer'
+        }}
+      >
+        <div style={{
+          width: '46px',
+          height: '46px',
+          borderRadius: '14px',
+          background: themeBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '24px',
+          flexShrink: 0,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+        }}>
+          {icon}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', textAlign: 'left' }}>
+          <span style={{
+            fontSize: '0.92rem',
+            fontWeight: 800,
+            color: '#0F172A',
+            fontFamily: "'Outfit', sans-serif",
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            {fileName}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+            <span style={{
+              fontSize: '0.66rem',
+              fontWeight: 800,
+              color: isMe ? '#B45309' : themeColor,
+              background: isMe ? 'rgba(212, 175, 55, 0.18)' : 'rgba(0,0,0,0.05)',
+              padding: '1px 6px',
+              borderRadius: '6px',
+              letterSpacing: '0.04em'
+            }}>
+              {extBadge}
+            </span>
+            {fileSize && (
+              <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
+                • {fileSize}
+              </span>
+            )}
+          </div>
+        </div>
+        <div style={{
+          width: '34px',
+          height: '34px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#FFFFFF',
+          fontSize: '14px',
+          fontWeight: 800,
+          flexShrink: 0,
+          boxShadow: '0 3px 10px rgba(212, 175, 55, 0.35)'
+        }}>
+          ↓
+        </div>
       </a>
     );
   }
   return <span>{text}</span>;
 };
+
 const TAG_COLORS = {
   important: { bg: '#FFF0F2', color: '#E63946', border: '#FFD0D5' },
   work: { bg: '#EEF2FF', color: '#4F46E5', border: '#C7D2FE' },
@@ -241,8 +392,84 @@ const shouldShowDateDivider = (messages, index) => {
   return d1.toDateString() !== d2.toDateString();
 };
 
+const senderId = (m) => {
+  if (!m) return null;
+  if (typeof m.sender === 'string') return m.sender;
+  return m.sender?._id || m.sender?.id || m.senderId;
+};
+
 const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) => {
-  const user = useSelector(state => state.user)
+  const user = useSelector(state => state.user);
+  const loggedId = user?._id || user?.id || user?.userLogin?._id || user?.userLogin?.id;
+
+  // ── Interactive Reactions Bar State
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [reactionsMap, setReactionsMap] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('aura_reactions_map') || '{}'); } catch { return {}; }
+  });
+  const [confettiEmoji, setConfettiEmoji] = useState(null);
+
+  const REACTION_EMOJIS = ['❤️', '🔥', '💎', '👏', '😂', '✨', '⚡'];
+
+  const triggerHapticFeedback = () => {
+    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+      try { window.navigator.vibrate(25); } catch (e) {}
+    }
+  };
+
+  const handleToggleReaction = (msg, emoji) => {
+    triggerHapticFeedback();
+    const id = msg._id || msg.id;
+    if (!id) return;
+
+    // Trigger visual confetti explosion effect
+    setConfettiEmoji({ emoji, x: window.innerWidth / 2, y: window.innerHeight / 2, id: Date.now() });
+    setTimeout(() => setConfettiEmoji(null), 1200);
+
+    setReactionsMap(prev => {
+      const currentList = prev[id] || [];
+      const hasMyReaction = currentList.find(r => r.userId === loggedId && r.emoji === emoji);
+      let updated;
+      if (hasMyReaction) {
+        // remove
+        updated = currentList.filter(r => !(r.userId === loggedId && r.emoji === emoji));
+      } else {
+        // add or replace my reaction
+        const otherReactions = currentList.filter(r => r.userId !== loggedId);
+        updated = [...otherReactions, { userId: loggedId, emoji, userName: user?.name || 'You' }];
+      }
+      const newMap = { ...prev, [id]: updated };
+      try { localStorage.setItem('aura_reactions_map', JSON.stringify(newMap)); } catch (e) {}
+      return newMap;
+    });
+
+    // Broadcast reaction through socket if connected
+    try {
+      const sock = window.__auraSocket;
+      if (sock) {
+        sock.emit('aura-reaction', { chatId, msgId: id, userId: loggedId, emoji, userName: user?.name || 'User' });
+      }
+    } catch (e) {}
+  };
+
+  // Listen for real-time reactions
+  useEffect(() => {
+    const sock = window.__auraSocket;
+    if (!sock) return;
+    const onReceiveReaction = (data) => {
+      if (data && data.msgId) {
+        setReactionsMap(prev => {
+          const currentList = prev[data.msgId] || [];
+          const updated = [...currentList.filter(r => r.userId !== data.userId), { userId: data.userId, emoji: data.emoji, userName: data.userName }];
+          const newMap = { ...prev, [data.msgId]: updated };
+          try { localStorage.setItem('aura_reactions_map', JSON.stringify(newMap)); } catch (e) {}
+          return newMap;
+        });
+      }
+    };
+    sock.on('aura-reaction-received', onReceiveReaction);
+    return () => { sock.off('aura-reaction-received', onReceiveReaction); };
+  }, [chatId]);
 
   // ── Context-menu state
   const [ctxMenu, setCtxMenu] = useState(null); // { x, y, msg }
@@ -405,14 +632,6 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
   const isBookmarked = (msg) => bookmarks.some(b => b.id === (msg._id || msg.id));
 
   // ── 4. Schedule message (display-only — scheduling happens at input level; here we show badge)
-
-  const senderId = (m) => {
-    if (!m) return null;
-    if (typeof m.sender === 'string') return m.sender;
-    return m.sender?._id || m.sender?.id || m.senderId;
-  };
-  const loggedId = user?._id || user?.id || user?.userLogin?._id || user?.userLogin?.id;
-
   return (
     <div ref={scrollContainerRef} style={{ position: 'relative', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
       <div style={{ display: 'block' }}>
@@ -427,17 +646,21 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
           return (
             <React.Fragment key={msgId + '-wrap'}>
               {shouldShowDateDivider(messages, i) && (
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0 16px 0', width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', margin: '26px 0 16px 0', width: '100%' }}>
                   <span style={{
-                    background: 'rgba(0, 0, 0, 0.05)',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
                     color: '#475569',
-                    padding: '4px 16px',
-                    borderRadius: '20px',
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    letterSpacing: '0.04em',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                    textTransform: 'uppercase'
+                    padding: '5px 18px',
+                    borderRadius: '99px',
+                    fontSize: '0.72rem',
+                    fontWeight: '800',
+                    letterSpacing: '0.08em',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
+                    textTransform: 'uppercase',
+                    fontFamily: "'Outfit', sans-serif"
                   }}>
                     {getDateLabel(m.createdAt || m.timestamp)}
                   </span>
@@ -458,12 +681,19 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                   initial={{ opacity: 0, scale: 0.95, y: 8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  onMouseEnter={() => setHoveredMsgId(msgId)}
+                  onMouseLeave={() => setHoveredMsgId(null)}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleReaction(m, '❤️');
+                  }}
                   onContextMenu={(e) => openCtx(e, m)}
                   style={{
                     display: 'flex',
                     justifyContent: isMe ? 'flex-end' : 'flex-start',
                     maxWidth: '78%',
-                    position: 'relative'
+                    position: 'relative',
+                    cursor: 'pointer'
                   }}
                 >
                   {editing ? (
@@ -485,10 +715,15 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                     const rawText = typeof m.content === 'string' ? m.content : '';
                     const cachedText = decompressionCache.get(m.content) || rawText;
                     const isCallMsg = rawText.includes('[call]') || cachedText.includes('[call]');
+                    const isDocMsg = rawText.includes('[doc] ') || cachedText.includes('[doc] ') || 
+                                     rawText.startsWith('data:application') || cachedText.startsWith('data:application') ||
+                                     rawText.includes('application/pdf') || cachedText.includes('application/pdf') ||
+                                     rawText.startsWith('data:image') || cachedText.startsWith('data:image') ||
+                                     rawText.startsWith('data:video') || cachedText.startsWith('data:video');
 
-                    if (isCallMsg) {
+                    if (isCallMsg || isDocMsg) {
                       return (
-                        <div style={{ display: 'inline-block', width: 'auto', padding: 0, margin: '4px 0' }}>
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', width: 'auto', padding: 0, margin: '2px 0' }}>
                           <DecompressedContent
                             content={m.content}
                             isMe={isMe}
@@ -498,6 +733,21 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                             viewCountdown={viewCountdown}
                             revealViewOnce={revealViewOnce}
                           />
+                          <span
+                            style={{
+                              fontSize: '0.66rem',
+                              opacity: 0.75,
+                              fontWeight: 700,
+                              whiteSpace: 'nowrap',
+                              color: '#64748B',
+                              marginTop: '4px',
+                              paddingRight: isMe ? '4px' : '0',
+                              paddingLeft: !isMe ? '4px' : '0',
+                              fontFamily: "'Outfit', sans-serif"
+                            }}
+                          >
+                            {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
+                          </span>
                         </div>
                       );
                     }
@@ -509,16 +759,16 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                           display: 'inline-block',
                           width: 'auto',
                           background: isMe
-                            ? '#E0A927'
+                            ? 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)'
                             : '#FFFFFF',
-                          color: isMe ? '#FFFFFF' : '#0F172A',
+                          color: '#0F172A',
                           border: isMe
                             ? '1.5px solid rgba(212, 175, 55, 0.45)'
-                            : '1.5px solid #F1F5F9',
+                            : '1.5px solid rgba(226, 232, 240, 0.9)',
                           boxShadow: isMe
-                            ? '0 4px 18px rgba(15, 23, 42, 0.25)'
-                            : '0 2px 10px rgba(15, 23, 42, 0.03)',
-                          borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
+                            ? '0 6px 20px rgba(212, 175, 55, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03)'
+                            : '0 3px 14px rgba(15, 23, 42, 0.04)',
+                          borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
                           padding: '12px 18px',
                           fontSize: '0.94rem',
                           lineHeight: '1.5',
@@ -529,7 +779,9 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                           cursor: 'context-menu',
                           position: 'relative',
                           fontFamily: "'Outfit', 'Inter', -apple-system, sans-serif",
-                          letterSpacing: '-0.01em'
+                          letterSpacing: '-0.01em',
+                          backdropFilter: isMe ? 'none' : 'blur(16px)',
+                          WebkitBackdropFilter: isMe ? 'none' : 'blur(16px)'
                         }}
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -547,13 +799,14 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                             </div>
                             <span
                               style={{
-                                fontSize: '0.66rem',
-                                opacity: isMe ? 0.92 : 0.7,
+                                fontSize: '0.68rem',
+                                opacity: 0.8,
                                 alignSelf: 'flex-end',
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 whiteSpace: 'nowrap',
-                                color: isMe ? 'rgba(255, 255, 255, 0.92)' : '#64748B',
-                                paddingLeft: '6px'
+                                color: isMe ? '#B45309' : '#64748B',
+                                paddingLeft: '8px',
+                                fontFamily: "'Outfit', sans-serif"
                               }}
                             >
                               {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
@@ -574,7 +827,122 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                       </span>
                     );
                   })()}
+
+                  {/* ── Interactive Instagram / iMessage Floating Quick Reaction Bar on Hover ── */}
+                  <AnimatePresence>
+                    {hoveredMsgId === msgId && !editing && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.85, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.85, y: 6 }}
+                        transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                        style={{
+                          position: 'absolute',
+                          top: '-42px',
+                          [isMe ? 'right' : 'left']: '10px',
+                          zIndex: 40,
+                          background: 'rgba(255, 255, 255, 0.95)',
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          borderRadius: '99px',
+                          padding: '3px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 8px 30px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(226, 232, 240, 0.85)'
+                        }}
+                      >
+                        {REACTION_EMOJIS.map((emoji) => {
+                          const msgReactions = reactionsMap[msgId] || [];
+                          const isMine = msgReactions.some(r => r.userId === loggedId && r.emoji === emoji);
+                          return (
+                            <motion.button
+                              key={emoji}
+                              whileHover={{ scale: 1.45, y: -4 }}
+                              whileTap={{ scale: 0.85 }}
+                              onClick={() => handleToggleReaction(m, emoji)}
+                              style={{
+                                background: isMine ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
+                                border: isMine ? '1px solid #D4AF37' : 'none',
+                                borderRadius: '50%',
+                                width: '30px',
+                                height: '30px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '18px',
+                                cursor: 'pointer',
+                                padding: 0,
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {emoji}
+                            </motion.button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
+
+                {/* ── Active Reactions Badge Cluster (WhatsApp/Slack/iMessage Style) ── */}
+                {(() => {
+                  const msgReactions = reactionsMap[msgId] || [];
+                  if (msgReactions.length === 0) return null;
+                  
+                  // Group by emoji
+                  const counts = {};
+                  msgReactions.forEach(r => {
+                    counts[r.emoji] = (counts[r.emoji] || 0) + 1;
+                  });
+
+                  return (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        marginTop: '-6px',
+                        marginBottom: '4px',
+                        zIndex: 10,
+                        alignSelf: isMe ? 'flex-end' : 'flex-start',
+                        paddingRight: isMe ? '8px' : '0',
+                        paddingLeft: !isMe ? '8px' : '0'
+                      }}
+                    >
+                      {Object.entries(counts).map(([emoji, count]) => {
+                        const hasMyReact = msgReactions.some(r => r.userId === loggedId && r.emoji === emoji);
+                        return (
+                          <motion.div
+                            key={emoji}
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleToggleReaction(m, emoji)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              background: hasMyReact ? '#FEF9EB' : '#FFFFFF',
+                              border: hasMyReact ? '1.5px solid #D4AF37' : '1px solid rgba(226, 232, 240, 0.9)',
+                              borderRadius: '99px',
+                              padding: '2px 8px',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              color: '#0F172A',
+                              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <span>{emoji}</span>
+                            {count > 1 && <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800 }}>{count}</span>}
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  );
+                })()}
 
                 {/* Instagram-style Transparent Seen / Sent Receipt below last sent message */}
                 {isMe && i === messages.length - 1 && (
@@ -592,11 +960,12 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                   >
                     <span style={{
                       fontSize: '0.72rem',
-                      fontWeight: 500,
-                      color: (m.isRead || m.seen || m.read) ? '#0EA5E9' : '#64748B',
-                      fontFamily: "'Inter', sans-serif"
+                      fontWeight: 600,
+                      color: (m.isRead || m.seen || m.read) ? '#0284C7' : '#94A3B8',
+                      fontFamily: "'Outfit', 'Inter', sans-serif",
+                      letterSpacing: '-0.01em'
                     }}>
-                      {(m.isRead || m.seen || m.read) ? 'Seen' : 'Sent'} • {getRelativeTime(m.createdAt || m.updatedAt || m.timestamp)}
+                      {(m.isRead || m.seen || m.read) ? 'Seen ✓✓' : 'Sent ✓'} • {getRelativeTime(m.createdAt || m.updatedAt || m.timestamp)}
                     </span>
                   </motion.div>
                 )}
@@ -666,7 +1035,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Context Menu */}
+      {/* ── Context Menu with Emoji Quick Reaction Bar ── */}
       <AnimatePresence>
         {ctxMenu && (
           <motion.div
@@ -681,14 +1050,46 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
               left: ctxMenu.x,
               zIndex: 9999,
               background: '#FFFFFF',
-              border: '1px solid rgba(61,43,38,0.1)',
-              borderRadius: 14,
-              boxShadow: '0 12px 40px rgba(61,43,38,0.14)',
+              border: '1.5px solid rgba(226, 232, 240, 0.95)',
+              borderRadius: 18,
+              boxShadow: '0 15px 45px rgba(15, 23, 42, 0.16)',
               padding: '6px 0',
-              minWidth: 190,
+              minWidth: 230,
               fontFamily: "'Inter', sans-serif",
             }}
           >
+            {/* Quick Emoji Reaction Header Row in Context Menu */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 12px 10px 12px',
+              borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+              marginBottom: '4px'
+            }}>
+              {REACTION_EMOJIS.map((emoji) => (
+                <motion.button
+                  key={emoji}
+                  whileHover={{ scale: 1.4, y: -2 }}
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => {
+                    handleToggleReaction(ctxMenu.msg, emoji);
+                    setCtxMenu(null);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    padding: '2px 4px',
+                    lineHeight: 1
+                  }}
+                >
+                  {emoji}
+                </motion.button>
+              ))}
+            </div>
+
             {[
               {
                 icon: '✏️', label: 'Edit message',
@@ -696,19 +1097,9 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                 action: () => startEdit(ctxMenu.msg),
               },
               {
-                icon: '👁', label: 'Send as view-once',
-                show: false, // only from input; shown here for context
-                action: () => { setCtxMenu(null); toast.info('Use 🔐 icon in input bar to send view-once', { autoClose: 2500 }); },
-              },
-              {
                 icon: '📌', label: isBookmarked(ctxMenu.msg) ? 'Update bookmark' : 'Bookmark',
                 show: true,
                 action: () => { setBookmarkModal(ctxMenu.msg); setCtxMenu(null); },
-              },
-              {
-                icon: '🕐', label: 'Schedule message',
-                show: false,
-                action: () => { setCtxMenu(null); },
               },
               {
                 icon: '📋', label: 'Copy text',
@@ -803,8 +1194,33 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Micro-Interaction Flying Reaction Confetti Animation ── */}
+      <AnimatePresence>
+        {confettiEmoji && (
+          <motion.div
+            key={confettiEmoji.id}
+            initial={{ scale: 0.3, opacity: 1, y: 30 }}
+            animate={{ scale: [1, 2.5, 3.2], opacity: [1, 0.9, 0], y: -90, rotate: [0, 15, -15, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'fixed',
+              left: confettiEmoji.x,
+              top: confettiEmoji.y,
+              transform: 'translate(-50%, -50%)',
+              fontSize: '54px',
+              pointerEvents: 'none',
+              zIndex: 99999,
+              filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.15))'
+            }}
+          >
+            {confettiEmoji.emoji}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
-export default ScrollableChat
+export default ScrollableChat;

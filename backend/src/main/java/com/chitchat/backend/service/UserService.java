@@ -188,16 +188,25 @@ public class UserService {
     }
 
     public List<User> searchUsers(String search, User currentUser) {
-        List<User> users;
+        List<User> users = new java.util.ArrayList<>();
         if (search == null || search.trim().isEmpty()) {
             users = userRepository.findAll();
         } else {
             String q = search.trim();
-            users = userRepository.searchUsers(q);
-            if (users.isEmpty()) {
+            try {
+                users = userRepository.searchUsers(q);
+            } catch (Exception e) {
+                users = new java.util.ArrayList<>();
+            }
+            if (users == null || users.isEmpty()) {
                 String queryLower = q.toLowerCase();
                 users = userRepository.findAll().stream()
-                        .filter(u -> isFuzzyMatch(u.getName(), queryLower) || isFuzzyMatch(u.getEmail(), queryLower))
+                        .filter(u -> (u.getName() != null && u.getName().toLowerCase().contains(queryLower))
+                                  || (u.getEmail() != null && u.getEmail().toLowerCase().contains(queryLower))
+                                  || (u.getUsername() != null && u.getUsername().toLowerCase().contains(queryLower))
+                                  || isFuzzyMatch(u.getName(), queryLower) 
+                                  || isFuzzyMatch(u.getEmail(), queryLower) 
+                                  || isFuzzyMatch(u.getUsername(), queryLower))
                         .collect(java.util.stream.Collectors.toList());
             }
         }
@@ -275,5 +284,78 @@ public class UserService {
             }
             return userRepository.save(user);
         }).orElse(null);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public List<User> addFriend(String currentUserId, String friendId) {
+        if (currentUserId == null || friendId == null) {
+            throw new IllegalArgumentException("User IDs cannot be null");
+        }
+        if (currentUserId.equals(friendId)) {
+            throw new IllegalArgumentException("You cannot add yourself as a friend");
+        }
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        User friendUser = userRepository.findById(friendId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        currentUser.addFriend(friendUser);
+        friendUser.addFriend(currentUser);
+
+        userRepository.save(currentUser);
+        userRepository.save(friendUser);
+
+        return getFriends(currentUserId);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public List<User> removeFriend(String currentUserId, String friendId) {
+        if (currentUserId == null || friendId == null) {
+            throw new IllegalArgumentException("User IDs cannot be null");
+        }
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        User friendUser = userRepository.findById(friendId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        currentUser.removeFriend(friendUser);
+        friendUser.removeFriend(currentUser);
+
+        userRepository.save(currentUser);
+        userRepository.save(friendUser);
+
+        return getFriends(currentUserId);
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<User> getFriends(String currentUserId) {
+        if (currentUserId == null) {
+            return java.util.Collections.emptyList();
+        }
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String defaultPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        List<User> friendList = new java.util.ArrayList<>(user.getFriends());
+        friendList.forEach(u -> {
+            if (u.getPic() == null || u.getPic().trim().isEmpty() || u.getPic().contains("icon-library.com")) {
+                u.setPic(defaultPic);
+            }
+        });
+        return friendList;
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public java.util.Set<String> getFriendIds(String currentUserId) {
+        if (currentUserId == null) {
+            return java.util.Collections.emptySet();
+        }
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getFriends().stream()
+                .map(User::getId)
+                .collect(java.util.stream.Collectors.toSet());
     }
 }

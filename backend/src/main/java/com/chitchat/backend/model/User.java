@@ -47,13 +47,46 @@ public class User {
     @Column(name = "LAST_SEEN")
     private LocalDateTime lastSeen;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_friends",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "friend_id")
+    )
+    @Builder.Default
+    private java.util.Set<User> friends = new java.util.HashSet<>();
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public java.util.Set<User> getFriends() {
+        if (friends == null) {
+            friends = new java.util.HashSet<>();
+        }
+        return friends;
+    }
+
+    public void addFriend(User friend) {
+        if (this.friends == null) {
+            this.friends = new java.util.HashSet<>();
+        }
+        this.friends.add(friend);
+    }
+
+    public void removeFriend(User friend) {
+        if (this.friends != null) {
+            this.friends.remove(friend);
+        }
+    }
 
     @PostLoad
     protected void onLoad() {
         if (isOnline == null) {
             isOnline = false;
+        }
+        if (friends == null) {
+            friends = new java.util.HashSet<>();
         }
     }
 

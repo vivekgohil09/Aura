@@ -110,4 +110,54 @@ public class UserController {
             ));
         }
     }
+
+    @PostMapping("/friends/{friendId}")
+    public ResponseEntity<?> addFriend(
+            @PathVariable("friendId") String friendId,
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Unauthorized"));
+        }
+        try {
+            List<User> friends = userService.addFriend(currentUser.getId(), friendId);
+            return ResponseEntity.ok(friends);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(java.util.Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/friends/{friendId}")
+    public ResponseEntity<?> removeFriend(
+            @PathVariable("friendId") String friendId,
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Unauthorized"));
+        }
+        try {
+            List<User> friends = userService.removeFriend(currentUser.getId(), friendId);
+            return ResponseEntity.ok(friends);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(java.util.Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/friends")
+    public ResponseEntity<?> getFriends(@AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Unauthorized"));
+        }
+        return ResponseEntity.ok(userService.getFriends(currentUser.getId()));
+    }
+
+    @GetMapping("/friends/ids")
+    public ResponseEntity<?> getFriendIds(@AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Unauthorized"));
+        }
+        return ResponseEntity.ok(userService.getFriendIds(currentUser.getId()));
+    }
 }

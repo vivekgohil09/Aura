@@ -78,6 +78,7 @@ const MotionBox = motion(Box);
 const ChatPage = () => {
   const [fetchAgain, setFetchAgain] = useState(false);
   const user = useSelector(state => state.user);
+  const selectedChat = useSelector(state => state.selectedChats);
   const history = useHistory();
   const { isOpen: isDrawerOpen, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
   const dispatch = useDispatch();
@@ -474,7 +475,11 @@ const ChatPage = () => {
       inset: 0
     }}>
       <AmbientVFXBackground />
-      {(user || localStorage.getItem("userInfo")) && <SideBar onOpenDrawer={onOpenDrawer} />}
+      {(user || localStorage.getItem("userInfo")) && (
+        <Box display={{ base: selectedChat ? "none" : "block", md: "block" }}>
+          <SideBar onOpenDrawer={onOpenDrawer} />
+        </Box>
+      )}
 
       <Box
         d="flex" 
@@ -483,8 +488,8 @@ const ChatPage = () => {
         flex="1"
         h="0"
         minH="0"
-        p={{ base: "4px", sm: "10px", md: "16px" }}
-        gap={{ base: "4px", sm: "10px", md: "16px" }}
+        p={{ base: "0px", sm: "6px", md: "16px" }}
+        gap={{ base: "0px", sm: "6px", md: "16px" }}
         overflow="hidden"
         style={{ boxSizing: "border-box" }}
       >

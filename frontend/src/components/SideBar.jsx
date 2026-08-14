@@ -4,6 +4,7 @@ import { Box, Text, VStack } from "@chakra-ui/layout"
 import { Tooltip } from "@chakra-ui/tooltip";
 import { Button } from "@chakra-ui/button";
 import { BellIcon, ChevronDownIcon, EditIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import jsQR from 'jsqr';
 import { Avatar } from '@chakra-ui/react'
 import { useSelector } from 'react-redux';
 import { useDisclosure } from "@chakra-ui/hooks";
@@ -22,7 +23,6 @@ import axios from 'axios';
 import { Search, Feather } from 'lucide-react';
 import UserListItem from "./UserListItem"
 import ChatLoading from "./ChatLoading"
-import Stack from '@mui/material/Stack';
 import { stompService } from '../config/stompService2';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Progress } from '@chakra-ui/react'
@@ -85,18 +85,141 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         onClose: onNotifClose
     } = useDisclosure()
 
-    const onOpenDrawer = externalOnOpenDrawer || internalOnOpenDrawer;
+    const onOpenDrawer = () => {
+        internalOnOpenDrawer();
+        if (externalOnOpenDrawer && typeof externalOnOpenDrawer === 'function') {
+            try { externalOnOpenDrawer(); } catch (e) {}
+        }
+    };
     const user = useSelector(state => state.user);
     const notification = useSelector(state => state.notification);
     const chats = useSelector(state => state.chats);
+    const userStatuses = useSelector(state => state.userStatuses) || {};
     const [search, setSearch] = useState("");
     const [searchResult, setSearchResult] = useState([]);
+    const [allUsersCache, setAllUsersCache] = useState([]);
+    const [drawerFilter, setDrawerFilter] = useState('all');
+    const [friendIds, setFriendIds] = useState(new Set());
+    const [sentRequestUserIds, setSentRequestUserIds] = useState(new Set());
+    const [pendingReceivedRequests, setPendingReceivedRequests] = useState([]);
+    const [requestLoadingId, setRequestLoadingId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [loadingChat, setLoadingChat] = useState(false);
     const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const dispatch = useDispatch();
     const searchContainerRef = useRef(null);
+    const drawerSearchInputRef = useRef(null);
+
+    const fetchFriendData = async () => {
+        try {
+            const token = getJwtToken();
+            if (!token) return;
+            const config = { headers: { Authorization: "Bearer " + token } };
+
+            // 1. Fetch friend IDs
+            try {
+                const { data: fData } = await axios.get('/api/user/friends/ids', config);
+                if (Array.isArray(fData)) {
+                    setFriendIds(new Set(fData.map(String)));
+                } else if (fData && typeof fData === 'object') {
+                    setFriendIds(new Set(Object.values(fData).map(String)));
+                }
+            } catch (e) {}
+
+            // 2. Fetch sent pending requests
+            try {
+                const { data: sData } = await axios.get('/api/chat/requests/sent', config);
+                if (Array.isArray(sData)) {
+                    const ids = sData.map(r => String(r.receiver?.id || r.receiver?._id || '')).filter(Boolean);
+                    setSentRequestUserIds(new Set(ids));
+                }
+            } catch (e) {}
+
+            // 3. Fetch incoming pending requests
+            try {
+                const { data: pData } = await axios.get('/api/chat/requests/pending', config);
+                if (Array.isArray(pData)) {
+                    setPendingReceivedRequests(pData);
+                }
+            } catch (e) {}
+        } catch (e) {
+            console.warn("Could not fetch friend data", e);
+        }
+    };
+
+    const handleSendFriendRequest = async (targetUser) => {
+        if (!targetUser) return;
+        const targetId = String(targetUser._id || targetUser.id || targetUser.publicId || '');
+        const targetName = targetUser.name || targetUser.username || targetUser.email || 'User';
+        const targetPayload = targetId || targetUser.email || targetUser.username;
+        if (!targetPayload) return;
+
+        try {
+            setRequestLoadingId(targetId || targetPayload);
+            const token = getJwtToken();
+            if (!token) {
+                toast.error("Please login again to send friend requests.");
+                return;
+            }
+            const config = { headers: { Authorization: "Bearer " + token } };
+            await axios.post('/api/chat/request/send', { 
+                targetUserId: targetPayload,
+                userId: targetPayload,
+                _id: targetPayload
+            }, config);
+
+            setSentRequestUserIds(prev => {
+                const next = new Set(prev);
+                if (targetId) next.add(targetId);
+                if (targetUser.id) next.add(String(targetUser.id));
+                if (targetUser._id) next.add(String(targetUser._id));
+                return next;
+            });
+
+            toast.success(`✨ Friend request sent to ${targetName} successfully! 📨`, {
+                position: "bottom-center",
+                autoClose: 3000
+            });
+        } catch (err) {
+            const msg = err?.response?.data?.message || err?.response?.data?.error || "Failed to send friend request";
+            toast.error(msg, { position: "bottom-center", autoClose: 3000 });
+        } finally {
+            setRequestLoadingId(null);
+        }
+    };
+
+    const handleRespondFriendRequest = async (requestId, action, senderUser) => {
+        try {
+            const token = getJwtToken();
+            if (!token) return;
+            const config = { headers: { Authorization: "Bearer " + token } };
+            const { data: newChat } = await axios.post(`/api/chat/request/respond?requestId=${requestId}&action=${action}`, {}, config);
+            
+            // Remove from pending received requests
+            setPendingReceivedRequests(prev => prev.filter(r => String(r.id || r._id) !== String(requestId)));
+
+            if (action === 'ACCEPT') {
+                const sId = String(senderUser?._id || senderUser?.id);
+                if (sId) {
+                    setFriendIds(prev => new Set([...prev, sId]));
+                }
+                toast.success(`🤝 You and ${senderUser?.name || 'User'} are now friends!`, {
+                    position: "bottom-center",
+                    autoClose: 2500
+                });
+                if (newChat) {
+                    dispatch(setChats([newChat, ...(chats || []).filter(c => String(c.id || c._id) !== String(newChat.id || newChat._id))]));
+                    dispatch(setSelectedChat(newChat));
+                    onCloseDrawer();
+                }
+            } else {
+                toast.info("Friend request declined", { position: "bottom-center", autoClose: 2000 });
+            }
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Failed to process friend request");
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -107,6 +230,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         const handleKeyDown = (event) => {
             if (event.key === "Escape") {
                 setSearchResult([]);
+            }
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+                event.preventDefault();
+                onOpenDrawer();
             }
         };
 
@@ -174,6 +301,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         };
     }, [isQrScannerOpen, qrTab]);
 
+    const hiddenCanvasRef = useRef(null);
+
     useEffect(() => {
         if (isQrScannerOpen && qrTab === 'scan' && cameraActive && videoRef.current) {
             let detector = null;
@@ -183,23 +312,58 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 } catch (e) {}
             }
 
+            let isProcessing = false;
+
             scanIntervalRef.current = setInterval(async () => {
+                if (isProcessing) return;
                 try {
-                    if (videoRef.current && videoRef.current.readyState >= 2) {
+                    const video = videoRef.current;
+                    if (video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                        isProcessing = true;
+                        let foundCode = null;
+
+                        // 1. Try Native BarcodeDetector if available
                         if (detector) {
-                            const barcodes = await detector.detect(videoRef.current);
-                            if (barcodes && barcodes.length > 0) {
-                                const detectedVal = barcodes[0].rawValue;
-                                if (detectedVal && detectedVal.trim()) {
-                                    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
-                                    setScannedUsername(detectedVal.trim());
-                                    handleScanQrCode(detectedVal.trim());
+                            try {
+                                const barcodes = await detector.detect(video);
+                                if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                                    foundCode = barcodes[0].rawValue;
+                                }
+                            } catch (err) {}
+                        }
+
+                        // 2. High-speed jsQR fallback for guaranteed cross-browser auto-scanning
+                        if (!foundCode && typeof jsQR === 'function') {
+                            if (!hiddenCanvasRef.current) {
+                                hiddenCanvasRef.current = document.createElement('canvas');
+                            }
+                            const canvas = hiddenCanvasRef.current;
+                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                            if (ctx) {
+                                canvas.width = video.videoWidth;
+                                canvas.height = video.videoHeight;
+                                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                    inversionAttempts: 'dontInvert',
+                                });
+                                if (code && code.data && code.data.trim()) {
+                                    foundCode = code.data.trim();
                                 }
                             }
                         }
+
+                        if (foundCode && foundCode.trim()) {
+                            if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+                            setScannedUsername(foundCode.trim());
+                            handleScanQrCode(foundCode.trim());
+                        }
                     }
-                } catch (e) {}
-            }, 350);
+                } catch (e) {
+                } finally {
+                    isProcessing = false;
+                }
+            }, 250);
         }
         return () => {
             if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
@@ -414,79 +578,115 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
         }
     };
 
+    const fetchUsers = async (term = "") => {
+        let cleanTerm = (term || "").trim();
+        if (cleanTerm.startsWith('@')) {
+            cleanTerm = cleanTerm.substring(1);
+        }
+        
+        // Instant Client-Side filtering if cache is populated
+        if (cleanTerm && allUsersCache.length > 0) {
+            const queryLower = cleanTerm.toLowerCase();
+            const localMatches = allUsersCache.filter(u => {
+                if (!u) return false;
+                const name = (u.name || "").toLowerCase();
+                const username = (u.username || "").toLowerCase();
+                const email = (u.email || "").toLowerCase();
+                return name.includes(queryLower) || username.includes(queryLower) || email.includes(queryLower);
+            });
+            if (localMatches.length > 0) {
+                setSearchResult(localMatches);
+                setSearchError('');
+            }
+        }
+
+        try {
+            const token = getJwtToken();
+            if (!token) return;
+            if (!cleanTerm) setLoading(true);
+            const config = {
+                headers: {
+                    Authorization: "Bearer " + token,
+                },
+            };
+            const endpoint = cleanTerm
+                ? `/api/user/all-users?search=${encodeURIComponent(cleanTerm)}`
+                : `/api/user/all-users`;
+            const { data } = await axios.get(endpoint, config);
+            setLoading(false);
+            
+            let list = [];
+            if (Array.isArray(data)) {
+                list = data;
+            } else if (data && typeof data === 'object' && Array.isArray(data.users)) {
+                list = data.users;
+            }
+
+            if (!cleanTerm && list.length > 0) {
+                setAllUsersCache(list);
+            }
+
+            if (cleanTerm) {
+                // Merge with client-side matches to ensure 100% match guarantee
+                const queryLower = cleanTerm.toLowerCase();
+                const localMatches = (allUsersCache || []).filter(u => {
+                    if (!u) return false;
+                    const name = (u.name || "").toLowerCase();
+                    const username = (u.username || "").toLowerCase();
+                    const email = (u.email || "").toLowerCase();
+                    return name.includes(queryLower) || username.includes(queryLower) || email.includes(queryLower);
+                });
+                
+                const mergedMap = new Map();
+                [...list, ...localMatches].forEach(u => {
+                    const id = String(u.id || u._id || u.email);
+                    if (id && !mergedMap.has(id)) {
+                        mergedMap.set(id, u);
+                    }
+                });
+                const finalMerged = Array.from(mergedMap.values());
+                setSearchResult(finalMerged);
+
+                if (finalMerged.length === 0) {
+                    setSearchError(`No users found matching "${cleanTerm}"`);
+                } else {
+                    setSearchError('');
+                }
+            } else {
+                setSearchResult(list);
+                setSearchError('');
+            }
+        } catch (err) {
+            setLoading(false);
+            if (handleAuthError(err, history)) return;
+        }
+    };
+
+    useEffect(() => {
+        fetchFriendData();
+    }, []);
+
     useEffect(() => {
         if (isOpenDrawer) {
-            setSearch("");
-            setSearchResult([]);
-            setSearchError("");
+            fetchFriendData();
+            fetchUsers(search);
         }
     }, [isOpenDrawer]);
 
     useEffect(() => {
-        const timer = setTimeout(async () => {
-            if (!search || !search.trim()) {
-                setSearchResult([]);
-                return;
+        const timer = setTimeout(() => {
+            if (isOpenDrawer || (search && search.trim().length > 0)) {
+                fetchUsers(search);
             }
-            let cleanTerm = search.trim();
-            if (cleanTerm.startsWith('@')) {
-                cleanTerm = cleanTerm.substring(1);
-            }
-            try {
-                setLoading(true);
-                const config = {
-                    headers: {
-                        Authorization: "Bearer " + getJwtToken(),
-                    },
-                };
-                const { data } = await axios.get(`/api/user/all-users?search=${cleanTerm}`, config);
-                setLoading(false);
-                setSearchResult(data || []);
-            } catch (err) {
-                setLoading(false);
-            }
-        }, 300);
+        }, 220);
 
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, isOpenDrawer]);
 
     const handleSearch = async (e) => {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
-        setSearchError('');
-        if (!search || !search.trim()) {
-            toast.error("Please enter a username to search (e.g. @vicky123)");
-            return;
-        }
-
-        let cleanUsername = search.trim();
-        if (cleanUsername.startsWith('@')) {
-            cleanUsername = cleanUsername.substring(1);
-        }
-
-        try {
-            setLoading(true);
-            const config = {
-                headers: {
-                    Authorization: "Bearer " + getJwtToken(),
-                },
-            };
-            const { data } = await axios.get(`/api/user/all-users?search=${cleanUsername}`, config);
-            setLoading(false);
-            setSearchResult(data || []);
-        } catch (error) {
-            if (handleAuthError(error, history)) return;
-            setLoading(false);
-            const errResponse = error.response?.data;
-            const msg = errResponse?.message || "No user found with this username.";
-            setSearchError(msg);
-            toast.error(msg, {
-                position: "top-center",
-                autoClose: 2500,
-                hideProgressBar: true,
-                theme: 'colored'
-            });
-        }
-    }
+        fetchUsers(search);
+    };
 
     const accessChat = async (userId, autoSelect = true) => {
         console.log(userId);
@@ -630,8 +830,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 top="0"
                 zIndex={100}
                 flexShrink={0}
-                px={{ base: 2, sm: 4, md: 6 }}
-                py={2.5}
+                px={{ base: 3, sm: 4, md: 6 }}
+                pt={{ base: "calc(var(--sat) + 8px)", md: "12px" }}
+                pb={{ base: "8px", md: "12px" }}
                 style={{
                     backdropFilter: "blur(24px)",
                     WebkitBackdropFilter: "blur(24px)",
@@ -660,38 +861,59 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         }}>
                             <Feather size={20} color="#FFFFFF" strokeWidth={2.2} />
                         </Box>
-                        <Box display={{ base: "none", sm: "block" }}>
-                            <h2 className="gradient-text m-0" style={{ fontSize: "1.35rem", fontWeight: 900, letterSpacing: "-0.035em", lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>AURA</h2>
+                        <Box display="block">
+                            <h2 className="gradient-text m-0" style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>AURA</h2>
                         </Box>
                     </motion.div>
 
-                    {/* Modern Light Grey Pill Search Bar */}
-                    <Tooltip label="Click or type to search users and open drawer" hasArrow placement="bottom-start">
-                        <Box ref={searchContainerRef} style={{ flex: 1, maxWidth: '520px', position: 'relative' }}>
+                    {/* Luxury Glass Search Bar — Desktop & Tablet */}
+                    <Tooltip label="Search users by @username (⌘K)" hasArrow placement="bottom-start">
+                        <Box ref={searchContainerRef} display={{ base: "none", sm: "block" }} style={{ flex: 1, maxWidth: '440px', position: 'relative' }}>
                             <Box
                                 onClick={onOpenDrawer}
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '10px',
-                                    background: '#F8FAFC',
+                                    background: 'rgba(248, 250, 252, 0.95)',
+                                    backdropFilter: 'blur(16px)',
+                                    WebkitBackdropFilter: 'blur(16px)',
                                     border: '1.5px solid rgba(226, 232, 240, 0.9)',
-                                    borderRadius: '99px',
+                                    borderRadius: '16px',
                                     px: 3,
                                     height: '42px',
                                     cursor: 'pointer',
-                                    transition: 'all 0.25s ease',
+                                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
+                                    '&:hover': {
+                                        background: '#FFFFFF',
+                                        borderColor: 'rgba(212, 175, 55, 0.45)',
+                                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.1)',
+                                        transform: 'translateY(-1px)'
+                                    },
                                     '&:focus-within': {
                                         background: '#FFFFFF',
                                         borderColor: '#D4AF37',
-                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.18)',
+                                        boxShadow: '0 6px 24px rgba(212, 175, 55, 0.18), 0 0 0 3px rgba(212, 175, 55, 0.1)',
                                     }
                                 }}
                             >
-                                <Search size={16} color="#94A3B8" style={{ transition: 'all 0.2s' }} />
+                                <Box
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    w="26px"
+                                    h="26px"
+                                    borderRadius="8px"
+                                    bg="rgba(212, 175, 55, 0.12)"
+                                    color="#D4AF37"
+                                    flexShrink={0}
+                                >
+                                    <Search size={14} strokeWidth={2.4} />
+                                </Box>
                                 <input
                                     type="text"
-                                    placeholder="Search users by @username..."
+                                    placeholder="Search users or @username..."
                                     value={search}
                                     onChange={(e) => {
                                         setSearch(e.target.value);
@@ -707,95 +929,200 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         border: 'none',
                                         outline: 'none',
                                         background: 'transparent',
-                                        fontSize: '0.875rem',
+                                        fontSize: '0.86rem',
                                         color: '#0F172A',
                                         fontWeight: 600,
-                                        fontFamily: "'Inter', sans-serif"
+                                        fontFamily: "'Outfit', 'Inter', sans-serif",
+                                        letterSpacing: '-0.01em'
                                     }}
                                 />
-                                <Tooltip label="Scan QR Code to Add User" hasArrow placement="top">
-                                    <motion.button
+                                {search ? (
+                                    <button
                                         type="button"
-                                        whileHover={{ scale: 1.1, y: -1 }}
-                                        whileTap={{ scale: 0.9 }}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setIsQrScannerOpen(true);
+                                            setSearch('');
                                         }}
                                         style={{
-                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
-                                            color: '#FFFFFF',
                                             border: 'none',
+                                            background: 'rgba(100, 116, 139, 0.12)',
+                                            color: '#64748B',
                                             borderRadius: '50%',
-                                            width: '32px',
-                                            height: '32px',
-                                            minWidth: '32px',
-                                            cursor: 'pointer',
-                                            flexShrink: 0,
+                                            width: '20px',
+                                            height: '20px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            boxShadow: '0 3px 12px rgba(212, 175, 55, 0.4)',
-                                            touchAction: 'manipulation',
-                                            WebkitTapHighlightColor: 'transparent'
+                                            cursor: 'pointer',
+                                            fontSize: '10px',
+                                            fontWeight: 'bold',
+                                            padding: 0,
+                                            flexShrink: 0
                                         }}
                                     >
-                                        <QrCodeScannerIcon style={{ fontSize: '17px', color: '#FFFFFF' }} />
-                                    </motion.button>
-                                </Tooltip>
+                                        ✕
+                                    </button>
+                                ) : (
+                                    <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={0.5}
+                                        bg="rgba(148, 163, 184, 0.12)"
+                                        border="1px solid rgba(226, 232, 240, 0.85)"
+                                        borderRadius="6px"
+                                        px={1.5}
+                                        py={0.5}
+                                        fontSize="0.68rem"
+                                        fontWeight="700"
+                                        color="#64748B"
+                                        fontFamily="'Outfit', sans-serif"
+                                        flexShrink={0}
+                                        letterSpacing="0.04em"
+                                    >
+                                        ⌘K
+                                    </Box>
+                                )}
                             </Box>
 
-                            {/* Dropdown search results aligned directly under top search bar */}
-                            {search && searchResult && searchResult.length > 0 && (
-                                <Box
-                                    position="absolute"
-                                    top="52px"
-                                    left="0"
-                                    w={{ base: "320px", sm: "380px" }}
-                                    bg="rgba(255, 255, 255, 0.98)"
-                                    borderRadius="24px"
-                                    border="1.5px solid rgba(212, 175, 55, 0.35)"
-                                    boxShadow="0 25px 60px rgba(15, 23, 42, 0.16), 0 0 30px rgba(212, 175, 55, 0.12)"
-                                    backdropFilter="blur(28px)"
-                                    WebkitBackdropFilter="blur(28px)"
-                                    zIndex="99999"
-                                    p={2.5}
-                                    maxH="380px"
-                                    overflowY="auto"
+                            {/* Floating Live Instant Search Results Dropdown */}
+                            {search && search.trim().length > 0 && searchResult && searchResult.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                                    transition={{ duration: 0.18 }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '48px',
+                                        left: 0,
+                                        right: 0,
+                                        background: '#FFFFFF',
+                                        borderRadius: '20px',
+                                        border: '1.5px solid rgba(212, 175, 55, 0.35)',
+                                        boxShadow: '0 20px 50px rgba(15, 23, 42, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)',
+                                        padding: '8px',
+                                        zIndex: 1000,
+                                        maxHeight: '340px',
+                                        overflowY: 'auto'
+                                    }}
                                 >
-                                    <Box px={2} py={1} mb={1} display="flex" alignItems="center" justifyContent="space-between" borderBottom="1px solid #F1F5F9">
-                                        <Text fontSize="0.68rem" fontWeight="900" color="#D4AF37" letterSpacing="0.1em" textTransform="uppercase" margin={0}>
-                                            ✦ Search Results ({searchResult.length})
-                                        </Text>
-                                        <Text fontSize="0.68rem" fontWeight="700" color="#94A3B8" margin={0} cursor="pointer" onClick={() => setSearch("")}>
-                                            Close ✕
-                                        </Text>
-                                    </Box>
-                                    {searchResult.map((u) => (
-                                        <Box key={u.id || u._id}>
-                                            <UserListItem user={u} handleFunction={() => sendChatRequest(u)} />
+                                    <div style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, color: '#B45309', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                        ✦ Matching Users ({searchResult.length})
+                                    </div>
+                                    {(searchResult || []).filter(u => u && (u.id || u._id)).map((u) => (
+                                        <Box
+                                            key={u.id || u._id}
+                                            onClick={() => {
+                                                onOpenDrawer();
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '8px 12px',
+                                                borderRadius: '14px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            _hover={{
+                                                background: 'rgba(212, 175, 55, 0.08)',
+                                                transform: 'translateX(3px)'
+                                            }}
+                                        >
+                                            <Box display="flex" alignItems="center" gap={3}>
+                                                <Avatar size="sm" name={u?.name || 'Aura User'} src={u?.pic} />
+                                                <Box textAlign="left">
+                                                    <Text fontWeight="800" fontSize="0.88rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif">
+                                                        {u?.name || 'User'}
+                                                    </Text>
+                                                    <Text fontWeight="700" fontSize="0.75rem" color="#B45309" m={0} fontFamily="'Outfit', sans-serif">
+                                                        @{u?.username || (u?.email ? u.email.split('@')[0] : 'user')}
+                                                    </Text>
+                                                </Box>
+                                            </Box>
+                                            <Badge bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)" color="#FFFFFF" borderRadius="99px" px={3} py={1} fontSize="0.72rem" fontWeight="800" boxShadow="0 2px 8px rgba(212, 175, 55, 0.25)">
+                                                + Add User
+                                            </Badge>
                                         </Box>
                                     ))}
-                                </Box>
+                                </motion.div>
                             )}
                         </Box>
                     </Tooltip>
                 </div>
 
-
                 <div className="d-flex align-items-center gap-2">
-                    {/* Notification Bell Menu */}
-                    <Menu isOpen={isNotifOpen} onOpen={onNotifOpen} onClose={onNotifClose}>
-                        <MenuButton
-                            as={motion.button}
+                    {/* Mobile Search Quick Action */}
+                    <Box display={{ base: "block", sm: "none" }}>
+                        <motion.button
+                            type="button"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
+                            onClick={onOpenDrawer}
                             style={{
                                 background: '#FFFFFF',
                                 border: '1px solid #E5E7EB',
                                 borderRadius: '12px',
-                                width: '40px',
-                                height: '40px',
+                                width: '38px',
+                                height: '38px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                                color: '#0F172A'
+                            }}
+                            aria-label="Search"
+                        >
+                            <Search size={18} />
+                        </motion.button>
+                    </Box>
+
+                    {/* QR Code Button */}
+                    <Tooltip label="Scan QR Code to Add User" hasArrow placement="top">
+                        <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.08, y: -1 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => setIsQrScannerOpen(true)}
+                            style={{
+                                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '12px',
+                                width: '38px',
+                                height: '38px',
+                                minWidth: '38px',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 4px 12px rgba(212, 175, 55, 0.35)',
+                                touchAction: 'manipulation',
+                                WebkitTapHighlightColor: 'transparent'
+                            }}
+                        >
+                            <QrCodeScannerIcon style={{ fontSize: '18px', color: '#FFFFFF' }} />
+                        </motion.button>
+                    </Tooltip>
+
+                    {/* Notification Bell Menu */}
+                    <Menu isOpen={isNotifOpen} onOpen={onNotifOpen} onClose={onNotifClose}>
+                        <MenuButton
+                            as={motion.button}
+                            className="aura-icon-btn"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            _focus={{ boxShadow: "none", outline: "none" }}
+                            _focusVisible={{ boxShadow: "none", outline: "none" }}
+                            _active={{ boxShadow: "none", outline: "none" }}
+                            style={{
+                                background: '#FFFFFF',
+                                border: '1px solid #E5E7EB',
+                                borderRadius: '12px',
+                                width: '38px',
+                                height: '38px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -804,8 +1131,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
                             }}
                         >
-                            <BellIcon fontSize="1.3rem" color="#0F172A" />
-                            {notification && notification.length > 0 && (
+                            <BellIcon fontSize="1.2rem" color="#0F172A" />
+                            {((notification && notification.length > 0) || (pendingReceivedRequests && pendingReceivedRequests.length > 0)) && (
                                 <span
                                     style={{
                                         position: 'absolute',
@@ -826,7 +1153,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         boxShadow: '0 3px 8px rgba(212, 175, 55, 0.4)'
                                     }}
                                 >
-                                    {notification.length}
+                                    {(notification?.length || 0) + (pendingReceivedRequests?.length || 0)}
                                 </span>
                             )}
                         </MenuButton>
@@ -834,8 +1161,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             bg="#FFFFFF"
                             borderRadius="20px"
                             p={2}
-                            minW="300px"
-                            maxW="360px"
+                            minW="320px"
+                            maxW="380px"
                             style={{
                                 boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
                                 border: "1.5px solid rgba(212, 175, 55, 0.25)",
@@ -844,9 +1171,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         >
                             <Box px={3} py={2} borderBottom="1px solid #F1F5F9" display="flex" alignItems="center" justifyContent="space-between">
                                 <Text fontWeight="800" fontSize="0.88rem" color="#0F172A" margin={0} fontFamily="'Outfit', sans-serif">
-                                    Notifications ({notification.length})
+                                    Notifications ({(notification?.length || 0) + (pendingReceivedRequests?.length || 0)})
                                 </Text>
-                                {notification.length > 0 && (
+                                {notification && notification.length > 0 && (
                                     <Text
                                         fontSize="0.75rem"
                                         color="#D4AF37"
@@ -858,7 +1185,133 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     </Text>
                                 )}
                             </Box>
-                            {(!notification || notification.length === 0) && (
+
+                            {/* ── Pending Friend Requests Section ── */}
+                            {pendingReceivedRequests && pendingReceivedRequests.length > 0 && (
+                                <Box p={2} borderBottom="1px solid #F1F5F9">
+                                    <Box display="flex" alignItems="center" justifyContent="space-between" px={1} mb={2}>
+                                        <Text fontSize="0.74rem" fontWeight="900" color="#B45309" textTransform="uppercase" letterSpacing="0.08em" m={0} fontFamily="'Outfit', sans-serif">
+                                            ✦ Friend Requests ({pendingReceivedRequests.length})
+                                        </Text>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#D4AF37', background: 'rgba(212, 175, 55, 0.12)', padding: '2px 8px', borderRadius: '99px' }}>
+                                            Pending
+                                        </span>
+                                    </Box>
+                                    <Box display="flex" flexDirection="column" gap={2.5}>
+                                        {pendingReceivedRequests.map((req) => {
+                                            const senderUser = req.sender;
+                                            const sId = String(senderUser?._id || senderUser?.id);
+                                            const sOnline = userStatuses[sId]?.isOnline || senderUser?.isOnline || senderUser?.online;
+
+                                            return (
+                                                <motion.div
+                                                    key={req.id || req._id}
+                                                    initial={{ opacity: 0, y: 6 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    whileHover={{ scale: 1.01 }}
+                                                >
+                                                    <Box
+                                                        p={3}
+                                                        bg="linear-gradient(135deg, #FFFDF8 0%, #FFF9EB 100%)"
+                                                        borderRadius="18px"
+                                                        border="1.5px solid rgba(212, 175, 55, 0.35)"
+                                                        boxShadow="0 6px 18px rgba(212, 175, 55, 0.1)"
+                                                        display="flex"
+                                                        flexDirection="column"
+                                                        gap={2.5}
+                                                    >
+                                                        <Box display="flex" alignItems="center" gap={2.5} style={{ minWidth: 0, overflow: 'hidden' }}>
+                                                            <Box style={{
+                                                                position: 'relative',
+                                                                width: '40px',
+                                                                height: '40px',
+                                                                minWidth: '40px',
+                                                                borderRadius: '50%',
+                                                                padding: '2px',
+                                                                background: sOnline
+                                                                    ? 'linear-gradient(135deg, #10B981 0%, #D4AF37 100%)'
+                                                                    : 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                                boxShadow: '0 3px 10px rgba(212, 175, 55, 0.25)',
+                                                                flexShrink: 0
+                                                            }}>
+                                                                <Avatar size="full" name={senderUser?.name} src={senderUser?.pic} />
+                                                                {sOnline && (
+                                                                    <span style={{
+                                                                        position: 'absolute',
+                                                                        right: 0,
+                                                                        bottom: 0,
+                                                                        width: '11px',
+                                                                        height: '11px',
+                                                                        borderRadius: '50%',
+                                                                        background: '#10B981',
+                                                                        border: '2px solid #FFFFFF'
+                                                                    }} />
+                                                                )}
+                                                            </Box>
+                                                            <Box textAlign="left" style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                                                                <Box display="flex" alignItems="center" gap={1}>
+                                                                    <Text fontWeight="900" fontSize="0.9rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                        {senderUser?.name || 'User'}
+                                                                    </Text>
+                                                                    {sOnline && (
+                                                                        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#10B981' }}>●</span>
+                                                                    )}
+                                                                </Box>
+                                                                <Text fontSize="0.75rem" color="#D4AF37" fontWeight="700" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                    @{senderUser?.username || (senderUser?.email ? senderUser.email.split('@')[0] : 'user')}
+                                                                </Text>
+                                                            </Box>
+                                                        </Box>
+                                                        <Box display="flex" gap={2} alignItems="center">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleRespondFriendRequest(req.id || req._id, 'ACCEPT', senderUser)}
+                                                                style={{
+                                                                    flex: 1,
+                                                                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                                                    color: '#FFFFFF',
+                                                                    borderRadius: '99px',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '0.78rem',
+                                                                    fontFamily: "'Outfit', sans-serif",
+                                                                    border: 'none',
+                                                                    height: '32px',
+                                                                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                _hover={{ opacity: 0.95 }}
+                                                            >
+                                                                ✓ Accept & Chat
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleRespondFriendRequest(req.id || req._id, 'REJECT', senderUser)}
+                                                                style={{
+                                                                    background: '#F1F5F9',
+                                                                    color: '#64748B',
+                                                                    borderRadius: '99px',
+                                                                    fontWeight: 700,
+                                                                    fontSize: '0.78rem',
+                                                                    fontFamily: "'Outfit', sans-serif",
+                                                                    border: '1px solid #E2E8F0',
+                                                                    height: '32px',
+                                                                    padding: '0 14px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                _hover={{ background: '#E2E8F0', color: '#0F172A' }}
+                                                            >
+                                                                Decline
+                                                            </Button>
+                                                        </Box>
+                                                    </Box>
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {(!notification || notification.length === 0) && (!pendingReceivedRequests || pendingReceivedRequests.length === 0) && (
                                 <Box p={4} textAlign="center">
                                     <Text fontSize="0.82rem" color="#94A3B8" margin={0} fontFamily="'Inter', sans-serif">
                                         No new notifications
@@ -946,21 +1399,36 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         </MenuList>
                     </Menu>
 
+                    {/* Profile Menu Button */}
                     <Menu>
                         <MenuButton
-                            as={Button}
-                            rightIcon={<ChevronDownIcon color="#0F172A" />}
-                            bg="#FFFFFF"
-                            border="1.5px solid rgba(226, 232, 240, 0.9)"
-                            borderRadius="14px"
-                            px={2}
-                            py={1}
-                            h="42px"
-                            _hover={{ bg: "#F8FAFC", borderColor: "#D4AF37" }}
-                            _active={{ bg: "#F1F5F9" }}
-                            style={{ boxShadow: "0 2px 10px rgba(15, 23, 42, 0.04)" }}
+                            as={motion.button}
+                            className="aura-icon-btn"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            _focus={{ boxShadow: "none", outline: "none" }}
+                            _focusVisible={{ boxShadow: "none", outline: "none" }}
+                            _active={{ boxShadow: "none", outline: "none" }}
+                            style={{
+                                background: "transparent",
+                                border: "none",
+                                padding: 0,
+                                cursor: "pointer",
+                                borderRadius: "50%"
+                            }}
                         >
-                            <Avatar size="sm" cursor="pointer" name={user && user.name} src={(!user?.pic || user?.pic.includes("icon-library.com")) ? "https://cdn-icons-png.flaticon.com/512/149/149071.png" : user.pic} bg="#0F172A" color="#D4AF37" fontWeight="800" style={{ border: "2px solid #D4AF37" }} />
+                            <Avatar
+                                size="sm"
+                                name={user && user.name}
+                                src={(!user?.pic || user?.pic.includes("icon-library.com")) ? undefined : user.pic}
+                                fontWeight="800"
+                                style={{
+                                    border: "1.5px solid #D4AF37",
+                                    width: "38px",
+                                    height: "38px",
+                                    boxShadow: "0 2px 10px rgba(212, 175, 55, 0.3)"
+                                }}
+                            />
                         </MenuButton>
                         <MenuList
                             bg="#FFFFFF"
@@ -1001,132 +1469,671 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     </Menu>
                 </div>
             </Box>
+            {/* ── ADVANCED LUXURY SEARCH & DISCOVERY DRAWER ── */}
             <Drawer
                 isOpen={isOpenDrawer}
                 placement='left'
                 onClose={onCloseDrawer}
                 size="md"
             >
-                <DrawerOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(15, 23, 42, 0.35)" }} />
-                <DrawerContent style={{ background: "#FFFFFF", color: "#0F172A", borderRight: "1.5px solid rgba(212, 175, 55, 0.25)", boxShadow: "0 25px 60px rgba(15, 23, 42, 0.15)", maxWidth: "440px" }}>
-                    {loadingChat && (<Progress size='xs' height='3px' colorScheme='teal' isIndeterminate />)}
-                    <DrawerHeader style={{ borderBottom: "1px solid #F1F5F9", padding: "20px 24px" }}>
-                        <div className='d-flex justify-content-between align-items-center'>
-                            <div className="d-flex align-items-center gap-2.5">
-                                <Box sx={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    border: '1px solid rgba(212, 175, 55, 0.3)'
-                                }}>
-                                    <Search size={18} color="#D4AF37" />
-                                </Box>
-                                <h3 className="m-0" style={{ fontSize: "1.25rem", fontWeight: 900, color: "#0F172A", fontFamily: "'Outfit', sans-serif" }}>Add User by Username</h3>
+                <DrawerOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(15, 23, 42, 0.45)" }} />
+                <DrawerContent style={{
+                    background: "#FFFFFF",
+                    color: "#0F172A",
+                    borderRight: "1.5px solid rgba(212, 175, 55, 0.3)",
+                    boxShadow: "0 30px 80px rgba(15, 23, 42, 0.2), 0 0 40px rgba(212, 175, 55, 0.08)",
+                    maxWidth: "460px",
+                    display: "flex",
+                    flexDirection: "column"
+                }}>
+                    {loadingChat && (<Progress size='xs' height='3.5px' colorScheme='amber' isIndeterminate bg="rgba(212, 175, 55, 0.2)" />)}
+                    
+                    {/* ── DRAWER HEADER ── */}
+                    <DrawerHeader style={{
+                        borderBottom: "1px solid rgba(241, 245, 249, 0.9)",
+                        padding: "22px 24px 18px",
+                        background: "linear-gradient(180deg, rgba(254, 249, 235, 0.5) 0%, rgba(255, 255, 255, 0) 100%)"
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <motion.div
+                                    whileHover={{ rotate: 10, scale: 1.08 }}
+                                    transition={{ type: 'spring', stiffness: 350, damping: 15 }}
+                                    style={{
+                                        width: '44px',
+                                        height: '44px',
+                                        borderRadius: '16px',
+                                        background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 8px 20px rgba(212, 175, 55, 0.35)',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    <Search size={22} color="#FFFFFF" strokeWidth={2.5} />
+                                </motion.div>
+                                <div>
+                                    <div style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        background: 'rgba(212, 175, 55, 0.12)',
+                                        color: '#B45309',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 900,
+                                        letterSpacing: '0.12em',
+                                        textTransform: 'uppercase',
+                                        padding: '2px 8px',
+                                        borderRadius: '99px',
+                                        marginBottom: '4px'
+                                    }}>
+                                        ✦ Aura Network
+                                    </div>
+                                    <h3 style={{
+                                        margin: 0,
+                                        fontSize: "1.3rem",
+                                        fontWeight: 900,
+                                        color: "#0F172A",
+                                        fontFamily: "'Outfit', sans-serif",
+                                        letterSpacing: "-0.02em",
+                                        lineHeight: 1.15
+                                    }}>
+                                        Find & Connect
+                                    </h3>
+                                </div>
                             </div>
+                            
+                            <motion.button
+                                type="button"
+                                whileHover={{ scale: 1.1, rotate: 90 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={onCloseDrawer}
+                                style={{
+                                    borderRadius: "50%",
+                                    border: "1px solid #E2E8F0",
+                                    width: "34px",
+                                    height: "34px",
+                                    color: "#64748B",
+                                    background: "#FFFFFF",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    fontSize: "13px",
+                                    fontWeight: "bold",
+                                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.05)",
+                                    transition: "all 0.15s ease",
+                                    padding: 0
+                                }}
+                                aria-label="Close"
+                            >
+                                ✕
+                            </motion.button>
                         </div>
                     </DrawerHeader>
 
-                    <DrawerBody px={4} py={3}>
-                        <form onSubmit={handleSearch}>
-                            <Box d="flex" flexDirection="column" gap={3} py={2}>
-                                <div style={{ position: 'relative', width: '100%' }}>
-                                    <Search size={18} color="#D4AF37" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }} />
-                                    <Input
-                                        placeholder="Enter exact @username (e.g. @vicky123)"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        bg="#FFFFFF"
-                                        color="#0F172A"
-                                        pl="42px"
-                                        h="46px"
-                                        fontWeight="600"
-                                        fontFamily="'Inter', sans-serif"
-                                        _focus={{ borderColor: "#D4AF37", bg: "#FFFFFF", boxShadow: "0 4px 15px rgba(212, 175, 55, 0.18)" }}
-                                        borderRadius="16px"
-                                        style={{ border: "1.5px solid rgba(226, 232, 240, 0.9)", fontSize: "0.92rem" }}
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    width="100%"
-                                    h="46px"
-                                    borderRadius="16px"
-                                    bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
-                                    color="#FFFFFF"
-                                    fontWeight="800"
+                    {/* ── DRAWER BODY ── */}
+                    <DrawerBody px={4} py={3} display="flex" flexDirection="column" gap={3} style={{ flex: 1, overflow: 'hidden' }}>
+                        {/* ── SEARCH INPUT BAR ── */}
+                        <form onSubmit={handleSearch} style={{ width: '100%', margin: 0 }}>
+                            <Box style={{ position: 'relative', width: '100%' }}>
+                                <Search
+                                    size={20}
+                                    color="#D4AF37"
+                                    style={{
+                                        position: 'absolute',
+                                        left: '18px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        zIndex: 2,
+                                        pointerEvents: 'none'
+                                    }}
+                                />
+                                <Input
+                                    placeholder="Search by name, @username, or email..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    bg="#FFFFFF"
+                                    color="#0F172A"
+                                    pl="50px"
+                                    pr={search ? "46px" : "18px"}
+                                    h="52px"
+                                    fontWeight="600"
                                     fontFamily="'Outfit', sans-serif"
-                                    boxShadow="0 4px 15px rgba(212, 175, 55, 0.35)"
-                                    _hover={{ opacity: 0.95 }}
-                                    isLoading={loading}
-                                >
-                                    🔍 Search Username
-                                </Button>
+                                    fontSize="0.96rem"
+                                    borderRadius="18px"
+                                    style={{
+                                        border: "1.5px solid rgba(226, 232, 240, 0.95)",
+                                        boxShadow: "0 2px 10px rgba(15, 23, 42, 0.03)"
+                                    }}
+                                    _focus={{
+                                        borderColor: "#D4AF37",
+                                        bg: "#FFFFFF",
+                                        boxShadow: "0 0 0 3.5px rgba(212, 175, 55, 0.18), 0 8px 25px rgba(212, 175, 55, 0.12)"
+                                    }}
+                                />
+                                {search && (
+                                    <motion.button
+                                        type="button"
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={() => setSearch('')}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '16px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            border: 'none',
+                                            background: 'rgba(100, 116, 139, 0.14)',
+                                            color: '#64748B',
+                                            borderRadius: '50%',
+                                            width: '24px',
+                                            height: '24px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: 'bold',
+                                            padding: 0,
+                                            zIndex: 2
+                                        }}
+                                    >
+                                        ✕
+                                    </motion.button>
+                                )}
                             </Box>
                         </form>
 
+                        {/* ── FILTER PILLS BAR ── */}
+                        <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '2px 2px' }}>
+                            <Box style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setDrawerFilter('all')}
+                                    style={{
+                                        padding: '6px 12px',
+                                        borderRadius: '99px',
+                                        fontSize: '0.76rem',
+                                        fontWeight: 800,
+                                        fontFamily: "'Outfit', sans-serif",
+                                        border: drawerFilter === 'all' ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
+                                        background: drawerFilter === 'all' ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : '#FFFFFF',
+                                        color: drawerFilter === 'all' ? '#FFFFFF' : '#64748B',
+                                        cursor: 'pointer',
+                                        boxShadow: drawerFilter === 'all' ? '0 4px 12px rgba(212, 175, 55, 0.3)' : 'none',
+                                        transition: 'all 0.18s ease',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    ✦ All
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDrawerFilter('friends')}
+                                    style={{
+                                        padding: '6px 12px',
+                                        borderRadius: '99px',
+                                        fontSize: '0.76rem',
+                                        fontWeight: 800,
+                                        fontFamily: "'Outfit', sans-serif",
+                                        border: drawerFilter === 'friends' ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
+                                        background: drawerFilter === 'friends' ? 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)' : '#FFFFFF',
+                                        color: drawerFilter === 'friends' ? '#FFFFFF' : '#64748B',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        boxShadow: drawerFilter === 'friends' ? '0 4px 12px rgba(139, 92, 246, 0.3)' : 'none',
+                                        transition: 'all 0.18s ease',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    <span>⭐ Friends</span>
+                                    {friendIds.size > 0 && (
+                                        <span style={{
+                                            background: drawerFilter === 'friends' ? 'rgba(255,255,255,0.25)' : 'rgba(139, 92, 246, 0.12)',
+                                            color: drawerFilter === 'friends' ? '#FFFFFF' : '#8B5CF6',
+                                            borderRadius: '99px',
+                                            padding: '1px 6px',
+                                            fontSize: '0.66rem'
+                                        }}>
+                                            {friendIds.size}
+                                        </span>
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDrawerFilter('online')}
+                                    style={{
+                                        padding: '6px 12px',
+                                        borderRadius: '99px',
+                                        fontSize: '0.76rem',
+                                        fontWeight: 800,
+                                        fontFamily: "'Outfit', sans-serif",
+                                        border: drawerFilter === 'online' ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
+                                        background: drawerFilter === 'online' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : '#FFFFFF',
+                                        color: drawerFilter === 'online' ? '#FFFFFF' : '#64748B',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        boxShadow: drawerFilter === 'online' ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none',
+                                        transition: 'all 0.18s ease',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: drawerFilter === 'online' ? '#FFFFFF' : '#10B981' }} />
+                                    Online
+                                </button>
+                            </Box>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#94A3B8', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>
+                                {(() => {
+                                    const list = (searchResult || []).filter(u => u && (u.id || u._id));
+                                    const filtered = drawerFilter === 'online'
+                                        ? list.filter(u => {
+                                            const tId = String(u.id || u._id || '');
+                                            return Boolean(userStatuses[tId]?.isOnline || u.isOnline || u.online);
+                                        })
+                                        : drawerFilter === 'friends'
+                                        ? list.filter(u => friendIds.has(String(u._id || u.id)))
+                                        : list;
+                                    return `${filtered.length} found`;
+                                })()}
+                            </span>
+                        </Box>
+
                         {searchError && (
-                            <Box p={3} mt={2} bg="#FFF0F2" color="#E63946" borderRadius="12px" border="1px solid #FFE3E6" textAlign="center" fontSize="0.85rem" fontWeight="600">
+                            <Box style={{
+                                padding: '10px 14px',
+                                background: '#FEF2F2',
+                                color: '#DC2626',
+                                borderRadius: '14px',
+                                border: '1px solid #FECACA',
+                                textAlign: 'center',
+                                fontSize: '0.84rem',
+                                fontWeight: 700,
+                                fontFamily: "'Outfit', sans-serif"
+                            }}>
                                 ❌ {searchError}
                             </Box>
                         )}
 
-                        {loading ? <ChatLoading /> :
-                            (
-                                searchResult?.map((u) => (
-                                    <Box key={u.id || u._id} mt={4} p={4} borderRadius="18px" bg="#FFFFFF" border="1.5px solid #FFE3E6" boxShadow="0 10px 30px rgba(230, 57, 70, 0.08)" textAlign="center">
-                                        <Avatar size="xl" name={u.name} src={u.pic} mb={2} style={{ border: '3px solid #E63946' }} />
-                                        <h4 style={{ margin: '4px 0 0', fontWeight: 800, color: '#303633', fontSize: '1.2rem' }}>{u.name}</h4>
-                                        <p style={{ margin: '0 0 16px', color: '#E63946', fontWeight: 700, fontSize: '0.9rem' }}>@{u.username}</p>
-                                        <Button
-                                            width="100%"
-                                            h="42px"
-                                            borderRadius="12px"
-                                            bg={(() => {
-                                                try {
-                                                    const targetId = String(u.id || u._id);
-                                                    const myId = user?._id || user?.id;
-                                                    const storageKey = myId ? `aura_sent_requests_${myId}` : "aura_sent_requests";
-                                                    const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
-                                                    return sentList.includes(targetId) ? "#10B981" : "#E63946";
-                                                } catch { return "#E63946"; }
-                                            })()}
-                                            color="#FFFFFF"
-                                            fontWeight="700"
-                                            _hover={{ opacity: 0.9 }}
-                                            onClick={() => sendChatRequest(u)}
-                                        >
-                                            {(() => {
-                                                try {
-                                                    const targetId = String(u.id || u._id);
-                                                    const myId = user?._id || user?.id;
-                                                    const storageKey = myId ? `aura_sent_requests_${myId}` : "aura_sent_requests";
-                                                    const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
-                                                    return sentList.includes(targetId) ? "✓ Requested" : "+ Send Chat Request";
-                                                } catch { return "+ Send Chat Request"; }
-                                            })()}
-                                        </Button>
-                                    </Box>
-                                ))
-                            )
-                        }
+                        {/* ── USER LIST CONTAINER ── */}
+                        {loading ? (
+                            <Box py={4}><ChatLoading /></Box>
+                        ) : (() => {
+                            const validUsers = (searchResult || []).filter(u => u && (u.id || u._id));
+                            const displayedUsers = drawerFilter === 'online'
+                                ? validUsers.filter(u => {
+                                    const tId = String(u.id || u._id || '');
+                                    return Boolean(userStatuses[tId]?.isOnline || u.isOnline || u.online);
+                                })
+                                : drawerFilter === 'friends'
+                                ? validUsers.filter(u => friendIds.has(String(u._id || u.id)))
+                                : validUsers;
+
+                            if (displayedUsers.length === 0) {
+                                return (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.2 }}
+                                        style={{
+                                            textAlign: 'center',
+                                            padding: '40px 20px',
+                                            background: 'rgba(248, 250, 252, 0.7)',
+                                            borderRadius: '24px',
+                                            border: '1.5px dashed rgba(226, 232, 240, 0.9)',
+                                            marginTop: '10px'
+                                        }}
+                                    >
+                                        <Box style={{
+                                            margin: '0 auto 14px',
+                                            width: '54px',
+                                            height: '54px',
+                                            borderRadius: '50%',
+                                            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#D4AF37',
+                                            boxShadow: '0 4px 14px rgba(212, 175, 55, 0.15)'
+                                        }}>
+                                            <Search size={24} />
+                                        </Box>
+                                        <Text fontWeight="800" fontSize="1.05rem" color="#0F172A" fontFamily="'Outfit', sans-serif" mb={1}>
+                                            {drawerFilter === 'online' ? "No Users Online Right Now" : drawerFilter === 'friends' ? "No Friends In Search" : "No users found"}
+                                        </Text>
+                                        <Text fontSize="0.84rem" color="#64748B" fontFamily="'Inter', sans-serif" maxW="280px" mx="auto" lineHeight="1.5">
+                                            {search.trim()
+                                                ? `We couldn't find anyone matching "${search.trim()}". Try typing their exact @username or full name.`
+                                                : drawerFilter === 'friends'
+                                                ? "You have not added any friends yet. Search users and click '+ Add Friend'!"
+                                                : "Type a name or username in the search bar above to find people."}
+                                        </Text>
+                                    </motion.div>
+                                );
+                            }
+
+                            return (
+                                <Box display="flex" flexDirection="column" gap="10px" overflowY="auto" flex="1" pr={1} pb={2}>
+                                    {displayedUsers.map((u, idx) => {
+                                        const targetId = String(u._id || u.id || u.publicId || '');
+                                        const targetEmail = (u.email || '').toLowerCase();
+                                        const isMe = Boolean(
+                                            (user?._id && String(user._id || user.id) === targetId) ||
+                                            (user?.email && targetEmail && user.email.toLowerCase() === targetEmail)
+                                        );
+                                        const isFriend = friendIds.has(targetId) || (u.id && friendIds.has(String(u.id))) || (u._id && friendIds.has(String(u._id)));
+                                        const isSentRequest = sentRequestUserIds.has(targetId) || (u.id && sentRequestUserIds.has(String(u.id))) || (u._id && sentRequestUserIds.has(String(u._id)));
+                                        const incomingReq = (pendingReceivedRequests || []).find(r => {
+                                            const sId = String(r.sender?.id || r.sender?._id || '');
+                                            return sId === targetId || (u.id && sId === String(u.id)) || (u._id && sId === String(u._id));
+                                        });
+                                        const statusObj = userStatuses[targetId] || (u.id ? userStatuses[String(u.id)] : null);
+                                        const isOnlineNow = statusObj != null ? statusObj.isOnline : Boolean(u.isOnline || u.online);
+                                        const isRequestLoading = requestLoadingId === targetId || (u.id && requestLoadingId === String(u.id));
+
+                                        return (
+                                            <motion.div
+                                                key={targetId}
+                                                initial={{ opacity: 0, y: 12 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.22, delay: idx * 0.035 }}
+                                                whileHover={{ scale: 1.015, y: -2 }}
+                                                whileTap={{ scale: 0.985 }}
+                                            >
+                                                <Box
+                                                    onClick={() => {
+                                                        if (isMe) return;
+                                                        if (isFriend) {
+                                                            accessChat(targetId);
+                                                        } else if (incomingReq) {
+                                                            handleRespondFriendRequest(incomingReq.id || incomingReq._id, 'ACCEPT', u);
+                                                        } else if (!isSentRequest) {
+                                                            handleSendFriendRequest(u);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        padding: '14px 16px',
+                                                        borderRadius: '20px',
+                                                        background: '#FFFFFF',
+                                                        border: isMe
+                                                            ? '1.5px solid rgba(212, 175, 55, 0.4)'
+                                                            : isFriend
+                                                            ? '1.5px solid rgba(139, 92, 246, 0.35)'
+                                                            : isSentRequest
+                                                            ? '1.5px solid rgba(245, 158, 11, 0.35)'
+                                                            : '1.5px solid rgba(226, 232, 240, 0.85)',
+                                                        boxShadow: isFriend
+                                                            ? '0 4px 16px rgba(139, 92, 246, 0.08)'
+                                                            : isSentRequest
+                                                            ? '0 4px 16px rgba(245, 158, 11, 0.06)'
+                                                            : '0 4px 16px rgba(15, 23, 42, 0.04)',
+                                                        cursor: isMe ? 'default' : 'pointer',
+                                                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                                                    }}
+                                                    _hover={{
+                                                        borderColor: '#D4AF37',
+                                                        boxShadow: '0 10px 28px rgba(212, 175, 55, 0.18)',
+                                                        background: isMe ? '#FFFFFF' : '#FFFDF8'
+                                                    }}
+                                                >
+                                                    <Box style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                                                        {/* Avatar with concentric luxury ring & presence beacon */}
+                                                        <Box style={{
+                                                            position: 'relative',
+                                                            width: '48px',
+                                                            height: '48px',
+                                                            minWidth: '48px',
+                                                            borderRadius: '50%',
+                                                            padding: '2px',
+                                                            background: isOnlineNow
+                                                                ? 'linear-gradient(135deg, #10B981 0%, #D4AF37 100%)'
+                                                                : isFriend
+                                                                ? 'linear-gradient(135deg, #8B5CF6 0%, #D4AF37 100%)'
+                                                                : isSentRequest
+                                                                ? 'linear-gradient(135deg, #F59E0B 0%, #D4AF37 100%)'
+                                                                : 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                            boxShadow: isOnlineNow
+                                                                ? '0 4px 14px rgba(16, 185, 129, 0.35)'
+                                                                : '0 4px 12px rgba(212, 175, 55, 0.25)',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <Avatar
+                                                                size="full"
+                                                                name={u?.name || 'Aura User'}
+                                                                src={u?.pic && typeof u.pic === 'string' && u.pic.length > 5 && !u.pic.includes("icon-library.com") && !u.pic.includes("flaticon.com") ? u.pic : undefined}
+                                                                fontWeight="900"
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    borderRadius: '50%',
+                                                                    border: '2px solid #FFFFFF'
+                                                                }}
+                                                            />
+                                                            {/* Real-time Status Pulse Beacon */}
+                                                            <span
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    right: 0,
+                                                                    bottom: 0,
+                                                                    width: '13px',
+                                                                    height: '13px',
+                                                                    borderRadius: '50%',
+                                                                    background: isOnlineNow ? '#10B981' : '#94A3B8',
+                                                                    border: '2.5px solid #FFFFFF',
+                                                                    boxShadow: isOnlineNow ? '0 0 8px rgba(16, 185, 129, 0.6)' : 'none'
+                                                                }}
+                                                            />
+                                                        </Box>
+
+                                                        {/* User Details */}
+                                                        <Box textAlign="left" style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                                                            <Box display="flex" alignItems="center" gap={1.5} style={{ overflow: 'hidden' }}>
+                                                                <Text fontWeight="900" fontSize="0.98rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                    {u?.name || 'User'}
+                                                                </Text>
+                                                                {isMe ? (
+                                                                    <Badge bg="linear-gradient(135deg, #D4AF37, #F59E0B)" color="#FFFFFF" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="900">
+                                                                        You
+                                                                    </Badge>
+                                                                ) : isFriend ? (
+                                                                    <Badge bg="linear-gradient(135deg, #8B5CF6, #6D28D9)" color="#FFFFFF" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="900">
+                                                                        ⭐ Friend
+                                                                    </Badge>
+                                                                ) : isSentRequest ? (
+                                                                    <Badge bg="rgba(245, 158, 11, 0.15)" color="#B45309" border="1px solid rgba(245, 158, 11, 0.3)" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="800">
+                                                                        ⏳ Request Sent
+                                                                    </Badge>
+                                                                ) : incomingReq ? (
+                                                                    <Badge bg="rgba(16, 185, 129, 0.15)" color="#059669" border="1px solid rgba(16, 185, 129, 0.3)" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="800">
+                                                                        Incoming
+                                                                    </Badge>
+                                                                ) : isOnlineNow && (
+                                                                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', padding: '1px 6px', borderRadius: '6px' }}>
+                                                                        Online
+                                                                    </span>
+                                                                )}
+                                                            </Box>
+                                                            <Text fontWeight="700" fontSize="0.8rem" color="#D4AF37" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                @{u?.username || (u?.email ? u.email.split('@')[0] : 'user')}
+                                                            </Text>
+                                                        </Box>
+                                                    </Box>
+
+                                                    {/* CTA Action Button */}
+                                                    {!isMe && (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '12px' }}>
+                                                            {isFriend ? (
+                                                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            accessChat(targetId);
+                                                                        }}
+                                                                        style={{
+                                                                            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                                                                            color: '#FFFFFF',
+                                                                            borderRadius: '99px',
+                                                                            padding: '0 16px',
+                                                                            height: '36px',
+                                                                            fontWeight: 800,
+                                                                            fontSize: '0.8rem',
+                                                                            fontFamily: "'Outfit', sans-serif",
+                                                                            border: '1px solid rgba(212, 175, 55, 0.4)',
+                                                                            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.2)',
+                                                                            cursor: 'pointer'
+                                                                        }}
+                                                                        _hover={{
+                                                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                                            boxShadow: '0 6px 20px rgba(212, 175, 55, 0.35)'
+                                                                        }}
+                                                                    >
+                                                                        💬 Chat
+                                                                    </Button>
+                                                                </motion.div>
+                                                            ) : incomingReq ? (
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleRespondFriendRequest(incomingReq.id || incomingReq._id, 'ACCEPT', u);
+                                                                            }}
+                                                                            style={{
+                                                                                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                                                                color: '#FFFFFF',
+                                                                                borderRadius: '99px',
+                                                                                padding: '0 14px',
+                                                                                height: '36px',
+                                                                                fontWeight: 800,
+                                                                                fontSize: '0.78rem',
+                                                                                fontFamily: "'Outfit', sans-serif",
+                                                                                border: 'none',
+                                                                                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                                                                                cursor: 'pointer'
+                                                                            }}
+                                                                        >
+                                                                            ✓ Accept
+                                                                        </Button>
+                                                                    </motion.div>
+                                                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleRespondFriendRequest(incomingReq.id || incomingReq._id, 'REJECT', u);
+                                                                            }}
+                                                                            style={{
+                                                                                background: '#F1F5F9',
+                                                                                color: '#64748B',
+                                                                                borderRadius: '99px',
+                                                                                padding: '0 10px',
+                                                                                height: '36px',
+                                                                                fontWeight: 700,
+                                                                                fontSize: '0.78rem',
+                                                                                fontFamily: "'Outfit', sans-serif",
+                                                                                border: '1px solid #E2E8F0',
+                                                                                cursor: 'pointer'
+                                                                            }}
+                                                                        >
+                                                                            ✕
+                                                                        </Button>
+                                                                    </motion.div>
+                                                                </div>
+                                                            ) : isSentRequest ? (
+                                                                <motion.div
+                                                                    animate={{ scale: [1, 1.02, 1] }}
+                                                                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                                                                >
+                                                                    <div
+                                                                        style={{
+                                                                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(212, 175, 55, 0.08) 100%)',
+                                                                            color: '#B45309',
+                                                                            borderRadius: '99px',
+                                                                            padding: '0 14px',
+                                                                            height: '36px',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                            fontWeight: 800,
+                                                                            fontSize: '0.78rem',
+                                                                            fontFamily: "'Outfit', sans-serif",
+                                                                            border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                                                                            boxShadow: '0 2px 10px rgba(212, 175, 55, 0.12)',
+                                                                            cursor: 'default',
+                                                                            userSelect: 'none'
+                                                                        }}
+                                                                    >
+                                                                        <span>⏳</span>
+                                                                        <span>Request Sent</span>
+                                                                    </div>
+                                                                </motion.div>
+                                                            ) : (
+                                                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        isLoading={isRequestLoading}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleSendFriendRequest(u);
+                                                                        }}
+                                                                        style={{
+                                                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                                            color: '#FFFFFF',
+                                                                            borderRadius: '99px',
+                                                                            padding: '0 16px',
+                                                                            height: '36px',
+                                                                            fontWeight: 800,
+                                                                            fontSize: '0.8rem',
+                                                                            fontFamily: "'Outfit', sans-serif",
+                                                                            border: 'none',
+                                                                            boxShadow: '0 4px 14px rgba(212, 175, 55, 0.35)',
+                                                                            cursor: 'pointer',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '5px'
+                                                                        }}
+                                                                        _hover={{ opacity: 0.95, boxShadow: '0 6px 20px rgba(212, 175, 55, 0.45)' }}
+                                                                    >
+                                                                        + Add Friend
+                                                                    </Button>
+                                                                </motion.div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </Box>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </Box>
+                            );
+                        })()}
                     </DrawerBody>
                 </DrawerContent>
             </Drawer>
-            {/* ── MY PROFILE MODAL (CLASSY ULTRA-AESTHETIC DESIGN WITH FRAMER MOTION) ── */}
-            <Modal size="md" isOpen={isOpen} onClose={onClose} isCentered>
-                <ModalOverlay style={{ backdropFilter: "blur(24px)", background: "rgba(15, 23, 42, 0.45)" }} />
-                <ModalContent style={{
-                    background: "#FFFFFF",
-                    color: "#0F172A",
-                    border: "1.5px solid rgba(212, 175, 55, 0.3)",
-                    borderRadius: "32px",
-                    boxShadow: "0 40px 100px rgba(15, 23, 42, 0.2)",
-                    overflow: "hidden"
-                }}>
+            <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="slideInBottom">
+                <ModalOverlay style={{ backdropFilter: "blur(24px)", background: "rgba(15, 23, 42, 0.5)" }} />
+                <ModalContent
+                    mx={{ base: 3, sm: "auto" }}
+                    maxW={{ base: "calc(100% - 24px)", sm: "460px" }}
+                    borderRadius="28px"
+                    style={{
+                        background: "#FFFFFF",
+                        color: "#0F172A",
+                        border: "1.5px solid rgba(212, 175, 55, 0.3)",
+                        boxShadow: "0 40px 100px rgba(15, 23, 42, 0.2)",
+                        overflow: "hidden"
+                    }}
+                >
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1222,6 +2229,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Box sx={{
                                                 padding: '4px',
                                                 borderRadius: '50%',
+                                                overflow: 'hidden',
                                                 background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                                 boxShadow: '0 0 0 3px #FFFFFF, 0 0 0 5px rgba(212, 175, 55, 0.4), 0 10px 25px rgba(212, 175, 55, 0.3)'
                                             }}>
@@ -1229,16 +2237,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     size="2xl"
                                                     name={user && user.name}
                                                     src={user && user.pic}
-                                                    bg="#0F172A !important"
-                                                    color="#D4AF37 !important"
                                                     fontWeight="900"
                                                     onClick={() => setIsPreviewPicOpen(true)}
                                                     style={{
                                                         width: '98px',
                                                         height: '98px',
+                                                        borderRadius: '50%',
+                                                        overflow: 'hidden',
                                                         border: "3px solid #FFFFFF",
-                                                        cursor: 'pointer',
-                                                        backgroundColor: '#0F172A'
+                                                        cursor: 'pointer'
                                                     }}
                                                 />
                                             </Box>
@@ -1561,28 +2568,29 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             {/* ── MODAL FOOTER ACTION PILL BUTTON ── */}
                             <Box display="flex" gap={3} justifyContent="center" width="100%" mt={1}>
                                 <motion.div style={{ width: '100%' }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}>
-                                    <MDBBtn
+                                    <Button
                                         onClick={onClose}
                                         style={{
                                             width: '100%',
-                                            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                             color: '#FFFFFF',
                                             fontWeight: 800,
-                                            height: '46px',
+                                            height: '48px',
                                             borderRadius: '16px',
-                                            border: '1.5px solid rgba(212, 175, 55, 0.4)',
-                                            fontSize: '0.9rem',
+                                            border: 'none',
+                                            fontSize: '0.94rem',
                                             fontFamily: "'Outfit', sans-serif",
                                             letterSpacing: '0.02em',
-                                            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
+                                            boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
                                             textTransform: 'none',
                                             cursor: 'pointer',
                                             touchAction: 'manipulation',
                                             WebkitTapHighlightColor: 'transparent'
                                         }}
+                                        _hover={{ opacity: 0.94 }}
                                     >
                                         Close Profile
-                                    </MDBBtn>
+                                    </Button>
                                 </motion.div>
                             </Box>
                         </ModalBody>
@@ -1619,7 +2627,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             <Badge
                                 sx={{
                                     bg: 'rgba(212, 175, 55, 0.12)',
-                                    color: '#D4AF37',
+                                    color: '#B45309',
                                     borderRadius: '99px',
                                     px: 3.5,
                                     py: 1.2,
@@ -1628,7 +2636,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.12em',
                                     border: '1px solid rgba(212, 175, 55, 0.3)',
-                                    boxShadow: '0 2px 8px rgba(212, 175, 55, 0.08)'
+                                    boxShadow: '0 2px 8px rgba(212, 175, 55, 0.08)',
+                                    fontFamily: "'Outfit', sans-serif"
                                 }}
                             >
                                 ✦ AURA BARCODE SCANNER
@@ -1640,18 +2649,17 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         width: '34px',
                                         height: '34px',
                                         borderRadius: '50%',
-                                        bg: 'rgba(0, 0, 0, 0.04)',
-                                        backdropFilter: 'blur(10px)',
-                                        color: '#71717A',
+                                        bg: '#F8FAFC',
+                                        color: '#64748B',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease',
-                                        border: '1px solid rgba(0, 0, 0, 0.05)',
+                                        border: '1px solid #E2E8F0',
                                         '&:hover': {
-                                            bg: 'rgba(0, 0, 0, 0.08)',
-                                            color: '#18181B'
+                                            bg: '#E2E8F0',
+                                            color: '#0F172A'
                                         }
                                     }}
                                 >
@@ -1660,55 +2668,63 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             </motion.div>
                         </Box>
 
-                        <ModalBody className="text-center pb-7 pt-2 px-6">
+                        <ModalBody className="text-center pb-7 pt-3 px-6">
                             {/* Mode Tab Switcher */}
                             <Box sx={{
                                 display: 'flex',
-                                background: '#F8FAFC',
+                                background: '#F1F5F9',
                                 borderRadius: '99px',
                                 p: 1,
                                 mb: 4,
-                                border: '1.5px solid #F1F5F9'
+                                border: '1px solid rgba(226, 232, 240, 0.8)'
                             }}>
                                 <button
                                     type="button"
                                     onClick={() => setQrTab('scan')}
                                     style={{
                                         flex: 1,
-                                        padding: '8px 12px',
+                                        padding: '9px 14px',
                                         borderRadius: '99px',
                                         border: 'none',
                                         background: qrTab === 'scan' ? '#FFFFFF' : 'transparent',
-                                        color: qrTab === 'scan' ? '#D4AF37' : '#64748B',
+                                        color: qrTab === 'scan' ? '#B45309' : '#64748B',
                                         fontWeight: 800,
                                         fontSize: '0.82rem',
                                         fontFamily: "'Outfit', sans-serif",
                                         cursor: 'pointer',
-                                        boxShadow: qrTab === 'scan' ? '0 4px 12px rgba(212, 175, 55, 0.15)' : 'none',
-                                        transition: 'all 0.2s ease'
+                                        boxShadow: qrTab === 'scan' ? '0 4px 14px rgba(212, 175, 55, 0.18)' : 'none',
+                                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px'
                                     }}
                                 >
-                                    📷 Scan Barcode
+                                    <span>📷</span> Scan Barcode
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setQrTab('myQr')}
                                     style={{
                                         flex: 1,
-                                        padding: '8px 12px',
+                                        padding: '9px 14px',
                                         borderRadius: '99px',
                                         border: 'none',
                                         background: qrTab === 'myQr' ? '#FFFFFF' : 'transparent',
-                                        color: qrTab === 'myQr' ? '#D4AF37' : '#64748B',
+                                        color: qrTab === 'myQr' ? '#B45309' : '#64748B',
                                         fontWeight: 800,
                                         fontSize: '0.82rem',
                                         fontFamily: "'Outfit', sans-serif",
                                         cursor: 'pointer',
-                                        boxShadow: qrTab === 'myQr' ? '0 4px 12px rgba(212, 175, 55, 0.15)' : 'none',
-                                        transition: 'all 0.2s ease'
+                                        boxShadow: qrTab === 'myQr' ? '0 4px 14px rgba(212, 175, 55, 0.18)' : 'none',
+                                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px'
                                     }}
                                 >
-                                    🪪 My QR Code
+                                    <span>🪪</span> My QR Code
                                 </button>
                             </Box>
 
@@ -1716,9 +2732,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     {/* Animated Camera Viewfinder Frame */}
                                     <Box sx={{
-                                        width: '230px',
-                                        height: '230px',
-                                        borderRadius: '24px',
+                                        width: '240px',
+                                        height: '240px',
+                                        borderRadius: '28px',
                                         border: isScanning ? '3px solid #10B981' : '3px solid #D4AF37',
                                         background: '#0F172A',
                                         position: 'relative',
@@ -1726,9 +2742,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.3)' : '0 12px 35px rgba(212, 175, 55, 0.25)',
+                                        boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.3)' : '0 14px 40px rgba(212, 175, 55, 0.25)',
                                         transition: 'all 0.3s ease',
-                                        mb: 3
+                                        mb: 4
                                     }}>
                                         {/* Video Stream Element */}
                                         <video
@@ -1784,64 +2800,93 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             animation: 'scanLine 1.8s linear infinite',
                                             zIndex: 3
                                         }} />
-                                        <style>{`
-                                            @keyframes scanLine {
-                                                0% { top: 0; }
-                                                50% { top: 100%; }
-                                                100% { top: 0; }
-                                            }
-                                        `}</style>
+
+                                        {/* Scanner Square Reticle Corners for Target Alignment */}
+                                        <Box sx={{
+                                            position: 'absolute',
+                                            width: '160px',
+                                            height: '160px',
+                                            borderRadius: '16px',
+                                            border: '2px dashed rgba(212, 175, 55, 0.6)',
+                                            boxShadow: 'inset 0 0 15px rgba(212, 175, 55, 0.15)',
+                                            pointerEvents: 'none',
+                                            zIndex: 2,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <span style={{
+                                                position: 'absolute',
+                                                bottom: '-22px',
+                                                fontSize: '0.66rem',
+                                                fontWeight: 800,
+                                                color: '#D4AF37',
+                                                background: 'rgba(15, 23, 42, 0.75)',
+                                                padding: '2px 8px',
+                                                borderRadius: '6px',
+                                                letterSpacing: '0.04em'
+                                            }}>
+                                                AUTO SCAN ACTIVE
+                                            </span>
+                                        </Box>
                                     </Box>
 
-                                    {/* Barcode Input & Scan Trigger */}
+                                    {/* Clean Separated Input Bar & Scan Button */}
                                     <Box sx={{ width: '100%', mb: 3 }}>
                                         <Box sx={{
                                             display: 'flex',
-                                            alignItems: 'center',
-                                            background: '#F8FAFC',
-                                            borderRadius: '99px',
-                                            border: '1.5px solid #F1F5F9',
-                                            p: '4px 6px 4px 14px',
-                                            mb: 2
+                                            flexDirection: 'column',
+                                            gap: 2.5
                                         }}>
-                                            <input
-                                                type="text"
-                                                placeholder="Enter or paste scanned @username..."
-                                                value={scannedUsername}
-                                                onChange={(e) => setScannedUsername(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') handleScanQrCode(scannedUsername);
-                                                }}
-                                                style={{
-                                                    flex: 1,
-                                                    border: 'none',
-                                                    outline: 'none',
-                                                    background: 'transparent',
-                                                    fontSize: '0.85rem',
-                                                    fontWeight: 700,
-                                                    color: '#0F172A',
-                                                    fontFamily: "'Inter', sans-serif"
-                                                }}
-                                            />
+                                            <div style={{ position: 'relative', width: '100%' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter or paste @username (e.g. @vicky123)"
+                                                    value={scannedUsername}
+                                                    onChange={(e) => setScannedUsername(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleScanQrCode(scannedUsername);
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '46px',
+                                                        borderRadius: '16px',
+                                                        border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                                                        outline: 'none',
+                                                        background: '#F8FAFC',
+                                                        fontSize: '0.88rem',
+                                                        fontWeight: 600,
+                                                        color: '#0F172A',
+                                                        fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                        padding: '0 16px',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                />
+                                            </div>
                                             <motion.button
                                                 type="button"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.97 }}
                                                 onClick={() => handleScanQrCode(scannedUsername)}
                                                 style={{
+                                                    width: '100%',
+                                                    height: '46px',
                                                     background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                                     color: '#FFFFFF',
                                                     border: 'none',
-                                                    borderRadius: '99px',
-                                                    padding: '8px 16px',
-                                                    fontSize: '0.78rem',
+                                                    borderRadius: '16px',
+                                                    fontSize: '0.88rem',
                                                     fontWeight: 800,
                                                     fontFamily: "'Outfit', sans-serif",
                                                     cursor: 'pointer',
-                                                    boxShadow: '0 3px 10px rgba(212, 175, 55, 0.35)'
+                                                    boxShadow: '0 4px 16px rgba(212, 175, 55, 0.35)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '8px'
                                                 }}
                                             >
-                                                {isScanning ? 'Scanning...' : 'Scan Barcode'}
+                                                🔍 {isScanning ? 'Searching User...' : 'Scan / Lookup Username'}
                                             </motion.button>
                                         </Box>
                                     </Box>
@@ -1861,21 +2906,31 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 gap: 2
                                             }}>
                                                 <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981', background: 'rgba(16, 185, 129, 0.12)', padding: '3px 10px', borderRadius: '99px', letterSpacing: '0.06em' }}>
-                                                    ✓ SCANNED BARCODE VERIFIED
+                                                    ✓ SCANNED USER VERIFIED
                                                 </span>
                                                 <Box display="flex" alignItems="center" justifyContent="space-between" w="100%">
                                                     <Box display="flex" alignItems="center" gap={3}>
-                                                        <Avatar size="md" name={scannedUser.name} src={scannedUser.pic} bg="#10B981" color="#FFFFFF" />
+                                                        <Avatar size="md" name={scannedUser.name} src={scannedUser.pic} />
                                                         <Box textAlign="left">
-                                                            <Text fontWeight="800" fontSize="0.9rem" color="#18181B" m={0}>
+                                                            <Text fontWeight="800" fontSize="0.9rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif">
                                                                 {scannedUser.name}
                                                             </Text>
-                                                            <Text fontWeight="700" fontSize="0.75rem" color="#10B981" m={0}>
+                                                            <Text fontWeight="700" fontSize="0.75rem" color="#B45309" m={0} fontFamily="'Outfit', sans-serif">
                                                                 @{scannedUser.username || (scannedUser.email ? scannedUser.email.split('@')[0] : 'user')}
                                                             </Text>
                                                         </Box>
                                                     </Box>
-                                                    <UserListItem user={scannedUser} handleFunction={() => sendChatRequest(scannedUser)} />
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => sendChatRequest(scannedUser)}
+                                                        bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
+                                                        color="#FFFFFF"
+                                                        fontWeight="800"
+                                                        borderRadius="12px"
+                                                        boxShadow="0 4px 12px rgba(212, 175, 55, 0.25)"
+                                                    >
+                                                        + Add User
+                                                    </Button>
                                                 </Box>
                                             </Box>
                                         </motion.div>
@@ -1884,7 +2939,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             ) : (
                                 <>
                                     {/* Profile Hero Avatar */}
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                                         <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
                                             <Box sx={{
                                                 padding: '4px',
@@ -1896,14 +2951,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     size="lg"
                                                     name={user && user.name}
                                                     src={user && user.pic}
-                                                    bg="#0F172A !important"
-                                                    color="#D4AF37 !important"
                                                     fontWeight="900"
                                                     style={{
                                                         width: '80px',
                                                         height: '80px',
-                                                        border: "3px solid #FFFFFF",
-                                                        backgroundColor: '#0F172A'
+                                                        border: "3px solid #FFFFFF"
                                                     }}
                                                 />
                                             </Box>
@@ -1914,13 +2966,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         <Badge
                                             sx={{
                                                 bg: 'rgba(212, 175, 55, 0.12)',
-                                                color: '#D4AF37',
+                                                color: '#B45309',
                                                 borderRadius: '99px',
                                                 px: 3.5,
                                                 py: 0.8,
                                                 fontSize: '0.8rem',
                                                 fontWeight: 800,
-                                                border: '1px solid rgba(212, 175, 55, 0.3)'
+                                                border: '1px solid rgba(212, 175, 55, 0.3)',
+                                                fontFamily: "'Outfit', sans-serif"
                                             }}
                                         >
                                             @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
@@ -1938,8 +2991,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             p: 4,
                                             borderRadius: '28px',
                                             background: '#FFFFFF',
-                                            border: '1.5px solid #F1F5F9',
-                                            boxShadow: '0 12px 35px rgba(15, 23, 42, 0.04)',
+                                            border: '1.5px solid rgba(212, 175, 55, 0.25)',
+                                            boxShadow: '0 12px 35px rgba(15, 23, 42, 0.05)',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
@@ -1948,9 +3001,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Box sx={{
                                                 p: 3,
                                                 borderRadius: '22px',
-                                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, #FFFFFF 100%)',
-                                                border: '1.5px solid rgba(212, 175, 55, 0.2)',
-                                                boxShadow: '0 6px 20px rgba(212, 175, 55, 0.08)',
+                                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.06) 0%, #FFFFFF 100%)',
+                                                border: '1.5px solid rgba(212, 175, 55, 0.25)',
+                                                boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)',
                                                 mb: 2
                                             }}>
                                                 <img
@@ -1959,7 +3012,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     style={{ width: '155px', height: '155px', borderRadius: '14px', display: 'block' }}
                                                 />
                                             </Box>
-                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Outfit', sans-serif" }}>
                                                 <QrCode2Icon style={{ fontSize: 16, color: '#D4AF37' }} /> Scan QR to quickly connect or view profile
                                             </p>
                                         </Box>
@@ -1979,11 +3032,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         style={{
                                             width: '100%',
                                             background: '#FFFFFF',
-                                            color: '#D4AF37',
+                                            color: '#B45309',
                                             fontWeight: 800,
-                                            height: '46px',
+                                            height: '48px',
                                             borderRadius: '16px',
-                                            border: '1.5px solid rgba(212, 175, 55, 0.3)',
+                                            border: '1.5px solid rgba(212, 175, 55, 0.35)',
                                             fontSize: '0.88rem',
                                             fontFamily: "'Outfit', sans-serif",
                                             display: 'flex',
@@ -1992,6 +3045,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             gap: '7px',
                                             boxShadow: '0 4px 12px rgba(212, 175, 55, 0.08)'
                                         }}
+                                        _hover={{ bg: 'rgba(212, 175, 55, 0.06)' }}
                                     >
                                         <ContentCopyIcon style={{ fontSize: 15, color: '#D4AF37' }} /> Copy Handle
                                     </Button>
@@ -2001,20 +3055,21 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         onClick={() => setIsQrScannerOpen(false)}
                                         style={{
                                             width: '100%',
-                                            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                                             color: '#FFFFFF',
                                             fontWeight: 800,
-                                            height: '46px',
+                                            height: '48px',
                                             borderRadius: '16px',
-                                            border: '1.5px solid rgba(212, 175, 55, 0.4)',
-                                            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
-                                            fontSize: '0.88rem',
+                                            border: 'none',
+                                            boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
+                                            fontSize: '0.92rem',
                                             fontFamily: "'Outfit', sans-serif",
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             gap: '6px'
                                         }}
+                                        _hover={{ opacity: 0.94 }}
                                     >
                                         Done
                                     </Button>

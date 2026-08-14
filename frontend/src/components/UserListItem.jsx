@@ -78,14 +78,14 @@ const UserListItem = ({ user, handleFunction }) => {
             <Box
                 sx={{
                     position: 'relative',
-                    width: '46px',
-                    height: '46px',
-                    minWidth: '46px',
+                    width: '44px',
+                    height: '44px',
+                    minWidth: '44px',
                     borderRadius: '50%',
-                    padding: '2px',
+                    padding: '1.5px',
                     background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
                     mr: 3,
-                    boxShadow: '0 4px 12px rgba(212, 175, 55, 0.25)',
+                    boxShadow: '0 4px 14px rgba(212, 175, 55, 0.28)',
                     flexShrink: 0
                 }}
             >
@@ -93,19 +93,28 @@ const UserListItem = ({ user, handleFunction }) => {
                     size="full"
                     name={user?.name || "Aura User"}
                     src={user?.pic && typeof user.pic === 'string' && user.pic.length > 5 && !user.pic.includes("icon-library.com") && !user.pic.includes("flaticon.com") ? user.pic : undefined}
-                    bg="#0F172A !important"
-                    color="#D4AF37 !important"
                     fontWeight="900"
                     style={{
                         width: '100%',
                         height: '100%',
                         borderRadius: '50%',
-                        border: '2px solid #FFFFFF',
-                        backgroundColor: '#0F172A'
+                        border: '2px solid #FFFFFF'
                     }}
                 />
                 {/* Presence badge */}
-                <div style={{ position: 'absolute', right: 6, bottom: 6, width: 12, height: 12, borderRadius: 12, background: isOnlineNow ? '#10B981' : '#94A3B8', border: '2px solid #FFFFFF', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }} />
+                <div
+                    className={isOnlineNow ? "aura-presence-online" : "aura-presence-offline"}
+                    style={{
+                        position: 'absolute',
+                        right: 0,
+                        bottom: 0,
+                        width: 11,
+                        height: 11,
+                        borderRadius: '50%',
+                        border: '2px solid #FFFFFF',
+                        zIndex: 2
+                    }}
+                />
             </Box>
             <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                 <Box style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>

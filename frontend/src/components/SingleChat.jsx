@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux'
 import { MDBBtn } from 'mdb-react-ui-kit';
 import { Box, Text } from "@chakra-ui/layout"
@@ -55,7 +55,7 @@ import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CallIcon from '@mui/icons-material/Call';
-import { Phone, Video, Info, MoreVertical, Eye, Clock, Smile, Feather } from 'lucide-react';
+import { Phone, Video, Info, MoreVertical, Eye, Clock, Smile, Feather, Palette } from 'lucide-react';
 
 const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     const history = useHistory();
@@ -161,6 +161,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         });
     };
 
+    const [pendingAttachment, setPendingAttachment] = useState(null);
+    const [isSendingAttachment, setIsSendingAttachment] = useState(false);
+
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -176,36 +179,70 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             if (file.type.startsWith('image/')) {
                 fileDataUrl = await compressImage(fileDataUrl);
             }
-            let rawContent = fileDataUrl;
+            
+            // Format nice file size string
+            const sizeInKb = (file.size / 1024).toFixed(1);
+            const sizeString = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` : `${sizeInKb} KB`;
+
+            // Open confirmation drawer for user confirmation
+            setPendingAttachment({
+                name: file.name,
+                size: sizeString,
+                type: file.type || 'application/octet-stream',
+                dataUrl: fileDataUrl,
+                isPdf: file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'),
+                isImage: file.type.startsWith('image/'),
+                isVideo: file.type.startsWith('video/')
+            });
+        };
+        reader.readAsDataURL(file);
+        e.target.value = "";
+    };
+
+    const confirmSendAttachment = async () => {
+        if (!pendingAttachment) return;
+        setIsSendingAttachment(true);
+        try {
+            let rawContent = pendingAttachment.dataUrl;
+            // Pack metadata into JSON structure for rich file preview with original name & size
+            const filePayload = JSON.stringify({
+                _isDoc: true,
+                name: pendingAttachment.name,
+                size: pendingAttachment.size,
+                type: pendingAttachment.type,
+                data: pendingAttachment.dataUrl,
+                isPdf: pendingAttachment.isPdf
+            });
+            rawContent = '[doc] ' + filePayload;
+
             if (viewOnceMode) {
-                rawContent = '[view-once] ' + fileDataUrl;
+                rawContent = '[view-once] ' + rawContent;
                 setViewOnceMode(false);
             }
             const contentToSend = await compressData(rawContent);
 
-            try {
-                const config = {
-                    headers: {
-                        "Content-type": "application/json",
-                        Authorization: "Bearer " + getJwtToken(),
-                    },
-                };
+            const config = {
+                headers: {
+                    "Content-type": "application/json",
+                    Authorization: "Bearer " + getJwtToken(),
+                },
+            };
 
-                const payload = {
-                    content: contentToSend,
-                    chatId: selectedChat.id || selectedChat._id,
-                };
+            const payload = {
+                content: contentToSend,
+                chatId: selectedChat.id || selectedChat._id,
+            };
 
-                const { data } = await axios.post('/api/message', payload, config);
-                socket.emit('new message', data);
-                setMessages(prev => [...prev, data]);
-                toast.success("Attachment sent!", { autoClose: 1500, hideProgressBar: true });
-            } catch (err) {
-                toast.error("Failed to send attachment");
-            }
-        };
-        reader.readAsDataURL(file);
-        e.target.value = "";
+            const { data } = await axios.post('/api/message', payload, config);
+            socket.emit('new message', data);
+            setMessages(prev => [...prev, data]);
+            setPendingAttachment(null);
+            setIsSendingAttachment(false);
+            toast.success("File sent successfully!", { autoClose: 1500, hideProgressBar: true });
+        } catch (err) {
+            setIsSendingAttachment(false);
+            toast.error("Failed to send attachment");
+        }
     };
 
     const toggleEmojiPicker = () => setShowPicker(!showPicker);
@@ -1406,7 +1443,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 <>
                     <Box
                         pb={2.5}
-                        pt={1}
+                        pt={{ base: "calc(var(--sat) + 6px)", md: "8px" }}
                         px={3}
                         w="100%"
                         d="flex"
@@ -1440,7 +1477,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             return (
                                 <>
                                     <div className='d-flex align-items-center' style={{ gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden', marginRight: '8px' }}>
-                                        <Box display={{ base: "flex", md: "none" }} mr={2}>
+                                        <Box display={{ base: "flex", md: "none" }} mr={1}>
                                             <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}>
                                                 <IconButton
                                                     size="sm"
@@ -1464,21 +1501,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 cursor="pointer" 
                                                 src={getPicture(user, selectedChat.users)} 
                                                 name={getSender(user, selectedChat.users)} 
-                                                bg="#0F172A !important"
-                                                color="#D4AF37 !important"
                                                 fontWeight="800"
-                                                style={{ border: "2px solid #D4AF37" }}
+                                                style={{ 
+                                                    border: "1.5px solid rgba(212, 175, 55, 0.45)",
+                                                    boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)"
+                                                }}
                                             />
                                             <span 
+                                                className={isTargetOnline ? "aura-presence-online" : "aura-presence-offline"}
                                                 style={{
                                                     position: "absolute",
-                                                    bottom: "2px",
-                                                    right: "2px",
-                                                    width: "10px",
-                                                    height: "10px",
-                                                    backgroundColor: isTargetOnline ? "#10B981" : "#9CA3AF",
+                                                    bottom: "1px",
+                                                    right: "1px",
+                                                    width: "11px",
+                                                    height: "11px",
                                                     borderRadius: "50%",
                                                     border: "2px solid #FFFFFF",
+                                                    zIndex: 2
                                                 }}
                                             />
                                         </div>
@@ -1570,34 +1609,70 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             );
                         })() : (
                             <>
-                                <div className='d-flex flex-column justify-content-start align-items-start'>
-                                    <div className='d-flex justify-content-start align-items-center gap-2'>
-                                        <Avatar size="sm" cursor="pointer" name={selectedChat.chatName} />
-                                        <div className="d-flex flex-column">
-                                            <p className="fw-bold fs-6 m-0 font" style={{ color: "#303633" }}>{selectedChat.chatName}</p>
-                                            <span style={{ fontSize: "0.72rem", color: "#4F8A82", display: "flex", alignItems: "center", gap: "4px" }}>
-                                                🔒 End-to-End Encrypted Group
-                                            </span>
-                                        </div>
+                                <div className='d-flex align-items-center' style={{ gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden', marginRight: '8px' }}>
+                                    <Box display={{ base: "flex", md: "none" }} mr={1}>
+                                        <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}>
+                                            <IconButton
+                                                size="sm"
+                                                onClick={() => dispatch(delSelectedChat())}
+                                                icon={<ArrowBackIcon style={{ fontSize: "18px", color: "#0F172A" }} />}
+                                                aria-label="Back to chat list"
+                                                style={{
+                                                    background: "#F8FAFC",
+                                                    borderRadius: "12px",
+                                                    border: "1px solid #E2E8F0",
+                                                    width: "38px",
+                                                    height: "38px",
+                                                    boxShadow: "0 2px 6px rgba(15, 23, 42, 0.04)"
+                                                }}
+                                            />
+                                        </motion.div>
+                                    </Box>
+                                    <div style={{ position: "relative", flexShrink: 0 }}>
+                                        <Avatar 
+                                            size="md" 
+                                            cursor="pointer" 
+                                            name={selectedChat.chatName} 
+                                            bg="#0F172A !important"
+                                            color="#D4AF37 !important"
+                                            fontWeight="800"
+                                            style={{ border: "2px solid #D4AF37" }}
+                                        />
                                     </div>
-                                    <div className='grpUser'>
-                                        {selectedChat.users.map(name => {
-                                            return (
-                                                <small> {name.name},</small>
-                                            )
-                                        })}
-
+                                    <div className="d-flex flex-column justify-content-center" style={{ minWidth: 0, overflow: 'hidden' }}>
+                                        <p className="fw-bold fs-6 m-0" style={{ color: "#0F172A", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.015em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                            {selectedChat.chatName}
+                                        </p>
+                                        <span style={{ fontSize: "0.72rem", color: "#64748B", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                            👥 {selectedChat.users ? `${selectedChat.users.length} members` : 'Group'} • 🔒 Encrypted
+                                        </span>
                                     </div>
                                 </div>
-                                {
-                                    <Tooltip label="View Group Details" hasArrow placement="bottom-end" bg='rgb(56, 90, 100)'>
-                                        <Button onClick={onOpen}
-                                        >
-                                            <ViewIcon />
-                                        </Button>
+                                <div className='d-flex align-items-center' style={{ gap: '10px', flexShrink: 0 }}>
+                                    <Tooltip label="View Group Details" hasArrow placement="bottom-end">
+                                        <motion.div whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}>
+                                            <IconButton
+                                                size="sm"
+                                                onClick={onOpen}
+                                                icon={<Info size={19} color="#D4AF37" />}
+                                                aria-label="View Group Details"
+                                                style={{
+                                                    background: "rgba(212, 175, 55, 0.1)",
+                                                    borderRadius: "12px",
+                                                    border: "1.5px solid rgba(212, 175, 55, 0.35)",
+                                                    width: "40px",
+                                                    height: "40px",
+                                                    minWidth: "40px",
+                                                    boxShadow: "0 2px 8px rgba(212, 175, 55, 0.12)"
+                                                }}
+                                            />
+                                        </motion.div>
                                     </Tooltip>
-                                }{
-                                    <Modal isOpen={isOpen} onClose={onClose}>
+                                </div>
+                            </>
+                        )}
+                    </Box>
+                    <Modal isOpen={isOpen} onClose={onClose}>
                                         <ModalOverlay />
                                         <ModalContent h="650px">
                                             <ModalHeader
@@ -1656,21 +1731,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             </ModalFooter>
                                         </ModalContent>
                                     </Modal>
-                                }
-                            </>
-                        )}
-                    </Box>
 
                     <Box
                         d="flex"
                         flexDir="column"
                         justifyContent="space-between"
                         p={{ base: 2, sm: 3.5 }}
-                        bg="linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)"
+                        bg="rgba(248, 250, 252, 0.7)"
                         style={{
-                            border: "1px solid #E2E8F0",
-                            boxShadow: "inset 0 2px 12px rgba(15, 23, 42, 0.03)",
-                            borderRadius: "20px"
+                            border: "1px solid rgba(226, 232, 240, 0.8)",
+                            boxShadow: "inset 0 2px 14px rgba(15, 23, 42, 0.02)",
+                            borderRadius: "24px",
+                            backdropFilter: "blur(16px)",
+                            WebkitBackdropFilter: "blur(16px)",
+                            position: "relative"
                         }}
                         w="100%"
                         flex="1"
@@ -1692,7 +1766,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             />
                         ) : (
                             <Box flex="1" overflowY="auto" minH="0" pr={1}>
-                                <ScrollableChat chatId={(selectedChat && (selectedChat._id || selectedChat.id)) || null} otherUser={selectedChat ? getSenderUser(user, selectedChat.users) : null} messages={messages} setMessages={setMessages} isTyping={istyping} />
+                                <ScrollableChat 
+                                    chatId={(selectedChat && (selectedChat._id || selectedChat.id)) || null} 
+                                    otherUser={selectedChat ? getSenderUser(user, selectedChat.users) : null} 
+                                    messages={messages} 
+                                    setMessages={setMessages} 
+                                    isTyping={istyping} 
+                                />
                             </Box>
                         )}
                         {/* Video & Voice Call Modal Overlay */}
@@ -1709,7 +1789,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     left: 0,
                                     width: "100vw",
                                     height: "100vh",
-                                    background: "radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0d0d1a 40%, #000000 100%)",
+                                    background: "radial-gradient(ellipse at 50% 0%, #FFFFFF 0%, #F8FAFC 45%, #EEF2F6 100%)",
                                     zIndex: 9999,
                                     display: "flex",
                                     flexDirection: "column",
@@ -1721,31 +1801,31 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             >
                                 {/* Ambient Glow Effects */}
                                 <motion.div
-                                    animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.05, 1] }}
+                                    animate={{ opacity: [0.4, 0.75, 0.4], scale: [1, 1.05, 1] }}
                                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                                     style={{
                                         position: "absolute",
                                         top: "-120px",
                                         left: "50%",
                                         transform: "translateX(-50%)",
-                                        width: "500px",
-                                        height: "500px",
+                                        width: "550px",
+                                        height: "550px",
                                         borderRadius: "50%",
-                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%)",
+                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.16) 0%, rgba(245, 158, 11, 0.06) 50%, transparent 70%)",
                                         pointerEvents: "none"
                                     }}
                                 />
                                 <motion.div
-                                    animate={{ opacity: [0.15, 0.35, 0.15] }}
+                                    animate={{ opacity: [0.2, 0.45, 0.2] }}
                                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                                     style={{
                                         position: "absolute",
                                         bottom: "-80px",
                                         right: "-60px",
-                                        width: "400px",
-                                        height: "400px",
+                                        width: "420px",
+                                        height: "420px",
                                         borderRadius: "50%",
-                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%)",
+                                        background: "radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%)",
                                         pointerEvents: "none"
                                     }}
                                 />
@@ -1756,11 +1836,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         display="inline-flex"
                                         alignItems="center"
                                         gap="8px"
-                                        bg="rgba(212, 175, 55, 0.08)"
+                                        bg="rgba(212, 175, 55, 0.12)"
                                         px={4}
                                         py={1.5}
                                         borderRadius="99px"
-                                        border="1px solid rgba(212, 175, 55, 0.25)"
+                                        border="1.5px solid rgba(212, 175, 55, 0.35)"
                                         mb={3}
                                         style={{ backdropFilter: "blur(16px)" }}
                                     >
@@ -1769,21 +1849,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             transition={{ duration: 1.5, repeat: Infinity }}
                                             style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#D4AF37", boxShadow: "0 0 12px rgba(212, 175, 55, 0.8)", display: "inline-block" }}
                                         />
-                                        <Text fontSize="0.72rem" fontWeight="800" color="#D4AF37" letterSpacing="0.1em" margin={0}>
+                                        <Text fontSize="0.72rem" fontWeight="800" color="#B45309" letterSpacing="0.1em" margin={0}>
                                             {callType === "video" ? "HD VIDEO • E2E ENCRYPTED" : "HD VOICE • E2E ENCRYPTED"}
                                         </Text>
                                     </Box>
-                                    <Text fontSize="1.6rem" fontWeight="800" color="#FFFFFF" fontFamily="'Outfit', sans-serif" letterSpacing="-0.02em" mt={1} margin={0}>
+                                    <Text fontSize="1.8rem" fontWeight="900" color="#0F172A" fontFamily="'Outfit', sans-serif" letterSpacing="-0.02em" mt={1} margin={0}>
                                         {getSender(user, selectedChat.users)}
                                     </Text>
                                     <Box display="flex" alignItems="center" gap="6px" mt={2}>
                                         {isCallAccepted ? (
-                                            <Text fontSize="0.88rem" fontWeight="700" color="#D4AF37" margin={0}>
+                                            <Text fontSize="0.92rem" fontWeight="800" color="#D4AF37" margin={0}>
                                                 {formatCallDuration(callDuration)}
                                             </Text>
                                         ) : (
                                             <Box display="flex" alignItems="center" gap="6px">
-                                                <Text fontSize="0.88rem" fontWeight="600" color="rgba(255,255,255,0.6)" margin={0}>Calling</Text>
+                                                <Text fontSize="0.88rem" fontWeight="700" color="#64748B" margin={0}>Calling</Text>
                                                 {[0, 1, 2].map((i) => (
                                                     <motion.span
                                                         key={i}
@@ -1808,11 +1888,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         display="flex"
                                         justifyContent="center"
                                         alignItems="center"
-                                        bg="#0a0a0f"
+                                        bg="#F1F5F9"
                                         borderRadius="28px"
                                         overflow="hidden"
-                                        border="1.5px solid rgba(212, 175, 55, 0.2)"
-                                        boxShadow="0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.06)"
+                                        border="1.5px solid rgba(226, 232, 240, 0.9)"
+                                        boxShadow="0 20px 60px rgba(15, 23, 42, 0.1), 0 0 30px rgba(212, 175, 55, 0.08)"
                                         zIndex={10}
                                         my={3}
                                     >
@@ -1855,18 +1935,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             display="flex"
                                             alignItems="center"
                                             gap="6px"
-                                            bg="rgba(0, 0, 0, 0.55)"
+                                            bg="rgba(15, 23, 42, 0.75)"
                                             backdropFilter="blur(16px)"
                                             px={3}
                                             py={1}
                                             borderRadius="99px"
-                                            border="1px solid rgba(255, 255, 255, 0.1)"
+                                            border="1px solid rgba(255, 255, 255, 0.2)"
                                             zIndex={25}
                                         >
                                             <motion.span
                                                 animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
                                                 transition={{ duration: 1.5, repeat: Infinity }}
-                                                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#FF3B5C", display: "inline-block" }}
+                                                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", display: "inline-block" }}
                                             />
                                             <Text fontSize="0.68rem" fontWeight="800" color="#FFFFFF" letterSpacing="0.06em" margin={0}>
                                                 {isCallAccepted ? "HD LIVE" : "CONNECTING"}
@@ -1887,10 +1967,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     height: "105px",
                                                     borderRadius: "16px",
                                                     overflow: "hidden",
-                                                    border: "2px solid rgba(212, 175, 55, 0.5)",
-                                                    boxShadow: "0 8px 28px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.1)",
+                                                    border: "2px solid rgba(212, 175, 55, 0.75)",
+                                                    boxShadow: "0 8px 28px rgba(15, 23, 42, 0.2), 0 0 15px rgba(212, 175, 55, 0.2)",
                                                     zIndex: 20,
-                                                    background: "#000"
+                                                    background: "#0F172A"
                                                 }}
                                             >
                                                 <video 
@@ -1905,15 +1985,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                         transform: 'scaleX(-1)' 
                                                     }} 
                                                 />
-                                                <Box position="absolute" bottom="4px" left="6px" bg="rgba(0, 0, 0, 0.6)" px={1.5} py={0.5} borderRadius="6px">
+                                                <Box position="absolute" bottom="4px" left="6px" bg="rgba(15, 23, 42, 0.75)" px={1.5} py={0.5} borderRadius="6px">
                                                     <Text fontSize="9px" fontWeight="700" color="#D4AF37" margin={0}>You</Text>
                                                 </Box>
                                             </motion.div>
                                         )}
 
                                         {!isCallAccepted && (
-                                            <Box position="absolute" bottom="16px" right="16px" bg="rgba(0, 0, 0, 0.5)" backdropFilter="blur(12px)" px={3} py={1} borderRadius="12px" border="1px solid rgba(255, 255, 255, 0.1)" zIndex={25}>
-                                                <Text fontSize="0.72rem" fontWeight="700" color="rgba(255,255,255,0.8)" margin={0}>You (Self View)</Text>
+                                            <Box position="absolute" bottom="16px" right="16px" bg="rgba(15, 23, 42, 0.65)" backdropFilter="blur(12px)" px={3} py={1} borderRadius="12px" border="1px solid rgba(255, 255, 255, 0.2)" zIndex={25}>
+                                                <Text fontSize="0.72rem" fontWeight="700" color="#FFFFFF" margin={0}>You (Self View)</Text>
                                             </Box>
                                         )}
                                     </Box>
@@ -1921,27 +2001,27 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                     <Box display="flex" flexDirection="column" alignItems="center" my="auto" position="relative" zIndex={10}>
                                         {/* Gold Pulse Ring Animations */}
                                         <motion.div
-                                            animate={{ scale: [1, 1.5, 1], opacity: [0.25, 0, 0.25] }}
+                                            animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0.05, 0.35] }}
                                             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                                             style={{
                                                 position: "absolute",
-                                                top: "calc(50% - 85px)",
-                                                width: "170px",
-                                                height: "170px",
+                                                top: "calc(50% - 95px)",
+                                                width: "190px",
+                                                height: "190px",
                                                 borderRadius: "50%",
-                                                background: "rgba(212, 175, 55, 0.15)"
+                                                background: "rgba(212, 175, 55, 0.18)"
                                             }}
                                         />
                                         <motion.div
-                                            animate={{ scale: [1, 1.8, 1], opacity: [0.12, 0, 0.12] }}
+                                            animate={{ scale: [1, 1.75, 1], opacity: [0.2, 0.02, 0.2] }}
                                             transition={{ duration: 2.4, repeat: Infinity, delay: 0.6, ease: "easeInOut" }}
                                             style={{
                                                 position: "absolute",
-                                                top: "calc(50% - 85px)",
-                                                width: "170px",
-                                                height: "170px",
+                                                top: "calc(50% - 95px)",
+                                                width: "190px",
+                                                height: "190px",
                                                 borderRadius: "50%",
-                                                background: "rgba(212, 175, 55, 0.08)"
+                                                background: "rgba(212, 175, 55, 0.1)"
                                             }}
                                         />
 
@@ -1949,15 +2029,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             size="2xl"
                                             name={getSender(user, selectedChat.users)}
                                             src={getPicture(user, selectedChat.users)}
-                                            bg="rgba(212, 175, 55, 0.15)"
-                                            color="#D4AF37"
                                             fontWeight="800"
                                             fontSize="2.8rem"
                                             style={{
-                                                width: "130px",
-                                                height: "130px",
-                                                border: "3px solid rgba(212, 175, 55, 0.4)",
-                                                boxShadow: "0 15px 45px rgba(212, 175, 55, 0.2), 0 0 30px rgba(212, 175, 55, 0.1)",
+                                                width: "140px",
+                                                height: "140px",
+                                                border: "4px solid #FFFFFF",
+                                                boxShadow: "0 20px 50px rgba(15, 23, 42, 0.15), 0 0 0 3px rgba(212, 175, 55, 0.45), 0 0 35px rgba(212, 175, 55, 0.2)",
                                                 position: "relative",
                                                 zIndex: 2
                                             }}
@@ -1979,13 +2057,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             ))}
                                         </Box>
 
-                                        <Text color="rgba(255, 255, 255, 0.5)" fontSize="0.82rem" fontWeight="600" mt={1} margin={0}>
+                                        <Text color="#64748B" fontSize="0.86rem" fontWeight="600" mt={1} margin={0}>
                                             {isCallAccepted ? "AURA Live HD Audio Stream Active" : "Waiting for contact to answer..."}
                                         </Text>
                                     </Box>
                                 )}
 
-                                {/* Real-time Live Subtitles / Captions Container - Transparent Frosted Glass with Typewriter Effect */}
+                                {/* Real-time Live Subtitles / Captions Container - Pristine Luxury Glass */}
                                 {liveCaptionsEnabled && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -1994,21 +2072,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         transition={{ type: "spring", stiffness: 350, damping: 25 }}
                                         whileHover={{
                                             scale: 1.01,
-                                            boxShadow: "0 25px 60px rgba(0, 0, 0, 0.35)",
+                                            boxShadow: "0 25px 60px rgba(15, 23, 42, 0.12)",
                                             borderColor: "rgba(212, 175, 55, 0.4)"
                                         }}
                                         style={{
                                             width: "95%",
                                             maxWidth: "480px",
                                             margin: "0 auto 12px auto",
-                                            background: "rgba(255, 255, 255, 0.06)",
+                                            background: "rgba(255, 255, 255, 0.88)",
                                             backdropFilter: "blur(24px)",
                                             WebkitBackdropFilter: "blur(24px)",
                                             padding: "14px 18px",
                                             borderRadius: "24px",
                                             textAlign: "left",
-                                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                                            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.25)",
+                                            border: "1.5px solid rgba(226, 232, 240, 0.9)",
+                                            boxShadow: "0 16px 40px rgba(15, 23, 42, 0.08)",
                                             zIndex: 40,
                                             cursor: "pointer",
                                             transition: "border-color 0.25s ease, box-shadow 0.25s ease"
@@ -2021,24 +2099,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     transition={{ repeat: Infinity, duration: 1.5 }}
                                                     style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#D4AF37", display: "inline-block" }}
                                                 />
-                                                <Text color="#D4AF37" fontSize="0.72rem" fontWeight="800" letterSpacing="0.08em" textTransform="uppercase" m={0}>
+                                                <Text color="#B45309" fontSize="0.72rem" fontWeight="800" letterSpacing="0.08em" textTransform="uppercase" m={0}>
                                                     LIVE AI CAPTIONS & TRANSLATION
                                                 </Text>
                                             </Box>
-                                            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "rgba(255,255,255,0.5)", background: "rgba(255, 255, 255, 0.06)", padding: "2px 8px", borderRadius: "99px" }}>
+                                            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#B45309", background: "rgba(212, 175, 55, 0.12)", padding: "2px 8px", borderRadius: "99px" }}>
                                                 HD REAL-TIME
                                             </span>
                                         </Box>
 
                                         {captionsLog.length === 0 && !currentTranscript && (
-                                            <Text color="rgba(255,255,255,0.45)" fontSize="0.84rem" fontWeight="600" italic m={0}>
+                                            <Text color="#94A3B8" fontSize="0.84rem" fontWeight="600" italic m={0}>
                                                 🎙️ Speaking to generate live captions...
                                                 <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.75 }} style={{ color: "#D4AF37", marginLeft: "4px", fontWeight: "bold" }}>|</motion.span>
                                             </Text>
                                         )}
                                         {captionsLog.map((c, index) => (
                                             <motion.div key={c.id || index} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} style={{ marginBottom: "8px" }}>
-                                                <Text color="rgba(255,255,255,0.9)" fontSize="0.92rem" fontWeight="700" m={0} style={{ lineHeight: 1.4 }}>
+                                                <Text color="#0F172A" fontSize="0.92rem" fontWeight="700" m={0} style={{ lineHeight: 1.4 }}>
                                                     <span style={{ color: "#D4AF37", fontWeight: 800 }}>{c.speaker}:</span> {c.original}
                                                 </Text>
                                                 {c.translated && (
@@ -2050,7 +2128,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         ))}
                                         {currentTranscript && (
                                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                                <Text color="rgba(255,255,255,0.7)" fontSize="0.9rem" fontWeight="700" italic m={0}>
+                                                <Text color="#334155" fontSize="0.9rem" fontWeight="700" italic m={0}>
                                                     {currentTranscript}
                                                     <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.6 }} style={{ color: "#D4AF37", marginLeft: "3px", fontWeight: 900 }}>|</motion.span>
                                                 </Text>
@@ -2068,13 +2146,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         transition={{ duration: 0.2 }}
                                         style={{
                                             marginBottom: "12px",
-                                            background: "rgba(255, 255, 255, 0.06)",
+                                            background: "rgba(255, 255, 255, 0.96)",
                                             backdropFilter: "blur(28px)",
                                             WebkitBackdropFilter: "blur(28px)",
                                             borderRadius: "24px",
                                             padding: "12px 16px",
-                                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                                            boxShadow: "0 20px 45px rgba(0, 0, 0, 0.35)",
+                                            border: "1.5px solid rgba(226, 232, 240, 0.9)",
+                                            boxShadow: "0 20px 50px rgba(15, 23, 42, 0.12)",
                                             display: "flex",
                                             alignItems: "center",
                                             gap: "12px",
@@ -2084,14 +2162,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         {/* Captions Toggle */}
                                         <Tooltip label={liveCaptionsEnabled ? "Disable Captions" : "Enable Captions"} hasArrow placement="top">
                                             <motion.div
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
+                                                whileHover={{ scale: 1.08 }}
+                                                whileTap={{ scale: 0.92 }}
                                                 onClick={() => setLiveCaptionsEnabled(!liveCaptionsEnabled)}
                                                 style={{
                                                     padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.06)",
-                                                    border: liveCaptionsEnabled ? "1.5px solid #10B981" : "1px solid rgba(255, 255, 255, 0.15)",
+                                                    background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.12)" : "#F8FAFC",
+                                                    border: liveCaptionsEnabled ? "1.5px solid #10B981" : "1px solid #E2E8F0",
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
@@ -2099,7 +2177,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             >
                                                 <span>💬</span>
-                                                <Text fontSize="0.78rem" fontWeight="800" color={liveCaptionsEnabled ? "#10B981" : "rgba(255,255,255,0.6)"} m={0}>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={liveCaptionsEnabled ? "#059669" : "#475569"} m={0}>
                                                     Captions {liveCaptionsEnabled ? "ON" : "OFF"}
                                                 </Text>
                                             </motion.div>
@@ -2108,14 +2186,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         {/* Voice Translation Toggle */}
                                         <Tooltip label={translateEnabled ? "Disable Translation" : "Enable Translation"} hasArrow placement="top">
                                             <motion.div
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
+                                                whileHover={{ scale: 1.08 }}
+                                                whileTap={{ scale: 0.92 }}
                                                 onClick={() => setTranslateEnabled(!translateEnabled)}
                                                 style={{
                                                     padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    background: translateEnabled ? "rgba(99, 102, 241, 0.15)" : "rgba(255, 255, 255, 0.06)",
-                                                    border: translateEnabled ? "1.5px solid #6366F1" : "1px solid rgba(255, 255, 255, 0.15)",
+                                                    background: translateEnabled ? "rgba(99, 102, 241, 0.12)" : "#F8FAFC",
+                                                    border: translateEnabled ? "1.5px solid #6366F1" : "1px solid #E2E8F0",
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
@@ -2123,7 +2201,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             >
                                                 <span>🌐</span>
-                                                <Text fontSize="0.78rem" fontWeight="800" color={translateEnabled ? "#818CF8" : "rgba(255,255,255,0.6)"} m={0}>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={translateEnabled ? "#4F46E5" : "#475569"} m={0}>
                                                     Translate {translateEnabled ? "ON" : "OFF"}
                                                 </Text>
                                             </motion.div>
@@ -2132,14 +2210,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         {/* Noise Filter Toggle */}
                                         <Tooltip label={noiseFilterEnabled ? "Disable Noise Suppression" : "Enable Noise Suppression"} hasArrow placement="top">
                                             <motion.div
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
+                                                whileHover={{ scale: 1.08 }}
+                                                whileTap={{ scale: 0.92 }}
                                                 onClick={() => setNoiseFilterEnabled(!noiseFilterEnabled)}
                                                 style={{
                                                     padding: "8px 14px",
                                                     borderRadius: "99px",
-                                                    background: noiseFilterEnabled ? "rgba(212, 175, 55, 0.15)" : "rgba(255, 255, 255, 0.06)",
-                                                    border: noiseFilterEnabled ? "1.5px solid #D4AF37" : "1px solid rgba(255, 255, 255, 0.15)",
+                                                    background: noiseFilterEnabled ? "rgba(212, 175, 55, 0.16)" : "#F8FAFC",
+                                                    border: noiseFilterEnabled ? "1.5px solid #D4AF37" : "1px solid #E2E8F0",
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
@@ -2147,7 +2225,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             >
                                                 <span>🎙️</span>
-                                                <Text fontSize="0.78rem" fontWeight="800" color={noiseFilterEnabled ? "#D4AF37" : "rgba(255,255,255,0.6)"} m={0}>
+                                                <Text fontSize="0.78rem" fontWeight="800" color={noiseFilterEnabled ? "#B45309" : "#475569"} m={0}>
                                                     Noise Filter {noiseFilterEnabled ? "ON" : "OFF"}
                                                 </Text>
                                             </motion.div>
@@ -2167,14 +2245,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         display="flex"
                                         alignItems="center"
                                         justifyContent="center"
-                                        bg="rgba(255, 255, 255, 0.78)"
+                                        bg="rgba(255, 255, 255, 0.92)"
                                         backdropFilter="blur(30px)"
                                         WebkitBackdropFilter="blur(30px)"
                                         px={{ base: 4, sm: 5, md: 6 }}
                                         py={2.5}
                                         borderRadius="99px"
-                                        border="1.5px solid rgba(255, 255, 255, 0.95)"
-                                        boxShadow="0 20px 50px rgba(255, 42, 84, 0.15), 0 10px 30px rgba(0, 0, 0, 0.08)"
+                                        border="1.5px solid rgba(226, 232, 240, 0.9)"
+                                        boxShadow="0 20px 50px rgba(15, 23, 42, 0.1), 0 4px 15px rgba(212, 175, 55, 0.08)"
                                         maxW="100%"
                                         mx="auto"
                                         zIndex={30}
@@ -2194,13 +2272,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        background: isMuted ? "rgba(255, 42, 84, 0.15)" : "#FFFFFF",
-                                                        border: isMuted ? "2px solid #FF2A54" : "1.5px solid #F1F1F4",
-                                                        boxShadow: isMuted ? "0 0 18px rgba(255, 42, 84, 0.35)" : "0 5px 15px rgba(0, 0, 0, 0.05)",
+                                                        background: isMuted ? "rgba(239, 68, 68, 0.12)" : "#F8FAFC",
+                                                        border: isMuted ? "2px solid #EF4444" : "1.5px solid #E2E8F0",
+                                                        boxShadow: isMuted ? "0 0 18px rgba(239, 68, 68, 0.25)" : "0 4px 12px rgba(0, 0, 0, 0.04)",
                                                         cursor: "pointer"
                                                     }}
                                                 >
-                                                    {isMuted ? <MicOffIcon style={{ color: "#FF2A54", fontSize: 20 }} /> : <MicIcon style={{ color: "#1E1B18", fontSize: 20 }} />}
+                                                    {isMuted ? <MicOffIcon style={{ color: "#EF4444", fontSize: 20 }} /> : <MicIcon style={{ color: "#0F172A", fontSize: 20 }} />}
                                                 </motion.div>
                                             </Tooltip>
 
@@ -2225,16 +2303,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        background: (callType === "video" && isCameraOff) ? "rgba(255, 42, 84, 0.15)" : "#FFFFFF",
-                                                        border: (callType === "video" && isCameraOff) ? "2px solid #FF2A54" : "1.5px solid #F1F1F4",
-                                                        boxShadow: "0 5px 15px rgba(0, 0, 0, 0.05)",
+                                                        background: (callType === "video" && isCameraOff) ? "rgba(239, 68, 68, 0.12)" : "#F8FAFC",
+                                                        border: (callType === "video" && isCameraOff) ? "2px solid #EF4444" : "1.5px solid #E2E8F0",
+                                                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
                                                         cursor: "pointer"
                                                     }}
                                                 >
                                                     {(callType === "video" && isCameraOff) ? (
-                                                        <VideocamOffIcon style={{ color: "#FF2A54", fontSize: 20 }} />
+                                                        <VideocamOffIcon style={{ color: "#EF4444", fontSize: 20 }} />
                                                     ) : (
-                                                        <VideocamIcon style={{ color: "#1E1B18", fontSize: 20 }} />
+                                                        <VideocamIcon style={{ color: "#0F172A", fontSize: 20 }} />
                                                     )}
                                                 </motion.div>
                                             </Tooltip>
@@ -2253,13 +2331,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        background: showMoreMenu ? "rgba(255, 42, 84, 0.15)" : "#FFFFFF",
-                                                        border: showMoreMenu ? "2px solid #FF2A54" : "1.5px solid #F1F1F4",
-                                                        boxShadow: "0 5px 15px rgba(0, 0, 0, 0.05)",
+                                                        background: showMoreMenu ? "rgba(212, 175, 55, 0.18)" : "#F8FAFC",
+                                                        border: showMoreMenu ? "2px solid #D4AF37" : "1.5px solid #E2E8F0",
+                                                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
                                                         cursor: "pointer"
                                                     }}
                                                 >
-                                                    <span style={{ fontSize: "1.3rem", fontWeight: 900, color: showMoreMenu ? "#FF2A54" : "#1E1B18", lineHeight: 1 }}>⋮</span>
+                                                    <span style={{ fontSize: "1.3rem", fontWeight: 900, color: showMoreMenu ? "#D4AF37" : "#0F172A", lineHeight: 1 }}>⋮</span>
                                                 </motion.div>
                                             </Tooltip>
 
@@ -2270,14 +2348,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     leftIcon={<CallEndIcon style={{ fontSize: 18 }} />}
                                                     size="md"
                                                     style={{
-                                                        background: "linear-gradient(135deg, #FF2A54 0%, #D62839 100%)",
+                                                        background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
                                                         color: "#FFFFFF",
                                                         borderRadius: "99px",
-                                                        padding: "0 20px",
+                                                        padding: "0 22px",
                                                         height: "48px",
                                                         fontWeight: 800,
-                                                        fontSize: "0.88rem",
-                                                        boxShadow: "0 8px 24px rgba(255, 42, 84, 0.5)",
+                                                        fontSize: "0.9rem",
+                                                        fontFamily: "'Outfit', sans-serif",
+                                                        boxShadow: "0 8px 24px rgba(239, 68, 68, 0.35)",
                                                         border: "none",
                                                         whiteSpace: "nowrap"
                                                     }}
@@ -2336,7 +2415,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                         <FormControl
                             id="first-name"
                             isRequired
-                            mt={3}
+                            mt={{ base: 1, md: 2 }}
+                            pb={{ base: "calc(var(--sab) + 4px)", md: "4px" }}
                             position="sticky"
                             bottom="0"
                             zIndex="100"
@@ -2351,177 +2431,185 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                             <div 
                                 style={{
                                     display: 'flex',
-                                    alignItems: 'flex-end',
-                                    gap: '6px',
-                                    background: 'rgba(255, 255, 255, 0.95)',
-                                    backdropFilter: 'blur(20px)',
-                                    border: '1px solid rgba(226, 232, 240, 0.9)',
-                                    borderRadius: '24px',
-                                    padding: '6px 10px',
-                                    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
-                                    WebkitTapHighlightColor: 'transparent'
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    background: 'rgba(255, 255, 255, 0.96)',
+                                    backdropFilter: 'blur(24px)',
+                                    WebkitBackdropFilter: 'blur(24px)',
+                                    border: '1.5px solid rgba(226, 232, 240, 0.85)',
+                                    borderRadius: '28px',
+                                    padding: '6px 8px 6px 12px',
+                                    boxShadow: '0 12px 36px -4px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(212, 175, 55, 0.06)',
+                                    WebkitTapHighlightColor: 'transparent',
+                                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
                                 }}
                             >
-                                {/* Primary File Attachment Button */}
-                                <Tooltip label="Attach File / Photo" hasArrow placement="top">
-                                    <motion.button
-                                        type="button"
-                                        whileHover={{ scale: 1.08, y: -1 }}
-                                        whileTap={{ scale: 0.92 }}
-                                        onClick={() => {
-                                            if (showPicker) setShowPicker(false);
-                                            if (fileInputRef.current) fileInputRef.current.click();
-                                        }}
-                                        style={{
-                                            background: 'rgba(0, 0, 0, 0.03)',
-                                            border: '1px solid rgba(0, 0, 0, 0.05)',
-                                            borderRadius: '14px',
-                                            width: '36px',
-                                            height: '36px',
-                                            minWidth: '36px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            marginBottom: '2px',
-                                            touchAction: 'manipulation',
-                                            WebkitTapHighlightColor: 'transparent',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <AttachFileIcon style={{ fontSize: '18px', color: '#71717A' }} />
-                                    </motion.button>
-                                </Tooltip>
-
-                                {/* Three Dots Options Menu (More Actions) */}
-                                <Menu placement="top-start" isLazy>
-                                    <MenuButton
-                                        as={motion.button}
-                                        type="button"
-                                        p={0}
-                                        m={0}
-                                        whileHover={{ scale: 1.08, y: -1 }}
-                                        whileTap={{ scale: 0.92 }}
-                                        onClick={() => {
-                                            if (showPicker) setShowPicker(false);
-                                        }}
-                                        style={{
-                                            background: (viewOnceMode || showPicker || scheduleModal) ? 'rgba(230, 57, 70, 0.08)' : 'rgba(0, 0, 0, 0.03)',
-                                            border: (viewOnceMode || showPicker || scheduleModal) ? '1px solid rgba(230, 57, 70, 0.2)' : '1px solid rgba(0, 0, 0, 0.05)',
-                                            borderRadius: '14px',
-                                            width: '36px',
-                                            height: '36px',
-                                            minWidth: '36px',
-                                            padding: '0',
-                                            margin: '0',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            marginBottom: '2px',
-                                            touchAction: 'manipulation',
-                                            WebkitTapHighlightColor: 'transparent',
-                                            transition: 'all 0.2s ease',
-                                            position: 'relative'
-                                        }}
-                                    >
-                                        <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%">
-                                            <MoreVertical size={18} color={(viewOnceMode || showPicker || scheduleModal) ? '#E63946' : '#71717A'} />
-                                        </Box>
-                                        {viewOnceMode && (
-                                            <span style={{
-                                                position: 'absolute', top: '3px', right: '3px', width: '6px', height: '6px',
-                                                borderRadius: '50%', background: '#E63946', boxShadow: '0 0 6px rgba(230, 57, 70, 0.6)'
-                                            }} />
-                                        )}
-                                    </MenuButton>
-                                    <MenuList
-                                        style={{
-                                            background: 'rgba(255, 255, 255, 0.95)',
-                                            backdropFilter: 'blur(24px)',
-                                            WebkitBackdropFilter: 'blur(24px)',
-                                            borderRadius: '20px',
-                                            border: '1px solid rgba(0, 0, 0, 0.06)',
-                                            boxShadow: '0 18px 45px rgba(0, 0, 0, 0.12)',
-                                            padding: '8px',
-                                            minWidth: '200px',
-                                            zIndex: 9999
-                                        }}
-                                    >
-                                        <MenuItem
-                                            onClick={toggleEmojiPicker}
+                                {/* Left Action Tools (File + Menu) */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    {/* Primary File Attachment Button */}
+                                    <Tooltip label="Attach File / Photo" hasArrow placement="top">
+                                        <motion.button
+                                            type="button"
+                                            whileHover={{ scale: 1.08, backgroundColor: 'rgba(212, 175, 55, 0.1)' }}
+                                            whileTap={{ scale: 0.92 }}
+                                            onClick={() => {
+                                                if (showPicker) setShowPicker(false);
+                                                if (fileInputRef.current) fileInputRef.current.click();
+                                            }}
                                             style={{
-                                                borderRadius: '12px',
-                                                fontSize: '0.86rem',
-                                                fontWeight: 700,
-                                                color: showPicker ? '#E63946' : '#18181B',
-                                                fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                background: 'rgba(241, 245, 249, 0.8)',
+                                                border: '1px solid rgba(226, 232, 240, 0.8)',
+                                                borderRadius: '50%',
+                                                width: '36px',
+                                                height: '36px',
+                                                minWidth: '36px',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '12px',
-                                                padding: '10px 14px'
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                touchAction: 'manipulation',
+                                                WebkitTapHighlightColor: 'transparent',
+                                                transition: 'all 0.2s ease',
+                                                color: '#64748B'
                                             }}
-                                            _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
                                         >
-                                            <Smile size={18} color={showPicker ? '#E63946' : '#71717A'} />
-                                            <span>{showPicker ? 'Close Emoji Picker' : 'Emoji Picker'}</span>
-                                        </MenuItem>
-                                        <MenuItem
+                                            <AttachFileIcon style={{ fontSize: '18px' }} />
+                                        </motion.button>
+                                    </Tooltip>
+
+                                    {/* Three Dots Options Menu (More Actions) */}
+                                    <Menu placement="top-start" isLazy>
+                                        <MenuButton
+                                            as={motion.button}
+                                            type="button"
+                                            className="aura-icon-btn"
+                                            p={0}
+                                            m={0}
+                                            whileHover={{ scale: 1.08, backgroundColor: (viewOnceMode || showPicker || scheduleModal) ? 'rgba(230, 57, 70, 0.12)' : 'rgba(212, 175, 55, 0.1)' }}
+                                            whileTap={{ scale: 0.92 }}
                                             onClick={() => {
-                                                setViewOnceMode(!viewOnceMode);
                                                 if (showPicker) setShowPicker(false);
                                             }}
+                                            _focus={{ boxShadow: "none", outline: "none" }}
+                                            _focusVisible={{ boxShadow: "none", outline: "none" }}
+                                            _active={{ boxShadow: "none", outline: "none" }}
                                             style={{
-                                                borderRadius: '12px',
-                                                fontSize: '0.86rem',
-                                                fontWeight: 700,
-                                                color: viewOnceMode ? '#E63946' : '#18181B',
-                                                fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                background: (viewOnceMode || showPicker || scheduleModal) ? 'rgba(230, 57, 70, 0.08)' : 'rgba(241, 245, 249, 0.8)',
+                                                border: (viewOnceMode || showPicker || scheduleModal) ? '1px solid rgba(230, 57, 70, 0.25)' : '1px solid rgba(226, 232, 240, 0.8)',
+                                                borderRadius: '50%',
+                                                width: '36px',
+                                                height: '36px',
+                                                minWidth: '36px',
+                                                padding: '0',
+                                                margin: '0',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '12px',
-                                                padding: '10px 14px'
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                touchAction: 'manipulation',
+                                                WebkitTapHighlightColor: 'transparent',
+                                                transition: 'all 0.2s ease',
+                                                position: 'relative'
                                             }}
-                                            _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
                                         >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <Eye size={18} color={viewOnceMode ? '#E63946' : '#71717A'} />
-                                                <span>Send View-Once</span>
-                                            </div>
-                                            {viewOnceMode && <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#E63946', background: 'rgba(230,57,70,0.1)', padding: '2px 6px', borderRadius: '6px' }}>ON</span>}
-                                        </MenuItem>
-                                        <MenuItem
-                                            onClick={() => {
-                                                setScheduleModal(true);
-                                                if (showPicker) setShowPicker(false);
-                                            }}
+                                            <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%">
+                                                <MoreVertical size={17} color={(viewOnceMode || showPicker || scheduleModal) ? '#E63946' : '#64748B'} />
+                                            </Box>
+                                            {viewOnceMode && (
+                                                <span style={{
+                                                    position: 'absolute', top: '2px', right: '2px', width: '7px', height: '7px',
+                                                    borderRadius: '50%', background: '#E63946', boxShadow: '0 0 6px rgba(230, 57, 70, 0.7)'
+                                                }} />
+                                            )}
+                                        </MenuButton>
+                                        <MenuList
                                             style={{
-                                                borderRadius: '12px',
-                                                fontSize: '0.86rem',
-                                                fontWeight: 700,
-                                                color: '#18181B',
-                                                fontFamily: "'Outfit', 'Inter', sans-serif",
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '12px',
-                                                padding: '10px 14px'
+                                                background: 'rgba(255, 255, 255, 0.97)',
+                                                backdropFilter: 'blur(24px)',
+                                                WebkitBackdropFilter: 'blur(24px)',
+                                                borderRadius: '20px',
+                                                border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                                                boxShadow: '0 20px 45px rgba(15, 23, 42, 0.12)',
+                                                padding: '8px',
+                                                minWidth: '210px',
+                                                zIndex: 9999
                                             }}
-                                            _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
                                         >
-                                            <Clock size={18} color="#71717A" />
-                                            <span>Schedule Message</span>
-                                        </MenuItem>
-                                    </MenuList>
-                                </Menu>
+                                            <MenuItem
+                                                onClick={toggleEmojiPicker}
+                                                style={{
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.86rem',
+                                                    fontWeight: 700,
+                                                    color: showPicker ? '#B45309' : '#1E293B',
+                                                    fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    padding: '10px 14px'
+                                                }}
+                                                _hover={{ bg: 'rgba(212, 175, 55, 0.08)' }}
+                                            >
+                                                <Smile size={18} color={showPicker ? '#D4AF37' : '#64748B'} />
+                                                <span>{showPicker ? 'Close Emoji Picker' : 'Emoji Picker'}</span>
+                                            </MenuItem>
+                                            <MenuItem
+                                                onClick={() => {
+                                                    setViewOnceMode(!viewOnceMode);
+                                                    if (showPicker) setShowPicker(false);
+                                                }}
+                                                style={{
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.86rem',
+                                                    fontWeight: 700,
+                                                    color: viewOnceMode ? '#E63946' : '#1E293B',
+                                                    fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    padding: '10px 14px'
+                                                }}
+                                                _hover={{ bg: 'rgba(230, 57, 70, 0.06)' }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                                                    <Eye size={18} color={viewOnceMode ? '#E63946' : '#64748B'} />
+                                                    <span>Send View-Once</span>
+                                                </div>
+                                                {viewOnceMode && <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#E63946', background: 'rgba(230,57,70,0.12)', padding: '2px 8px', borderRadius: '6px' }}>ACTIVE</span>}
+                                            </MenuItem>
+                                            <MenuItem
+                                                onClick={() => {
+                                                    setScheduleModal(true);
+                                                    if (showPicker) setShowPicker(false);
+                                                }}
+                                                style={{
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.86rem',
+                                                    fontWeight: 700,
+                                                    color: '#1E293B',
+                                                    fontFamily: "'Outfit', 'Inter', sans-serif",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    padding: '10px 14px'
+                                                }}
+                                                _hover={{ bg: 'rgba(212, 175, 55, 0.08)' }}
+                                            >
+                                                <Clock size={18} color="#64748B" />
+                                                <span>Schedule Message</span>
+                                            </MenuItem>
+                                        </MenuList>
+                                    </Menu>
+                                </div>
 
-                                {/* Auto-Expanding WhatsApp Style Textarea */}
+                                {/* Auto-Expanding WhatsApp Style Modern Textarea */}
                                 <textarea
                                     rows={1}
                                     placeholder={viewOnceMode ? "👁 View-once message..." : "Type a message..."}
                                     value={newMessage}
                                     onChange={(e) => {
                                         typingHandler(e);
-                                        e.target.style.height = '38px';
+                                        e.target.style.height = '36px';
                                         e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
                                     }}
                                     onFocus={(e) => {
@@ -2536,57 +2624,58 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             sendMessage(e);
-                                            e.target.style.height = '38px';
+                                            e.target.style.height = '36px';
                                         }
                                     }}
                                     style={{
                                         flex: 1,
                                         border: 'none',
                                         outline: 'none',
-                                        fontSize: '0.92rem',
+                                        fontSize: '0.94rem',
                                         fontFamily: "'Outfit', 'Inter', sans-serif",
                                         fontWeight: 500,
                                         color: '#0F172A',
                                         background: 'transparent',
                                         resize: 'none',
-                                        height: '38px',
+                                        height: '36px',
                                         maxHeight: '120px',
-                                        minHeight: '38px',
-                                        lineHeight: '1.4',
-                                        padding: '8px 10px',
+                                        minHeight: '36px',
+                                        lineHeight: '1.45',
+                                        padding: '7px 6px',
                                         overflowY: newMessage ? 'auto' : 'hidden'
                                     }}
                                 />
 
-                                {/* Glowing Send Button */}
+                                {/* Glowing Luxury Gold Send Button */}
                                 <motion.button
                                     type="button"
-                                    whileHover={{ scale: 1.08, y: -2 }}
-                                    whileTap={{ scale: 0.88 }}
+                                    whileHover={{ scale: 1.06, y: -1, boxShadow: '0 6px 20px rgba(212, 175, 55, 0.45)' }}
+                                    whileTap={{ scale: 0.92 }}
                                     onClick={(e) => {
                                         sendMessage({ key: "Enter" });
                                         const textarea = e.currentTarget.parentElement?.querySelector('textarea');
-                                        if (textarea) textarea.style.height = '38px';
+                                        if (textarea) textarea.style.height = '36px';
                                     }}
                                     aria-label="Send Message"
                                     style={{
                                         background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
-                                        borderRadius: "16px",
-                                        width: "40px",
-                                        height: "40px",
-                                        minWidth: "40px",
+                                        borderRadius: "20px",
+                                        width: "42px",
+                                        height: "42px",
+                                        minWidth: "42px",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
                                         border: "none",
                                         cursor: "pointer",
-                                        boxShadow: "0 4px 16px rgba(212, 175, 55, 0.4)",
+                                        boxShadow: "0 4px 16px rgba(212, 175, 55, 0.35)",
                                         color: "#FFFFFF",
                                         flexShrink: 0,
-                                        WebkitTapHighlightColor: 'transparent'
+                                        WebkitTapHighlightColor: 'transparent',
+                                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                                     }}
                                 >
-                                    <SendIcon style={{ fontSize: "19px" }} />
+                                    <SendIcon style={{ fontSize: "19px", transform: 'translateX(1px)' }} />
                                 </motion.button>
                             </div>
 
@@ -2661,22 +2750,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             </button>
                                         </div>
 
-                                        {/* Message Preview Card */}
-                                        <div style={{
-                                            background: 'rgba(230, 57, 70, 0.04)',
-                                            border: '1px solid rgba(230, 57, 70, 0.12)',
-                                            borderRadius: '16px',
-                                            padding: '12px 14px',
-                                            marginBottom: '18px'
-                                        }}>
-                                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#E63946', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
-                                                Message Payload
-                                            </span>
-                                            <p style={{ fontSize: '0.88rem', color: '#18181B', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                "{newMessage || 'No message typed...'}"
-                                            </p>
-                                        </div>
-
                                         {/* Quick Presets */}
                                         <label style={{ fontSize: 11, fontWeight: 800, color: '#A1A1AA', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
                                             Quick Time Presets
@@ -2696,7 +2769,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     setScheduledAt(`${year}-${month}-${day}T${hours}:${mins}`);
                                                 }}
                                                 style={{
-                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '99px',
+                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: 99,
                                                     background: 'rgba(0, 0, 0, 0.04)', border: '1px solid rgba(0, 0, 0, 0.06)',
                                                     color: '#52525B', cursor: 'pointer', transition: 'all 0.2s ease'
                                                 }}
@@ -2717,7 +2790,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     setScheduledAt(`${year}-${month}-${day}T${hours}:${mins}`);
                                                 }}
                                                 style={{
-                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '99px',
+                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: 99,
                                                     background: 'rgba(0, 0, 0, 0.04)', border: '1px solid rgba(0, 0, 0, 0.06)',
                                                     color: '#52525B', cursor: 'pointer', transition: 'all 0.2s ease'
                                                 }}
@@ -2737,7 +2810,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     setScheduledAt(`${year}-${month}-${day}T09:00`);
                                                 }}
                                                 style={{
-                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '99px',
+                                                    fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: 99,
                                                     background: 'rgba(0, 0, 0, 0.04)', border: '1px solid rgba(0, 0, 0, 0.06)',
                                                     color: '#52525B', cursor: 'pointer', transition: 'all 0.2s ease'
                                                 }}
@@ -2756,20 +2829,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             onChange={e => setScheduledAt(e.target.value)}
                                             style={{
                                                 width: '100%',
-                                                height: '48px',
-                                                padding: '10px 16px',
-                                                borderRadius: 16,
+                                                height: '46px',
+                                                padding: '10px 14px',
+                                                borderRadius: 14,
                                                 border: '1.5px solid #E4E4E7',
                                                 background: '#FAFAFA',
                                                 color: '#18181B',
-                                                fontSize: '0.92rem',
+                                                fontSize: '0.9rem',
                                                 fontWeight: 700,
-                                                marginBottom: 24,
+                                                marginBottom: 20,
                                                 fontFamily: "'Outfit', 'Inter', sans-serif",
                                                 outline: 'none',
-                                                cursor: 'pointer',
-                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                                                transition: 'all 0.2s ease'
+                                                cursor: 'pointer'
                                             }}
                                         />
 
@@ -2777,7 +2848,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         <div style={{ display: 'flex', gap: 10 }}>
                                             <motion.button
                                                 type="button"
-                                                whileHover={{ scale: 1.02, y: -1 }}
+                                                whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={sendScheduledMessage}
                                                 style={{
@@ -2786,13 +2857,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     color: '#FFFFFF',
                                                     border: 'none',
                                                     borderRadius: 99,
-                                                    padding: '13px 18px',
+                                                    padding: '12px 16px',
                                                     fontWeight: 800,
                                                     fontSize: 14,
                                                     cursor: 'pointer',
-                                                    boxShadow: '0 8px 22px rgba(230, 57, 70, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                                                    touchAction: 'manipulation',
-                                                    WebkitTapHighlightColor: 'transparent'
+                                                    boxShadow: '0 8px 22px rgba(230, 57, 70, 0.32)'
                                                 }}
                                             >
                                                 Schedule Send
@@ -2803,20 +2872,253 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={() => setScheduleModal(false)}
                                                 style={{
-                                                    padding: '13px 20px',
+                                                    padding: '12px 18px',
                                                     background: '#F4F4F5',
                                                     border: '1px solid #E4E4E7',
                                                     borderRadius: 99,
                                                     fontSize: 14,
                                                     cursor: 'pointer',
                                                     fontWeight: 700,
-                                                    color: '#71717A',
-                                                    touchAction: 'manipulation',
-                                                    WebkitTapHighlightColor: 'transparent'
+                                                    color: '#71717A'
                                                 }}
                                             >
                                                 Cancel
                                             </motion.button>
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            )}
+
+                            {/* Luxury PDF & Attachment Confirmation Modal / Drawer */}
+                            {pendingAttachment && (
+                                <div style={{
+                                    position: 'fixed',
+                                    inset: 0,
+                                    background: 'rgba(15, 23, 42, 0.5)',
+                                    backdropFilter: 'blur(16px)',
+                                    WebkitBackdropFilter: 'blur(16px)',
+                                    zIndex: 10002,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '16px'
+                                }}>
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        transition={{ type: "spring", stiffness: 350, damping: 26 }}
+                                        style={{
+                                            background: '#FFFFFF',
+                                            borderRadius: '28px',
+                                            maxWidth: '420px',
+                                            width: '100%',
+                                            boxShadow: '0 25px 60px -12px rgba(15, 23, 42, 0.25)',
+                                            border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        {/* Top Header Badge */}
+                                        <div style={{
+                                            padding: '18px 22px 14px',
+                                            borderBottom: '1px solid #F1F5F9',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{
+                                                    fontSize: '0.72rem',
+                                                    fontWeight: 900,
+                                                    letterSpacing: '0.08em',
+                                                    textTransform: 'uppercase',
+                                                    color: pendingAttachment.isPdf ? '#EF4444' : '#B45309',
+                                                    background: pendingAttachment.isPdf ? 'rgba(239, 68, 68, 0.1)' : 'rgba(212, 175, 55, 0.12)',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '99px'
+                                                }}>
+                                                    {pendingAttachment.isPdf ? '📕 PDF DOCUMENT' : '📎 ATTACHMENT PREVIEW'}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPendingAttachment(null)}
+                                                style={{
+                                                    background: '#F1F5F9',
+                                                    border: 'none',
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    borderRadius: '50%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    color: '#64748B'
+                                                }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        {/* Body Content */}
+                                        <div style={{ padding: '22px' }}>
+                                            {/* Preview Card */}
+                                            <div style={{
+                                                background: '#F8FAFC',
+                                                border: '1.5px dashed #CBD5E1',
+                                                borderRadius: '20px',
+                                                padding: '20px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                textAlign: 'center',
+                                                marginBottom: '18px'
+                                            }}>
+                                                {pendingAttachment.isPdf ? (
+                                                    <div style={{
+                                                        width: '64px',
+                                                        height: '64px',
+                                                        borderRadius: '18px',
+                                                        background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+                                                        color: '#EF4444',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '32px',
+                                                        boxShadow: '0 8px 20px rgba(239, 68, 68, 0.18)',
+                                                        marginBottom: '14px'
+                                                    }}>
+                                                        📕
+                                                    </div>
+                                                ) : pendingAttachment.isImage ? (
+                                                    <img
+                                                        src={pendingAttachment.dataUrl}
+                                                        alt="preview"
+                                                        style={{
+                                                            maxHeight: '140px',
+                                                            borderRadius: '14px',
+                                                            objectFit: 'cover',
+                                                            marginBottom: '12px',
+                                                            boxShadow: '0 4px 14px rgba(0,0,0,0.08)'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div style={{
+                                                        width: '64px',
+                                                        height: '64px',
+                                                        borderRadius: '18px',
+                                                        background: '#F1F5F9',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '30px',
+                                                        marginBottom: '14px'
+                                                    }}>
+                                                        📄
+                                                    </div>
+                                                )}
+
+                                                <h4 style={{
+                                                    margin: '0 0 4px',
+                                                    fontSize: '0.98rem',
+                                                    fontWeight: 800,
+                                                    color: '#0F172A',
+                                                    fontFamily: "'Outfit', sans-serif",
+                                                    maxWidth: '280px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {pendingAttachment.name}
+                                                </h4>
+                                                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
+                                                    File size: <strong style={{ color: '#0F172A' }}>{pendingAttachment.size}</strong>
+                                                </span>
+                                            </div>
+
+                                            {/* Security Notice / View Once Toggle */}
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                background: '#F1F5F9',
+                                                padding: '10px 16px',
+                                                borderRadius: '14px',
+                                                marginBottom: '20px'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Eye size={16} color={viewOnceMode ? '#E63946' : '#64748B'} />
+                                                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                                                        View Once Protection
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setViewOnceMode(!viewOnceMode)}
+                                                    style={{
+                                                        border: 'none',
+                                                        background: viewOnceMode ? '#E63946' : '#CBD5E1',
+                                                        color: '#FFFFFF',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 800,
+                                                        padding: '4px 12px',
+                                                        borderRadius: '99px',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                >
+                                                    {viewOnceMode ? 'ENABLED' : 'OFF'}
+                                                </button>
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <motion.button
+                                                    type="button"
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.96 }}
+                                                    onClick={() => setPendingAttachment(null)}
+                                                    style={{
+                                                        flex: 1,
+                                                        height: '46px',
+                                                        background: '#F1F5F9',
+                                                        color: '#475569',
+                                                        border: '1px solid #E2E8F0',
+                                                        borderRadius: '16px',
+                                                        fontWeight: 700,
+                                                        fontSize: '0.9rem',
+                                                        fontFamily: "'Outfit', sans-serif",
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </motion.button>
+                                                <motion.button
+                                                    type="button"
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.96 }}
+                                                    onClick={confirmSendAttachment}
+                                                    disabled={isSendingAttachment}
+                                                    style={{
+                                                        flex: 1.5,
+                                                        height: '46px',
+                                                        background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                        color: '#FFFFFF',
+                                                        border: 'none',
+                                                        borderRadius: '16px',
+                                                        fontWeight: 800,
+                                                        fontSize: '0.9rem',
+                                                        fontFamily: "'Outfit', sans-serif",
+                                                        cursor: isSendingAttachment ? 'not-allowed' : 'pointer',
+                                                        boxShadow: '0 6px 18px rgba(212, 175, 55, 0.35)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '8px'
+                                                    }}
+                                                >
+                                                    {isSendingAttachment ? 'Sending...' : 'Confirm & Send 🚀'}
+                                                </motion.button>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 </div>
@@ -2933,8 +3235,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     </motion.div>
                 </Box>
             )}
-
-            {/* Incoming Call Popup Modal logic removed — ChatPage handles this globally now */}
         </>
     )
 }

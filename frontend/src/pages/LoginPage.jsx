@@ -467,7 +467,7 @@ export default function LoginPage() {
         <Grid
           item
           xs={false}
-          sm={4}
+          sm={false}
           md={7}
           className="card-3d-wrapper"
           sx={{

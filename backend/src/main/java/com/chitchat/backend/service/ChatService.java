@@ -23,10 +23,16 @@ public class ChatService {
     private com.chitchat.backend.repository.ChatRequestRepository chatRequestRepository;
 
     public com.chitchat.backend.model.ChatRequest sendChatRequest(String targetUserId, User sender) {
-        if (targetUserId == null || targetUserId.isEmpty()) {
+        if (targetUserId == null || targetUserId.trim().isEmpty()) {
             throw new RuntimeException("Target user ID is required");
         }
-        User receiver = userRepository.findById(targetUserId)
+        String cleanTarget = targetUserId.trim();
+        if (sender != null && (cleanTarget.equals(sender.getId()) || cleanTarget.equalsIgnoreCase(sender.getEmail()) || cleanTarget.equalsIgnoreCase(sender.getUsername()))) {
+            throw new RuntimeException("You cannot send a friend request to yourself");
+        }
+        User receiver = userRepository.findById(cleanTarget)
+                .or(() -> userRepository.findByEmail(cleanTarget.toLowerCase()))
+                .or(() -> userRepository.findByUsername(cleanTarget.toLowerCase()))
                 .orElseThrow(() -> new RuntimeException("Target user not found"));
 
         Optional<com.chitchat.backend.model.ChatRequest> existing = chatRequestRepository
@@ -47,6 +53,11 @@ public class ChatService {
         return chatRequestRepository.findByReceiverAndStatus(receiver, "PENDING");
     }
 
+    public List<com.chitchat.backend.model.ChatRequest> getSentPendingRequests(User sender) {
+        return chatRequestRepository.findBySenderAndStatus(sender, "PENDING");
+    }
+
+    @org.springframework.transaction.annotation.Transactional
     public Chat respondToRequest(String requestId, String action, User currentUser) {
         com.chitchat.backend.model.ChatRequest request = chatRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
@@ -58,7 +69,15 @@ public class ChatService {
         if ("ACCEPT".equalsIgnoreCase(action)) {
             request.setStatus("ACCEPTED");
             chatRequestRepository.save(request);
-            return accessChat(request.getSender().getId(), currentUser);
+
+            User sender = request.getSender();
+            User receiver = request.getReceiver();
+            currentUser.addFriend(sender);
+            sender.addFriend(currentUser);
+            userRepository.save(currentUser);
+            userRepository.save(sender);
+
+            return accessChat(sender.getId(), currentUser);
         } else {
             request.setStatus("REJECTED");
             chatRequestRepository.save(request);
