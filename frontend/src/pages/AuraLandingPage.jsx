@@ -1183,13 +1183,15 @@ export default function AuraLandingPage() {
         style={{
           position: 'fixed',
           top: 0,
+          left: 0,
+          right: 0,
           width: '100%',
           zIndex: 1100,
-          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.75)',
+          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderBottom: isScrolled ? '1px solid rgba(23, 24, 39, 0.08)' : '1px solid rgba(23, 24, 39, 0.03)',
-          boxShadow: isScrolled ? '0 10px 30px rgba(23, 24, 39, 0.03)' : 'none',
+          borderBottom: isScrolled ? '1px solid rgba(23, 24, 39, 0.08)' : '1px solid rgba(23, 24, 39, 0.04)',
+          boxShadow: isScrolled ? '0 10px 30px rgba(23, 24, 39, 0.04)' : 'none',
           transition: 'all 0.3s ease'
         }}
       >
@@ -1199,58 +1201,64 @@ export default function AuraLandingPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 28px'
+          padding: '10px 16px',
+          gap: '8px'
         }}>
           {/* Brand Logo */}
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: '14px',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
               background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(91, 95, 239, 0.32)',
+              boxShadow: '0 6px 18px rgba(91, 95, 239, 0.32)',
               flexShrink: 0
             }}>
-              <Feather size={20} color="#FFFFFF" strokeWidth={2} />
+              <Feather size={18} color="#FFFFFF" strokeWidth={2} />
             </div>
             <div>
               <span style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 fontWeight: 900,
-                fontSize: '1.35rem',
+                fontSize: '1.18rem',
                 letterSpacing: '-0.03em',
                 color: '#171827',
                 lineHeight: 1,
                 display: 'block',
+                whiteSpace: 'nowrap'
               }}>
                 AURA
               </span>
-              <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.55rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'block', whiteSpace: 'nowrap' }}>
                 LIVING SPACES
               </span>
             </div>
           </Link>
 
-          {/* Action CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link to="/login" style={{ textDecoration: 'none' }}>
+          {/* Action CTAs (Clean, No Vertical Word Wrapping) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <Link to="/login" style={{ textDecoration: 'none', flexShrink: 0 }}>
               <button style={{
                 background: 'transparent',
                 border: 'none',
                 color: '#171827',
                 fontWeight: 700,
-                fontSize: '0.9rem',
+                fontSize: '0.84rem',
                 cursor: 'pointer',
-                padding: '10px 18px',
-                fontFamily: "'Plus Jakarta Sans', sans-serif"
+                padding: '7px 12px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0
               }}>
                 Sign In
               </button>
             </Link>
-            <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
+            <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }} style={{ flexShrink: 0 }}>
               <Link to="/signup" style={{ textDecoration: 'none' }}>
                 <button style={{
                   background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
@@ -1258,16 +1266,19 @@ export default function AuraLandingPage() {
                   border: 'none',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                   fontWeight: 800,
-                  fontSize: '0.9rem',
-                  padding: '10px 22px',
+                  fontSize: '0.82rem',
+                  padding: '7px 14px',
                   borderRadius: '99px',
-                  boxShadow: '0 8px 24px rgba(91, 95, 239, 0.28)',
+                  boxShadow: '0 6px 18px rgba(91, 95, 239, 0.28)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '5px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}>
-                  Launch Aura <ArrowRight size={15} color="#FFFFFF" />
+                  <span>Launch Aura</span>
+                  <ArrowRight size={13} color="#FFFFFF" />
                 </button>
               </Link>
             </motion.div>
