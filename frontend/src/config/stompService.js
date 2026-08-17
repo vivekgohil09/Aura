@@ -322,4 +322,3 @@ class StompService {
 
 export const stompService =
     new StompService();
-```
