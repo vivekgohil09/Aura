@@ -1365,6 +1365,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
           const editing = editingId === msgId;
           const bmked = isBookmarked(m);
           const tag = bookmarks.find(b => b.id === msgId)?.tag;
+          const isCallMsg = Boolean(m.content && m.content.startsWith("[call]"));
 
           return (
             <React.Fragment key={msgId + '-wrap'}>
@@ -1410,7 +1411,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                     e.stopPropagation();
                     handleToggleReaction(m, '❤️');
                   }}
-                  onContextMenu={(e) => openCtx(e, m)}
+                  onContextMenu={(e) => { if (!isCallMsg) openCtx(e, m); }}
                   style={{
                     display: 'flex',
                     justifyContent: isMe ? 'flex-end' : 'flex-start',

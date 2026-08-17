@@ -2688,7 +2688,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             </Box>
 
                                             {captionsLog.length === 0 && !currentTranscript && (
-                                                <Text color="#94A3B8" fontSize="0.84rem" fontWeight="600" italic m={0}>
+                                                <Text color="#94A3B8" fontSize="0.84rem" fontWeight="600" fontStyle="italic" m={0}>
                                                     🎙️ Speaking to generate live subtitles...
                                                 </Text>
                                             )}
