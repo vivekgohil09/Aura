@@ -2344,52 +2344,53 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                         {isVideoCallActive && (
                             <Portal>
                                 <motion.div
-                                    initial={{ opacity: 0, scale: 0.96 }}
+                                    initial={{ opacity: 0, scale: 0.97 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.96 }}
-                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                    exit={{ opacity: 0, scale: 0.97 }}
+                                    transition={{ duration: 0.35, ease: "easeOut" }}
                                     style={{
                                         position: "fixed",
                                         inset: 0,
                                         width: "100vw",
                                         height: "100vh",
-                                        background: "radial-gradient(ellipse at 50% 15%, #14162B 0%, #0A0B14 60%, #05060A 100%)",
+                                        background: "radial-gradient(ellipse at 50% 15%, #181A33 0%, #0E1022 45%, #080914 100%)",
                                         zIndex: 9999,
                                         display: "flex",
                                         flexDirection: "column",
                                         alignItems: "center",
                                         justifyContent: "space-between",
-                                        padding: "28px 20px 24px 20px",
-                                        overflow: "hidden"
+                                        padding: "32px 24px 28px 24px",
+                                        overflow: "hidden",
+                                        fontFamily: "'Plus Jakarta Sans', sans-serif"
                                     }}
                                 >
-                                    {/* Ambient Shimmering Aurora Orbs */}
+                                    {/* Ambient Shimmering Aura Lights */}
                                     <motion.div
-                                        animate={{ opacity: [0.35, 0.65, 0.35], scale: [1, 1.1, 1] }}
-                                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                                        animate={{ opacity: [0.4, 0.75, 0.4], scale: [1, 1.15, 1], rotate: [0, 90, 0] }}
+                                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                                         style={{
                                             position: "absolute",
-                                            top: "-120px",
+                                            top: "-150px",
                                             left: "50%",
                                             transform: "translateX(-50%)",
-                                            width: "650px",
-                                            height: "650px",
+                                            width: "700px",
+                                            height: "700px",
                                             borderRadius: "50%",
-                                            background: "radial-gradient(circle, rgba(91, 95, 239, 0.22) 0%, rgba(128, 103, 232, 0.08) 50%, transparent 70%)",
+                                            background: "radial-gradient(circle, rgba(91, 95, 239, 0.28) 0%, rgba(139, 92, 246, 0.12) 45%, transparent 70%)",
                                             pointerEvents: "none"
                                         }}
                                     />
                                     <motion.div
-                                        animate={{ opacity: [0.2, 0.45, 0.2], scale: [1, 1.15, 1] }}
-                                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                                        animate={{ opacity: [0.25, 0.55, 0.25], scale: [1, 1.2, 1] }}
+                                        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                                         style={{
                                             position: "absolute",
-                                            bottom: "-100px",
-                                            right: "-80px",
-                                            width: "500px",
-                                            height: "500px",
+                                            bottom: "-120px",
+                                            right: "-100px",
+                                            width: "550px",
+                                            height: "550px",
                                             borderRadius: "50%",
-                                            background: "radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)",
+                                            background: "radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%)",
                                             pointerEvents: "none"
                                         }}
                                     />
@@ -2401,49 +2402,54 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             display="inline-flex"
                                             alignItems="center"
                                             gap="8px"
-                                            bg="rgba(255, 255, 255, 0.06)"
+                                            bg="rgba(255, 255, 255, 0.08)"
                                             px={4}
                                             py={1.5}
                                             borderRadius="99px"
-                                            border="1px solid rgba(255, 255, 255, 0.12)"
+                                            border="1px solid rgba(255, 255, 255, 0.16)"
                                             mb={2.5}
-                                            style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+                                            style={{
+                                                backdropFilter: "blur(24px)",
+                                                WebkitBackdropFilter: "blur(24px)",
+                                                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)"
+                                            }}
                                         >
                                             <motion.span
                                                 animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
                                                 transition={{ duration: 1.5, repeat: Infinity }}
                                                 style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10B981", boxShadow: "0 0 10px #10B981", display: "inline-block" }}
                                             />
-                                            <Text fontSize="0.72rem" fontWeight="800" color="#10B981" letterSpacing="0.08em" margin={0}>
-                                                {callType === "video" ? "256-BIT E2EE • 4K 60FPS • 0.42ms" : "256-BIT E2EE • SPATIAL AUDIO • 0.42ms"}
+                                            <Text fontSize="0.74rem" fontWeight="800" color="#10B981" letterSpacing="0.08em" margin={0}>
+                                                {callType === "video" ? "🛡️ 256-BIT E2EE • 4K 60FPS • 0.42ms" : "🛡️ 256-BIT E2EE • SPATIAL AUDIO • 0.42ms"}
                                             </Text>
                                         </Box>
 
                                         {/* Participant Name */}
-                                        <Text fontSize="1.8rem" fontWeight="900" color="#FFFFFF" fontFamily="'Plus Jakarta Sans', sans-serif" letterSpacing="-0.02em" margin={0}>
-                                            {getSender(user, selectedChat.users)}
+                                        <Text fontSize="1.9rem" fontWeight="900" color="#FFFFFF" fontFamily="'Plus Jakarta Sans', sans-serif" letterSpacing="-0.025em" margin={0}>
+                                            {selectedChat.isGroupChat ? selectedChat.chatName : getSender(user, selectedChat.users)}
                                         </Text>
 
                                         {/* Duration / Connecting State */}
                                         <Box display="flex" alignItems="center" gap="6px" mt={1.5}>
                                             {isCallAccepted ? (
                                                 <div style={{
-                                                    background: "rgba(91, 95, 239, 0.15)",
-                                                    border: "1px solid rgba(91, 95, 239, 0.35)",
-                                                    padding: "3px 12px",
+                                                    background: "rgba(91, 95, 239, 0.18)",
+                                                    border: "1px solid rgba(91, 95, 239, 0.4)",
+                                                    padding: "4px 14px",
                                                     borderRadius: "99px",
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    gap: "6px"
+                                                    gap: "7px",
+                                                    boxShadow: "0 2px 10px rgba(91, 95, 239, 0.25)"
                                                 }}>
-                                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />
-                                                    <Text fontSize="0.88rem" fontWeight="800" color="#FFFFFF" margin={0} fontFamily="monospace">
+                                                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "inline-block", boxShadow: "0 0 8px #10B981" }} />
+                                                    <Text fontSize="0.9rem" fontWeight="800" color="#FFFFFF" margin={0} fontFamily="'Plus Jakarta Sans', monospace">
                                                         {formatCallDuration(callDuration)}
                                                     </Text>
                                                 </div>
                                             ) : (
                                                 <Box display="flex" alignItems="center" gap="6px">
-                                                    <Text fontSize="0.86rem" fontWeight="700" color="#94A3B8" margin={0}>
+                                                    <Text fontSize="0.88rem" fontWeight="700" color="#94A3B8" margin={0}>
                                                         Establishing Vault Relay
                                                     </Text>
                                                     {[0, 1, 2].map((i) => (
@@ -2464,17 +2470,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         <Box
                                             position="relative"
                                             width="100%"
-                                            maxW="820px"
+                                            maxW="840px"
                                             flex="1"
                                             minH="0"
                                             display="flex"
                                             justifyContent="center"
                                             alignItems="center"
-                                            bg="#0A0B14"
-                                            borderRadius="32px"
+                                            bg="#0E1020"
+                                            borderRadius="34px"
                                             overflow="hidden"
-                                            border="1.5px solid rgba(255, 255, 255, 0.12)"
-                                            boxShadow="0 25px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(91, 95, 239, 0.15)"
+                                            border="1.5px solid rgba(255, 255, 255, 0.15)"
+                                            boxShadow="0 30px 90px rgba(0, 0, 0, 0.7), 0 0 50px rgba(91, 95, 239, 0.2)"
                                             zIndex={10}
                                             my={2.5}
                                         >
@@ -2487,7 +2493,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     width: '100%', 
                                                     height: '100%', 
                                                     objectFit: 'cover', 
-                                                    borderRadius: '32px', 
+                                                    borderRadius: '34px', 
                                                     display: isCallAccepted ? 'block' : 'none'
                                                 }} 
                                             />
@@ -2504,7 +2510,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                         height: '100%', 
                                                         objectFit: 'cover', 
                                                         transform: 'scaleX(-1)', 
-                                                        borderRadius: '32px' 
+                                                        borderRadius: '34px' 
                                                     }} 
                                                 />
                                             )}
@@ -2512,17 +2518,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             {/* 4K UHD LIVE Badge */}
                                             <Box
                                                 position="absolute"
-                                                top="16px"
-                                                left="16px"
+                                                top="18px"
+                                                left="18px"
                                                 display="flex"
                                                 alignItems="center"
                                                 gap="6px"
-                                                bg="rgba(10, 11, 20, 0.75)"
-                                                backdropFilter="blur(16px)"
-                                                px={3}
-                                                py={1}
+                                                bg="rgba(14, 16, 32, 0.8)"
+                                                backdropFilter="blur(20px)"
+                                                px={3.5}
+                                                py={1.2}
                                                 borderRadius="99px"
-                                                border="1px solid rgba(255, 255, 255, 0.18)"
+                                                border="1px solid rgba(255, 255, 255, 0.2)"
                                                 zIndex={25}
                                             >
                                                 <motion.span
@@ -2530,7 +2536,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     transition={{ duration: 1.5, repeat: Infinity }}
                                                     style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", display: "inline-block" }}
                                                 />
-                                                <Text fontSize="0.68rem" fontWeight="800" color="#FFFFFF" letterSpacing="0.06em" margin={0}>
+                                                <Text fontSize="0.7rem" fontWeight="800" color="#FFFFFF" letterSpacing="0.06em" margin={0}>
                                                     {isCallAccepted ? "4K 60FPS LIVE" : "CONNECTING"}
                                                 </Text>
                                             </Box>
@@ -2543,16 +2549,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                     transition={{ type: "spring", stiffness: 260, damping: 20 }}
                                                     style={{
                                                         position: "absolute",
-                                                        bottom: "16px",
-                                                        right: "16px",
-                                                        width: "150px",
-                                                        height: "112px",
-                                                        borderRadius: "18px",
+                                                        bottom: "18px",
+                                                        right: "18px",
+                                                        width: "155px",
+                                                        height: "115px",
+                                                        borderRadius: "20px",
                                                         overflow: "hidden",
-                                                        border: "2px solid rgba(91, 95, 239, 0.8)",
-                                                        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(91, 95, 239, 0.3)",
+                                                        border: "2.5px solid #5B5FEF",
+                                                        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.6), 0 0 25px rgba(91, 95, 239, 0.4)",
                                                         zIndex: 20,
-                                                        background: "#0E0F19"
+                                                        background: "#14162B"
                                                     }}
                                                 >
                                                     <video 
@@ -2567,15 +2573,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                             transform: 'scaleX(-1)' 
                                                         }} 
                                                     />
-                                                    <Box position="absolute" bottom="4px" left="6px" bg="rgba(10, 11, 20, 0.75)" px={1.5} py={0.5} borderRadius="6px">
+                                                    <Box position="absolute" bottom="5px" left="7px" bg="rgba(14, 16, 32, 0.85)" px={1.5} py={0.5} borderRadius="6px">
                                                         <Text fontSize="9px" fontWeight="800" color="#5B5FEF" margin={0}>You</Text>
                                                     </Box>
                                                 </motion.div>
                                             )}
 
                                             {!isCallAccepted && (
-                                                <Box position="absolute" bottom="16px" right="16px" bg="rgba(10, 11, 20, 0.7)" backdropFilter="blur(12px)" px={3} py={1} borderRadius="12px" border="1px solid rgba(255, 255, 255, 0.15)" zIndex={25}>
-                                                    <Text fontSize="0.72rem" fontWeight="700" color="#FFFFFF" margin={0}>Self View</Text>
+                                                <Box position="absolute" bottom="18px" right="18px" bg="rgba(14, 16, 32, 0.75)" backdropFilter="blur(16px)" px={3} py={1} borderRadius="14px" border="1px solid rgba(255, 255, 255, 0.18)" zIndex={25}>
+                                                    <Text fontSize="0.74rem" fontWeight="700" color="#FFFFFF" margin={0}>Self View</Text>
                                                 </Box>
                                             )}
                                         </Box>
@@ -2583,63 +2589,66 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         <Box display="flex" flexDirection="column" alignItems="center" my="auto" position="relative" zIndex={10}>
                                             {/* 3D Pulsing Aura Orbit Rings */}
                                             <motion.div
-                                                animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0.05, 0.4] }}
-                                                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                                                animate={{ scale: [1, 1.55, 1], opacity: [0.45, 0.05, 0.45] }}
+                                                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
                                                 style={{
                                                     position: "absolute",
-                                                    top: "calc(50% - 105px)",
-                                                    width: "210px",
-                                                    height: "210px",
+                                                    top: "calc(50% - 110px)",
+                                                    width: "220px",
+                                                    height: "220px",
                                                     borderRadius: "50%",
-                                                    background: "radial-gradient(circle, rgba(91, 95, 239, 0.25) 0%, transparent 70%)"
+                                                    background: "radial-gradient(circle, rgba(91, 95, 239, 0.35) 0%, transparent 70%)"
                                                 }}
                                             />
                                             <motion.div
-                                                animate={{ scale: [1, 1.85, 1], opacity: [0.25, 0.02, 0.25] }}
-                                                transition={{ duration: 2.5, repeat: Infinity, delay: 0.6, ease: "easeInOut" }}
+                                                animate={{ scale: [1, 1.9, 1], opacity: [0.3, 0.02, 0.3] }}
+                                                transition={{ duration: 2.8, repeat: Infinity, delay: 0.7, ease: "easeInOut" }}
                                                 style={{
                                                     position: "absolute",
-                                                    top: "calc(50% - 105px)",
-                                                    width: "210px",
-                                                    height: "210px",
+                                                    top: "calc(50% - 110px)",
+                                                    width: "220px",
+                                                    height: "220px",
                                                     borderRadius: "50%",
-                                                    background: "radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)"
+                                                    background: "radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%)"
                                                 }}
                                             />
 
                                             <Avatar
                                                 size="2xl"
-                                                name={getSender(user, selectedChat.users)}
-                                                src={getPicture(user, selectedChat.users)}
-                                                fontWeight="800"
-                                                fontSize="2.8rem"
+                                                name={selectedChat.isGroupChat ? selectedChat.chatName : getSender(user, selectedChat.users)}
+                                                src={!selectedChat.isGroupChat ? getPicture(user, selectedChat.users) : ''}
+                                                bg="linear-gradient(135deg, #5B5FEF 0%, #8B5CF6 50%, #EC4899 100%) !important"
+                                                color="#FFFFFF !important"
+                                                fontWeight="900"
+                                                fontSize="3rem"
                                                 style={{
-                                                    width: "140px",
-                                                    height: "140px",
-                                                    border: "4px solid rgba(255, 255, 255, 0.9)",
-                                                    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(91, 95, 239, 0.6), 0 0 40px rgba(91, 95, 239, 0.3)",
+                                                    width: "148px",
+                                                    height: "148px",
+                                                    border: "4px solid rgba(255, 255, 255, 0.95)",
+                                                    boxShadow: "0 25px 70px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(91, 95, 239, 0.7), 0 0 50px rgba(91, 95, 239, 0.4)",
                                                     position: "relative",
                                                     zIndex: 2
                                                 }}
                                             />
 
                                             {/* Multi-Frequency Spatial Audio Soundwave Equalizer */}
-                                            <Box display="flex" alignItems="center" gap="4px" mt={8} mb={2}>
-                                                {[14, 28, 44, 20, 52, 30, 46, 22, 38, 48, 18, 34, 40].map((h, i) => (
+                                            <Box display="flex" alignItems="center" gap="5px" mt={8} mb={2}>
+                                                {[16, 32, 48, 24, 56, 36, 50, 26, 42, 52, 20, 38, 44, 28, 48].map((h, i) => (
                                                     <motion.div
                                                         key={i}
-                                                        animate={{ height: isCallAccepted ? ["8px", `${h}px`, "8px"] : ["4px", "12px", "4px"] }}
-                                                        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.07, ease: "easeInOut" }}
+                                                        animate={{ height: isCallAccepted ? ["8px", `${h}px`, "8px"] : ["4px", "14px", "4px"] }}
+                                                        transition={{ duration: 0.85, repeat: Infinity, delay: i * 0.06, ease: "easeInOut" }}
                                                         style={{
-                                                            width: "4px",
-                                                            background: "linear-gradient(180deg, #5B5FEF 0%, #8067E8 50%, #10B981 100%)",
-                                                            borderRadius: "4px"
+                                                            width: "4.5px",
+                                                            background: "linear-gradient(180deg, #5B5FEF 0%, #8B5CF6 50%, #10B981 100%)",
+                                                            borderRadius: "99px",
+                                                            boxShadow: "0 0 8px rgba(91, 95, 239, 0.4)"
                                                         }}
                                                     />
                                                 ))}
                                             </Box>
 
-                                            <Text color="#94A3B8" fontSize="0.86rem" fontWeight="600" mt={1} margin={0}>
+                                            <Text color="#94A3B8" fontSize="0.88rem" fontWeight="600" mt={1} margin={0}>
                                                 {isCallAccepted ? "● Spatial Audio Stream Active (Opus HD 48kHz)" : "Waiting for participant to connect..."}
                                             </Text>
                                         </Box>
@@ -2653,43 +2662,43 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             exit={{ opacity: 0, y: 10 }}
                                             style={{
                                                 width: "92%",
-                                                maxWidth: "520px",
-                                                margin: "0 auto 10px auto",
-                                                background: "rgba(15, 23, 42, 0.75)",
-                                                backdropFilter: "blur(24px)",
-                                                WebkitBackdropFilter: "blur(24px)",
-                                                padding: "12px 18px",
-                                                borderRadius: "20px",
+                                                maxWidth: "540px",
+                                                margin: "0 auto 12px auto",
+                                                background: "rgba(255, 255, 255, 0.08)",
+                                                backdropFilter: "blur(28px)",
+                                                WebkitBackdropFilter: "blur(28px)",
+                                                padding: "14px 20px",
+                                                borderRadius: "24px",
                                                 textAlign: "left",
-                                                border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                boxShadow: "0 16px 40px rgba(0, 0, 0, 0.4)",
+                                                border: "1px solid rgba(255, 255, 255, 0.16)",
+                                                boxShadow: "0 20px 50px rgba(0, 0, 0, 0.45)",
                                                 zIndex: 40
                                             }}
                                         >
                                             <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
                                                 <Box display="flex" alignItems="center" gap="6px">
                                                     <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981" }} />
-                                                    <Text color="#10B981" fontSize="0.7rem" fontWeight="800" letterSpacing="0.08em" m={0}>
+                                                    <Text color="#10B981" fontSize="0.72rem" fontWeight="800" letterSpacing="0.08em" m={0}>
                                                         LIVE AI SUBTITLES & TRANSLATION
                                                     </Text>
                                                 </Box>
-                                                <span style={{ fontSize: "0.65rem", fontWeight: 800, color: "#8067E8", background: "rgba(128, 103, 232, 0.15)", padding: "2px 8px", borderRadius: "99px" }}>
+                                                <span style={{ fontSize: "0.66rem", fontWeight: 800, color: "#8B5CF6", background: "rgba(139, 92, 246, 0.18)", padding: "2px 8px", borderRadius: "99px" }}>
                                                     AUTO-SYNC
                                                 </span>
                                             </Box>
 
                                             {captionsLog.length === 0 && !currentTranscript && (
-                                                <Text color="#64748B" fontSize="0.82rem" fontWeight="600" italic m={0}>
+                                                <Text color="#94A3B8" fontSize="0.84rem" fontWeight="600" italic m={0}>
                                                     🎙️ Speaking to generate live subtitles...
                                                 </Text>
                                             )}
                                             {captionsLog.map((c, index) => (
                                                 <motion.div key={c.id || index} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} style={{ marginBottom: "6px" }}>
-                                                    <Text color="#FFFFFF" fontSize="0.88rem" fontWeight="700" m={0}>
+                                                    <Text color="#FFFFFF" fontSize="0.9rem" fontWeight="700" m={0}>
                                                         <span style={{ color: "#5B5FEF", fontWeight: 800 }}>{c.speaker}:</span> {c.original}
                                                     </Text>
                                                     {c.translated && (
-                                                        <Text color="#10B981" fontSize="0.82rem" fontWeight="800" m={0} style={{ marginTop: "1px" }}>
+                                                        <Text color="#10B981" fontSize="0.84rem" fontWeight="800" m={0} style={{ marginTop: "2px" }}>
                                                             🌐 {c.translated}
                                                         </Text>
                                                     )}
@@ -2698,7 +2707,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                         </motion.div>
                                     )}
 
-                                    {/* ── FLOATING CALL CONTROL CAPSULE DOCK ── */}
+                                    {/* ── FLOATING CALL CONTROL CAPSULE DOCK (iOS 18 Glass) ── */}
                                     <motion.div
                                         initial={{ y: 30, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
@@ -2709,38 +2718,39 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             display="flex"
                                             alignItems="center"
                                             justifyContent="center"
-                                            bg="rgba(255, 255, 255, 0.1)"
-                                            backdropFilter="blur(32px)"
-                                            WebkitBackdropFilter="blur(32px)"
-                                            px={{ base: 3, sm: 5 }}
-                                            py={2.5}
+                                            bg="rgba(255, 255, 255, 0.12)"
+                                            backdropFilter="blur(36px)"
+                                            WebkitBackdropFilter="blur(36px)"
+                                            px={{ base: 4, sm: 6 }}
+                                            py={3}
                                             borderRadius="99px"
-                                            border="1px solid rgba(255, 255, 255, 0.18)"
-                                            boxShadow="0 25px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(91, 95, 239, 0.15)"
-                                            gap={{ base: 3, sm: 4 }}
+                                            border="1.5px solid rgba(255, 255, 255, 0.22)"
+                                            boxShadow="0 30px 80px rgba(0, 0, 0, 0.6), 0 0 35px rgba(91, 95, 239, 0.25)"
+                                            gap={{ base: 3.5, sm: 4.5 }}
                                         >
                                             {/* Mic Toggle */}
                                             <Tooltip label={isMuted ? "Unmute Mic" : "Mute Mic"} hasArrow placement="top">
                                                 <motion.button
                                                     type="button"
-                                                    whileHover={{ scale: 1.1, y: -2 }}
+                                                    whileHover={{ scale: 1.12, y: -2 }}
                                                     whileTap={{ scale: 0.9 }}
                                                     onClick={toggleMute}
                                                     style={{
-                                                        width: "50px",
-                                                        height: "50px",
+                                                        width: "52px",
+                                                        height: "52px",
                                                         borderRadius: "50%",
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        background: isMuted ? "rgba(239, 68, 68, 0.25)" : "rgba(255, 255, 255, 0.12)",
-                                                        border: isMuted ? "2px solid #EF4444" : "1px solid rgba(255, 255, 255, 0.2)",
+                                                        background: isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255, 255, 255, 0.14)",
+                                                        border: isMuted ? "2px solid #EF4444" : "1.5px solid rgba(255, 255, 255, 0.25)",
                                                         color: isMuted ? "#EF4444" : "#FFFFFF",
                                                         cursor: "pointer",
-                                                        boxShadow: isMuted ? "0 0 20px rgba(239, 68, 68, 0.4)" : "none"
+                                                        boxShadow: isMuted ? "0 0 20px rgba(239, 68, 68, 0.5)" : "none",
+                                                        transition: "all 0.18s ease"
                                                     }}
                                                 >
-                                                    {isMuted ? <MicOffIcon style={{ fontSize: 22 }} /> : <MicIcon style={{ fontSize: 22 }} />}
+                                                    {isMuted ? <MicOffIcon style={{ fontSize: 23 }} /> : <MicIcon style={{ fontSize: 23 }} />}
                                                 </motion.button>
                                             </Tooltip>
 
@@ -2748,7 +2758,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             <Tooltip label={callType === "video" ? (isCameraOff ? "Turn Camera On" : "Turn Camera Off") : "Switch to Video"} hasArrow placement="top">
                                                 <motion.button
                                                     type="button"
-                                                    whileHover={{ scale: 1.1, y: -2 }}
+                                                    whileHover={{ scale: 1.12, y: -2 }}
                                                     whileTap={{ scale: 0.9 }}
                                                     onClick={() => {
                                                         if (callType === "video") {
@@ -2759,22 +2769,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                         }
                                                     }}
                                                     style={{
-                                                        width: "50px",
-                                                        height: "50px",
+                                                        width: "52px",
+                                                        height: "52px",
                                                         borderRadius: "50%",
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        background: (callType === "video" && isCameraOff) ? "rgba(239, 68, 68, 0.25)" : "rgba(255, 255, 255, 0.12)",
-                                                        border: (callType === "video" && isCameraOff) ? "2px solid #EF4444" : "1px solid rgba(255, 255, 255, 0.2)",
+                                                        background: (callType === "video" && isCameraOff) ? "rgba(239, 68, 68, 0.3)" : "rgba(255, 255, 255, 0.14)",
+                                                        border: (callType === "video" && isCameraOff) ? "2px solid #EF4444" : "1.5px solid rgba(255, 255, 255, 0.25)",
                                                         color: (callType === "video" && isCameraOff) ? "#EF4444" : "#FFFFFF",
-                                                        cursor: "pointer"
+                                                        cursor: "pointer",
+                                                        transition: "all 0.18s ease"
                                                     }}
                                                 >
                                                     {(callType === "video" && isCameraOff) ? (
-                                                        <VideocamOffIcon style={{ fontSize: 22 }} />
+                                                        <VideocamOffIcon style={{ fontSize: 23 }} />
                                                     ) : (
-                                                        <VideocamIcon style={{ fontSize: 22 }} />
+                                                        <VideocamIcon style={{ fontSize: 23 }} />
                                                     )}
                                                 </motion.button>
                                             </Tooltip>
@@ -2783,21 +2794,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                             <Tooltip label={liveCaptionsEnabled ? "Hide AI Subtitles" : "Show AI Subtitles"} hasArrow placement="top">
                                                 <motion.button
                                                     type="button"
-                                                    whileHover={{ scale: 1.1, y: -2 }}
+                                                    whileHover={{ scale: 1.12, y: -2 }}
                                                     whileTap={{ scale: 0.9 }}
                                                     onClick={() => setLiveCaptionsEnabled(!liveCaptionsEnabled)}
                                                     style={{
-                                                        width: "50px",
-                                                        height: "50px",
+                                                        width: "52px",
+                                                        height: "52px",
                                                         borderRadius: "50%",
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.25)" : "rgba(255, 255, 255, 0.12)",
-                                                        border: liveCaptionsEnabled ? "2px solid #10B981" : "1px solid rgba(255, 255, 255, 0.2)",
+                                                        background: liveCaptionsEnabled ? "rgba(16, 185, 129, 0.3)" : "rgba(255, 255, 255, 0.14)",
+                                                        border: liveCaptionsEnabled ? "2px solid #10B981" : "1.5px solid rgba(255, 255, 255, 0.25)",
                                                         color: liveCaptionsEnabled ? "#10B981" : "#FFFFFF",
                                                         cursor: "pointer",
-                                                        fontSize: "1.1rem"
+                                                        fontSize: "1.2rem",
+                                                        boxShadow: liveCaptionsEnabled ? "0 0 20px rgba(16, 185, 129, 0.4)" : "none",
+                                                        transition: "all 0.18s ease"
                                                     }}
                                                 >
                                                     💬
@@ -2812,24 +2825,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 onClick={endVideoCall}
                                                 aria-label="End Call"
                                                 style={{
-                                                    height: "50px",
-                                                    padding: "0 24px",
+                                                    height: "52px",
+                                                    padding: "0 26px",
                                                     borderRadius: "99px",
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    gap: "8px",
+                                                    gap: "9px",
                                                     background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
                                                     border: "none",
                                                     color: "#FFFFFF",
-                                                    fontWeight: 800,
-                                                    fontSize: "0.92rem",
+                                                    fontWeight: 900,
+                                                    fontSize: "0.95rem",
                                                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                                                     cursor: "pointer",
-                                                    boxShadow: "0 8px 25px rgba(239, 68, 68, 0.5)",
+                                                    boxShadow: "0 10px 30px rgba(239, 68, 68, 0.55)",
                                                     letterSpacing: "0.02em"
                                                 }}
                                             >
-                                                <CallEndIcon style={{ fontSize: 20 }} />
+                                                <CallEndIcon style={{ fontSize: 22 }} />
                                                 <span>End Call</span>
                                             </motion.button>
                                         </Box>
