@@ -22,29 +22,78 @@ public class ChatService {
     @Autowired
     private com.chitchat.backend.repository.ChatRequestRepository chatRequestRepository;
 
+    @org.springframework.transaction.annotation.Transactional
     public com.chitchat.backend.model.ChatRequest sendChatRequest(String targetUserId, User sender) {
         if (targetUserId == null || targetUserId.trim().isEmpty()) {
-            throw new RuntimeException("Target user ID is required");
+            throw new IllegalArgumentException("Target user ID is required");
+        }
+        if (sender == null) {
+            throw new IllegalArgumentException("Authentication required to send friend request");
         }
         String cleanTarget = targetUserId.trim();
-        if (sender != null && (cleanTarget.equals(sender.getId()) || cleanTarget.equalsIgnoreCase(sender.getEmail()) || cleanTarget.equalsIgnoreCase(sender.getUsername()))) {
-            throw new RuntimeException("You cannot send a friend request to yourself");
+        if (cleanTarget.equals(sender.getId()) || cleanTarget.equalsIgnoreCase(sender.getEmail()) || cleanTarget.equalsIgnoreCase(sender.getUsername())) {
+            throw new IllegalArgumentException("You cannot send a friend request to yourself");
         }
+
         User receiver = userRepository.findById(cleanTarget)
                 .or(() -> userRepository.findByEmail(cleanTarget.toLowerCase()))
                 .or(() -> userRepository.findByUsername(cleanTarget.toLowerCase()))
-                .orElseThrow(() -> new RuntimeException("Target user not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
 
-        Optional<com.chitchat.backend.model.ChatRequest> existing = chatRequestRepository
-                .findBySenderAndReceiverAndStatus(sender, receiver, "PENDING");
-        if (existing.isPresent()) {
-            return existing.get();
+        User freshSender = userRepository.findById(sender.getId()).orElse(sender);
+
+        // 1. Check if already friends
+        if (freshSender.getFriends() != null && freshSender.getFriends().stream().anyMatch(f -> f.getId().equals(receiver.getId()))) {
+            throw new IllegalArgumentException("You are already friends with " + (receiver.getName() != null ? receiver.getName() : "this user") + ".");
         }
 
+        // 2. Check if a PENDING request already exists from sender to receiver
+        Optional<com.chitchat.backend.model.ChatRequest> pendingSent = chatRequestRepository
+                .findBySenderAndReceiverAndStatus(freshSender, receiver, "PENDING");
+        if (pendingSent.isPresent()) {
+            throw new IllegalArgumentException("You have already sent a friend request to " + (receiver.getName() != null ? receiver.getName() : "this user") + ". Please wait for them to accept.");
+        }
+
+        // 3. Check if there is an incoming PENDING request from receiver to sender
+        Optional<com.chitchat.backend.model.ChatRequest> pendingIncoming = chatRequestRepository
+                .findBySenderAndReceiverAndStatus(receiver, freshSender, "PENDING");
+        if (pendingIncoming.isPresent()) {
+            throw new IllegalArgumentException(receiver.getName() + " has already sent you a friend request. Please check your notifications to accept!");
+        }
+
+        // 4. Rate-limiting / Cooldown Check: 2 days (48 hours)
+        Optional<com.chitchat.backend.model.ChatRequest> latestRequest = chatRequestRepository
+                .findTopBySenderAndReceiverOrderByCreatedAtDesc(freshSender, receiver);
+        if (latestRequest.isPresent()) {
+            java.time.LocalDateTime lastCreatedAt = latestRequest.get().getCreatedAt();
+            if (lastCreatedAt != null) {
+                java.time.Duration duration = java.time.Duration.between(lastCreatedAt, java.time.LocalDateTime.now());
+                long totalHours = duration.toHours();
+                if (totalHours < 48) { // Less than 2 days (48 hours)
+                    long hoursRemaining = 48 - totalHours;
+                    long minutesRemaining = 60 - (duration.toMinutes() % 60);
+                    String remainingTime;
+                    if (hoursRemaining >= 24) {
+                        long days = hoursRemaining / 24;
+                        long remHours = hoursRemaining % 24;
+                        remainingTime = days + " day" + (days > 1 ? "s" : "") + (remHours > 0 ? " and " + remHours + " hr" + (remHours > 1 ? "s" : "") : "");
+                    } else if (hoursRemaining > 0) {
+                        remainingTime = hoursRemaining + " hour" + (hoursRemaining > 1 ? "s" : "") + " and " + minutesRemaining + " min" + (minutesRemaining > 1 ? "s" : "");
+                    } else {
+                        remainingTime = Math.max(1, minutesRemaining) + " minute" + (minutesRemaining > 1 ? "s" : "");
+                    }
+                    throw new IllegalArgumentException("Friend request cooldown: You can only send a request once every 2 days. Please wait " + remainingTime + " before sending again.");
+                }
+            }
+        }
+
+        // 5. Create and save new PENDING request
         com.chitchat.backend.model.ChatRequest request = com.chitchat.backend.model.ChatRequest.builder()
-                .sender(sender)
+                .sender(freshSender)
                 .receiver(receiver)
                 .status("PENDING")
+                .createdAt(java.time.LocalDateTime.now())
+                .updatedAt(java.time.LocalDateTime.now())
                 .build();
         return chatRequestRepository.save(request);
     }
@@ -59,27 +108,36 @@ public class ChatService {
 
     @org.springframework.transaction.annotation.Transactional
     public Chat respondToRequest(String requestId, String action, User currentUser) {
+        if (currentUser == null) {
+            throw new IllegalArgumentException("Authentication required");
+        }
         com.chitchat.backend.model.ChatRequest request = chatRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
 
         if (!request.getReceiver().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized action");
+            throw new IllegalArgumentException("Unauthorized action on this friend request");
         }
 
         if ("ACCEPT".equalsIgnoreCase(action)) {
             request.setStatus("ACCEPTED");
+            request.setUpdatedAt(java.time.LocalDateTime.now());
             chatRequestRepository.save(request);
 
             User sender = request.getSender();
             User receiver = request.getReceiver();
-            currentUser.addFriend(sender);
-            sender.addFriend(currentUser);
-            userRepository.save(currentUser);
-            userRepository.save(sender);
 
-            return accessChat(sender.getId(), currentUser);
+            User freshReceiver = userRepository.findById(currentUser.getId()).orElse(currentUser);
+            User freshSender = userRepository.findById(sender.getId()).orElse(sender);
+
+            freshReceiver.addFriend(freshSender);
+            freshSender.addFriend(freshReceiver);
+            userRepository.save(freshReceiver);
+            userRepository.save(freshSender);
+
+            return accessChat(freshSender.getId(), freshReceiver);
         } else {
             request.setStatus("REJECTED");
+            request.setUpdatedAt(java.time.LocalDateTime.now());
             chatRequestRepository.save(request);
             return null;
         }

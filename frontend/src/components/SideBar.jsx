@@ -7,7 +7,7 @@ import { BellIcon, ChevronDownIcon, EditIcon, CheckIcon, CloseIcon } from "@chak
 import jsQR from 'jsqr';
 import { Avatar } from '@chakra-ui/react'
 import { useSelector } from 'react-redux';
-import { useDisclosure } from "@chakra-ui/hooks";
+import { useDisclosure, useToast } from "@chakra-ui/react";
 import { MDBTypography } from 'mdb-react-ui-kit';
 import EmailIcon from '@mui/icons-material/Email';
 import { MDBBtn } from 'mdb-react-ui-kit';

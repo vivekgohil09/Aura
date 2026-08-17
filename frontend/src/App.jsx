@@ -109,6 +109,7 @@ export default function App() {
         draggable={true}
         pauseOnHover={false}
         theme="colored"
+        style={{ zIndex: 99999999 }}
       />
     </Router>
   );

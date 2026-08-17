@@ -27,24 +27,41 @@ const UserListItem = ({ user, handleFunction }) => {
 
     const handleAddClick = async (e) => {
         e.stopPropagation();
+        if (handleFunction) {
+            handleFunction(user);
+            return;
+        }
         if (isSent) return;
-        setIsSent(true);
         if (targetUserId) {
             try {
-                const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
-                if (!sentList.includes(String(targetUserId))) {
-                    localStorage.setItem(storageKey, JSON.stringify([...sentList, String(targetUserId)]));
-                }
-                // Call Option A Backend persistence API with correct getJwtToken()
                 const token = getJwtToken();
-                await fetch("/api/chat/request/send", {
+                const response = await fetch("/api/chat/request/send", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
                     body: JSON.stringify({ targetUserId: String(targetUserId) })
                 });
-            } catch (e) { }
+                const data = await response.json();
+                if (!response.ok) {
+                    const errorMsg = data?.message || data?.error || "Could not send friend request.";
+                    import('react-toastify').then(({ toast }) => {
+                        toast.error(errorMsg, { position: "bottom-center", autoClose: 3500 });
+                    });
+                    return;
+                }
+                setIsSent(true);
+                const sentList = JSON.parse(localStorage.getItem(storageKey) || "[]");
+                if (!sentList.includes(String(targetUserId))) {
+                    localStorage.setItem(storageKey, JSON.stringify([...sentList, String(targetUserId)]));
+                }
+                import('react-toastify').then(({ toast }) => {
+                    toast.success(`✨ Friend request sent to ${user?.name || 'user'}! 📨`, { position: "bottom-center", autoClose: 2500 });
+                });
+            } catch (err) {
+                import('react-toastify').then(({ toast }) => {
+                    toast.error("Failed to send friend request", { position: "bottom-center", autoClose: 2500 });
+                });
+            }
         }
-        if (handleFunction) handleFunction(user);
     };
 
     const userStatuses = useSelector(state => state.userStatuses) || {};
