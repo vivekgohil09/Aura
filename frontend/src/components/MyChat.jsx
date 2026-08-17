@@ -743,12 +743,16 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 marginBottom: '12px',
-                padding: '0 4px'
+                padding: '0 6px'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981', display: 'inline-block' }} />
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <motion.span
+                  animate={{ scale: [1, 1.35, 1], opacity: [0.7, 1, 0.7] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981', display: 'inline-block' }}
+                />
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Active Gravity Circle
                 </span>
               </div>
@@ -757,18 +761,18 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
               </span>
             </Box>
 
-            {/* ── 🪐 CONCENTRIC LIVING ORBIT CARD (EXACT IMAGE 1 SPEC) ── */}
+            {/* ── 🪐 CONCENTRIC LIVING ORBIT CARD WITH CONTINUOUS MOTION ── */}
             <div
               style={{
                 position: 'relative',
                 width: '100%',
-                maxWidth: '300px',
-                height: '300px',
-                minHeight: '300px',
+                maxWidth: '335px',
+                height: '335px',
+                minHeight: '335px',
                 background: 'linear-gradient(180deg, #F5F5F1 0%, #EFEFEA 100%)',
-                borderRadius: '32px',
+                borderRadius: '34px',
                 border: '1.5px solid rgba(23, 24, 39, 0.05)',
-                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.03), inset 0 2px 6px rgba(255, 255, 255, 0.9)',
+                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.04), inset 0 2px 8px rgba(255, 255, 255, 0.95)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -776,32 +780,32 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 flexShrink: 0
               }}
             >
-              {/* Outer Dashed Orbit Ring (240px Diameter) - Mathematically Centered */}
+              {/* Outer Dashed Orbit Ring (270px Diameter) */}
               <div
                 style={{
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '240px',
-                  height: '240px',
+                  width: '270px',
+                  height: '270px',
                   borderRadius: '50%',
-                  border: '1.5px dashed rgba(91, 95, 239, 0.4)',
+                  border: '1.5px dashed rgba(91, 95, 239, 0.38)',
                   pointerEvents: 'none',
                   zIndex: 1,
                   boxSizing: 'border-box'
                 }}
               />
 
-              {/* Inner Solid Orbit Ring (150px Diameter) - Mathematically Centered */}
+              {/* Inner Solid Orbit Ring (170px Diameter) */}
               <div
                 style={{
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '150px',
-                  height: '150px',
+                  width: '170px',
+                  height: '170px',
                   borderRadius: '50%',
                   border: '1.5px solid rgba(91, 95, 239, 0.45)',
                   pointerEvents: 'none',
@@ -810,7 +814,7 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 }}
               />
 
-              {/* Center "YOU" Node with Radial Ambient Aura - Mathematically Centered */}
+              {/* Center "YOU" Node with Multi-Layered Radial Ambient Aura */}
               <div
                 style={{
                   position: 'absolute',
@@ -824,27 +828,27 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                   pointerEvents: 'none'
                 }}
               >
-                {/* Ambient Breathing Aura */}
+                {/* Ambient Breathing Aura Halo */}
                 <motion.div
-                  animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0.2, 0.5] }}
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.55, 0.22, 0.55] }}
                   transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
                   style={{
                     position: 'absolute',
-                    width: '88px',
-                    height: '88px',
+                    width: '100px',
+                    height: '100px',
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(91, 95, 239, 0.4) 0%, rgba(128, 103, 232, 0.15) 50%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(91, 95, 239, 0.42) 0%, rgba(128, 103, 232, 0.18) 50%, transparent 70%)',
                     pointerEvents: 'none'
                   }}
                 />
 
                 {/* Solid YOU Sphere */}
                 <motion.div
-                  animate={{ scale: [1, 1.04, 1] }}
+                  animate={{ scale: [1, 1.05, 1] }}
                   transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
                   style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '72px',
+                    height: '72px',
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #5B5FEF 0%, #6E5BE8 100%)',
                     display: 'flex',
@@ -853,9 +857,9 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                     color: '#FFFFFF',
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontWeight: 900,
-                    fontSize: '0.98rem',
+                    fontSize: '1.05rem',
                     letterSpacing: '0.04em',
-                    boxShadow: '0 8px 24px rgba(91, 95, 239, 0.42)',
+                    boxShadow: '0 10px 28px rgba(91, 95, 239, 0.45)',
                     userSelect: 'none',
                     position: 'relative',
                     zIndex: 2
@@ -865,76 +869,166 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 </motion.div>
               </div>
 
-              {/* Orbiting Satellites (Plotted Directly ON 150px and 240px Ring Perimeters) */}
-              {chats && chats.slice(0, 8).map((c, i) => {
-                const total = Math.min(chats.length, 8);
-                const angle = ((i / total) * Math.PI * 2) - (Math.PI / 3);
-                // Inner ring radius = 75px (half of 150px), Outer ring radius = 120px (half of 240px)
-                const isInner = i % 2 === 0;
-                const radius = isInner ? 75 : 120;
-                const x = Math.cos(angle) * radius;
-                const y = Math.sin(angle) * radius;
-
-                const cName = !c.isGroupChat ? getSender(user, c.users) : c.chatName;
-                const cPic = !c.isGroupChat ? getPicture(user, c.users) : "";
-                
-                // Color palette matching Image 1
-                const nodeColors = [
-                  '#0284C7', // Blue (SC)
-                  '#10B981', // Emerald (AR)
-                  '#EF4444', // Crimson / Coral (S)
-                  '#8B5CF6', // Purple
-                  '#F59E0B', // Amber
-                  '#EC4899', // Pink
-                ];
-                const nodeBg = nodeColors[i % nodeColors.length];
+              {/* ── 🔄 INNER ORBIT REVOLUTION LAYER (Clockwise 30s) ── */}
+              {(() => {
+                const innerList = (chats || []).filter((_, idx) => idx % 2 === 0).slice(0, 4);
+                if (innerList.length === 0) return null;
+                const nodeColors = ['#0284C7', '#EF4444', '#10B981', '#8B5CF6'];
 
                 return (
                   <motion.div
-                    key={c.id || c._id}
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 32, ease: "linear" }}
                     style={{
                       position: 'absolute',
                       top: '50%',
                       left: '50%',
-                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                      zIndex: 15,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer'
-                    }}
-                    whileHover={{ scale: 1.25, zIndex: 30 }}
-                    whileTap={{ scale: 0.92 }}
-                    onClick={() => {
-                      dispatch(setSelectedChat(c));
+                      width: '170px',
+                      height: '170px',
+                      marginTop: '-85px',
+                      marginLeft: '-85px',
+                      pointerEvents: 'none',
+                      zIndex: 14
                     }}
                   >
-                    <Tooltip label={cName} hasArrow placement="top">
-                      <Box position="relative">
-                        <Avatar
-                          size="sm"
-                          name={cName}
-                          src={cPic}
+                    {innerList.map((c, i) => {
+                      const angle = (i / innerList.length) * Math.PI * 2;
+                      const radius = 85; // exact half of 170px
+                      const x = Math.cos(angle) * radius;
+                      const y = Math.sin(angle) * radius;
+                      const cName = !c.isGroupChat ? getSender(user, c.users) : c.chatName;
+                      const cPic = !c.isGroupChat ? getPicture(user, c.users) : "";
+                      const nodeBg = nodeColors[i % nodeColors.length];
+
+                      return (
+                        <div
+                          key={c.id || c._id}
                           style={{
-                            width: "34px",
-                            height: "34px",
-                            background: nodeBg,
-                            color: "#FFFFFF",
-                            fontWeight: 800,
-                            fontSize: "0.8rem",
-                            fontFamily: "'Plus Jakarta Sans', sans-serif",
-                            border: "2.5px solid #FFFFFF",
-                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)"
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                            pointerEvents: 'auto'
                           }}
-                        />
-                      </Box>
-                    </Tooltip>
+                        >
+                          {/* Counter-rotate in sync so text/avatar stays upright during orbit */}
+                          <motion.div
+                            animate={{ rotate: -360 }}
+                            transition={{ repeat: Infinity, duration: 32, ease: "linear" }}
+                            whileHover={{ scale: 1.28, zIndex: 40 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => dispatch(setSelectedChat(c))}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <Tooltip label={cName} hasArrow placement="top">
+                              <Box position="relative">
+                                <Avatar
+                                  size="sm"
+                                  name={cName}
+                                  src={cPic}
+                                  style={{
+                                    width: "38px",
+                                    height: "38px",
+                                    background: nodeBg,
+                                    color: "#FFFFFF",
+                                    fontWeight: 800,
+                                    fontSize: "0.85rem",
+                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                    border: "2.5px solid #FFFFFF",
+                                    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.14)"
+                                  }}
+                                />
+                              </Box>
+                            </Tooltip>
+                          </motion.div>
+                        </div>
+                      );
+                    })}
                   </motion.div>
                 );
-              })}
+              })()}
+
+              {/* ── 🔄 OUTER ORBIT REVOLUTION LAYER (Counter-Clockwise 48s) ── */}
+              {(() => {
+                const outerList = (chats || []).filter((_, idx) => idx % 2 !== 0).slice(0, 5);
+                if (outerList.length === 0) return null;
+                const nodeColors = ['#10B981', '#F59E0B', '#EC4899', '#0284C7', '#6366F1'];
+
+                return (
+                  <motion.div
+                    animate={{ rotate: -360 }}
+                    transition={{ repeat: Infinity, duration: 48, ease: "linear" }}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: '270px',
+                      height: '270px',
+                      marginTop: '-135px',
+                      marginLeft: '-135px',
+                      pointerEvents: 'none',
+                      zIndex: 13
+                    }}
+                  >
+                    {outerList.map((c, i) => {
+                      const angle = (i / outerList.length) * Math.PI * 2;
+                      const radius = 135; // exact half of 270px
+                      const x = Math.cos(angle) * radius;
+                      const y = Math.sin(angle) * radius;
+                      const cName = !c.isGroupChat ? getSender(user, c.users) : c.chatName;
+                      const cPic = !c.isGroupChat ? getPicture(user, c.users) : "";
+                      const nodeBg = nodeColors[i % nodeColors.length];
+
+                      return (
+                        <div
+                          key={c.id || c._id}
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                            pointerEvents: 'auto'
+                          }}
+                        >
+                          {/* Counter-rotate in sync so text/avatar stays upright during orbit */}
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 48, ease: "linear" }}
+                            whileHover={{ scale: 1.28, zIndex: 40 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => dispatch(setSelectedChat(c))}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <Tooltip label={cName} hasArrow placement="top">
+                              <Box position="relative">
+                                <Avatar
+                                  size="sm"
+                                  name={cName}
+                                  src={cPic}
+                                  style={{
+                                    width: "36px",
+                                    height: "36px",
+                                    background: nodeBg,
+                                    color: "#FFFFFF",
+                                    fontWeight: 800,
+                                    fontSize: "0.82rem",
+                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                    border: "2.5px solid #FFFFFF",
+                                    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.14)"
+                                  }}
+                                />
+                              </Box>
+                            </Tooltip>
+                          </motion.div>
+                        </div>
+                      );
+                    })}
+                  </motion.div>
+                );
+              })()}
             </div>
 
-            {/* ── 🌟 RECENT ORBIT QUICK CONNECT TRAY (Eliminates Bottom Whitespace) ── */}
+            {/* ── 🌟 RECENT ORBIT QUICK CONNECT TRAY ── */}
             <div
               style={{
                 width: '100%',
@@ -947,7 +1041,7 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#171827', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#171827', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Quick Orbit Connect
                 </span>
                 <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#5B5FEF', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
