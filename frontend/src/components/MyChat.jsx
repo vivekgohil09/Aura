@@ -1718,7 +1718,13 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             )}
         </Box>
         )}
-      </Box>
+        <AuraGroupChatModal
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        fetchAgain={fetchAgain}
+        setFetchAgain={setFetchAgain}
+      />
+    </Box>
     </>
   );
 };
