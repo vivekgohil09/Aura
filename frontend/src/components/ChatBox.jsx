@@ -17,8 +17,8 @@ const ChatBox = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
       position="relative"
       zIndex={1}
       style={{
-        border: "1.5px solid rgba(212, 175, 55, 0.25)",
-        boxShadow: "0 10px 40px rgba(15, 23, 42, 0.05), 0 0 20px rgba(212, 175, 55, 0.08)",
+        border: "1px solid rgba(23, 24, 39, 0.08)",
+        boxShadow: "0 10px 40px rgba(23, 24, 39, 0.04), 0 0 20px rgba(91, 95, 239, 0.04)",
         backdropFilter: "blur(24px)"
       }}
       w={{ base: "100%", md: "68%" }}

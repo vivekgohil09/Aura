@@ -1,3 +1,4 @@
+import { autoPermissions } from './config/autoPermissions';
 import React, { useEffect } from 'react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';

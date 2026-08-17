@@ -45,7 +45,7 @@ function AmbientVFXBackground() {
           width: '500px',
           height: '500px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.22) 0%, rgba(245, 158, 11, 0.05) 55%, transparent 75%)',
+          background: 'radial-gradient(circle, rgba(91, 95, 239, 0.2) 0%, rgba(128, 103, 232, 0.05) 55%, transparent 75%)',
           filter: 'blur(55px)'
         }}
       />
@@ -63,7 +63,7 @@ function AmbientVFXBackground() {
           width: '520px',
           height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(212, 175, 55, 0.04) 60%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(128, 103, 232, 0.15) 0%, rgba(91, 95, 239, 0.04) 60%, transparent 80%)',
           filter: 'blur(60px)'
         }}
       />
@@ -189,8 +189,8 @@ export default function ForgotPass() {
         minHeight: 'calc(100vh - 80px)', 
         position: 'relative',
         zIndex: 1,
-        background: 'transparent',
-        backgroundImage: 'radial-gradient(at 50% 0%, rgba(212, 175, 55, 0.14) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.08) 0px, transparent 50%)',
+        background: 'var(--aura-ivory, #FCFBF7)',
+        backgroundImage: 'radial-gradient(at 50% 0%, rgba(91, 95, 239, 0.08) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(128, 103, 232, 0.06) 0px, transparent 50%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -209,13 +209,13 @@ export default function ForgotPass() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.88)',
+              background: 'rgba(255, 255, 255, 0.92)',
               backdropFilter: 'blur(30px)',
               WebkitBackdropFilter: 'blur(30px)',
               p: { xs: 3.5, sm: 4.5 },
               borderRadius: '28px',
-              border: '1.5px solid rgba(212, 175, 55, 0.35)',
-              boxShadow: '0 20px 50px rgba(15, 23, 42, 0.08), 0 0 25px rgba(212, 175, 55, 0.1)'
+              border: '1px solid rgba(23, 24, 39, 0.06)',
+              boxShadow: '0 20px 50px rgba(23, 24, 39, 0.04), 0 0 25px rgba(91, 95, 239, 0.06)'
             }}
           >
             <motion.div
@@ -226,11 +226,11 @@ export default function ForgotPass() {
                 width: '100%',
                 height: '100%',
                 borderRadius: '20px',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 10px 30px rgba(212, 175, 55, 0.4)'
+                boxShadow: '0 10px 30px rgba(91, 95, 239, 0.35)'
               }}>
                 <span style={{ fontSize: '1.9rem', color: '#FFFFFF' }}>🔑</span>
               </Box>
@@ -241,16 +241,14 @@ export default function ForgotPass() {
               lineHeight: 1,
               marginBottom: '0.4rem',
               fontWeight: 900,
-              background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: '#171827',
               letterSpacing: '-0.03em',
-              fontFamily: "'Outfit', sans-serif"
+              fontFamily: "'Plus Jakarta Sans', sans-serif"
             }}>
               {emailPres ? "New Password" : "Reset Password"}
             </h1>
 
-            <Typography variant="body2" sx={{ color: '#64748B', mb: 3, textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>
+            <Typography variant="body2" sx={{ color: '#727486', mb: 3, textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               {emailPres 
                 ? "Enter your new password below to update your account" 
                 : "Enter your account email to verify and reset your password"}
@@ -272,31 +270,31 @@ export default function ForgotPass() {
                 onChange={(e) => setEmail(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    color: '#0F172A',
-                    backgroundColor: emailPres ? '#F1F5F9' : '#FFFFFF',
+                    color: '#171827',
+                    backgroundColor: emailPres ? '#F4F3EF' : '#FFFFFF',
                     borderRadius: '16px',
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontWeight: 600,
                     '& fieldset': {
-                      borderColor: 'rgba(226, 232, 240, 0.9)',
+                      borderColor: 'rgba(23, 24, 39, 0.08)',
                       borderWidth: '1.5px'
                     },
                     '&:hover fieldset': {
-                      borderColor: '#D4AF37'
+                      borderColor: '#5B5FEF'
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#D4AF37',
+                      borderColor: '#5B5FEF',
                       borderWidth: '2px',
-                      boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
+                      boxShadow: '0 4px 16px rgba(91, 95, 239, 0.15)'
                     }
                   },
                   '& .MuiInputLabel-root': {
-                    color: '#64748B',
-                    fontFamily: "'Inter', sans-serif",
+                    color: '#727486',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: '0.9rem',
                     fontWeight: 500,
                     '&.Mui-focused': {
-                      color: '#D4AF37'
+                      color: '#5B5FEF'
                     }
                   }
                 }}
@@ -318,31 +316,31 @@ export default function ForgotPass() {
                   autoComplete="new-password"
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: '#0F172A',
+                      color: '#171827',
                       backgroundColor: '#FFFFFF',
                       borderRadius: '16px',
-                      fontFamily: "'Inter', sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontWeight: 600,
                       '& fieldset': {
-                        borderColor: 'rgba(226, 232, 240, 0.9)',
+                        borderColor: 'rgba(23, 24, 39, 0.08)',
                         borderWidth: '1.5px'
                       },
                       '&:hover fieldset': {
-                        borderColor: '#D4AF37'
+                        borderColor: '#5B5FEF'
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#D4AF37',
+                        borderColor: '#5B5FEF',
                         borderWidth: '2px',
-                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
+                        boxShadow: '0 4px 16px rgba(91, 95, 239, 0.15)'
                       }
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#64748B',
-                      fontFamily: "'Inter', sans-serif",
+                      color: '#727486',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontSize: '0.9rem',
                       fontWeight: 500,
                       '&.Mui-focused': {
-                        color: '#D4AF37'
+                        color: '#5B5FEF'
                       }
                     }
                   }}
@@ -352,16 +350,16 @@ export default function ForgotPass() {
               <motion.div whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   style={{
-                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                     color: '#FFFFFF',
-                    border: '1px solid rgba(212, 175, 55, 0.5)',
+                    border: 'none',
                     fontWeight: 800,
                     fontSize: '1rem',
                     padding: '14px',
                     borderRadius: '16px',
-                    boxShadow: '0 10px 28px rgba(15, 23, 42, 0.2)',
+                    boxShadow: '0 10px 28px rgba(91, 95, 239, 0.28)',
                     textTransform: 'none',
-                    fontFamily: "'Outfit', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     letterSpacing: '0.04em'
                   }}
                   type="submit"
@@ -384,24 +382,24 @@ export default function ForgotPass() {
                   <Link to="/login" style={{
                     cursor: "pointer",
                     textDecoration: "none",
-                    color: "#D4AF37",
+                    color: "#5B5FEF",
                     fontSize: "0.875rem",
                     fontWeight: 700,
-                    fontFamily: "'Inter', sans-serif"
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                   }}>
                     Remembered password? Sign In
                   </Link>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                    <Typography variant="body2" component="span" sx={{ color: '#64748B', fontSize: '0.875rem', fontFamily: "'Inter', sans-serif" }}>
+                    <Typography variant="body2" component="span" sx={{ color: '#727486', fontSize: '0.875rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                       Don't have an account?
                     </Typography>
                     <Link to="/signup" style={{
                       cursor: "pointer",
                       textDecoration: "none",
-                      color: "#0F172A",
+                      color: "#5B5FEF",
                       fontSize: "0.875rem",
                       fontWeight: 800,
-                      fontFamily: "'Inter', sans-serif"
+                      fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}>
                       Sign Up
                     </Link>

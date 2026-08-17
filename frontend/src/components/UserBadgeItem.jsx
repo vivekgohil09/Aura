@@ -13,7 +13,7 @@ const UserBadgeItem = ({ user, handleFunction, admin }) => {
                 mb={2}
                 fontSize={12}
                 fontWeight={800}
-                bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
+                bg="linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)"
                 color="#FFFFFF"
                 cursor="pointer"
                 onClick={handleFunction}
@@ -22,13 +22,13 @@ const UserBadgeItem = ({ user, handleFunction, admin }) => {
                     display: "inline-flex", 
                     alignItems: "center", 
                     gap: "6px",
-                    boxShadow: "0 3px 10px rgba(212, 175, 55, 0.35)",
+                    boxShadow: "0 3px 10px rgba(91, 95, 239, 0.28)",
                     border: "none",
-                    fontFamily: "'Outfit', sans-serif"
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                 }}
             >
                 {user.name}
-                {admin === (user._id || user.id) && <span style={{ color: "#FFF8E7" }}> (Admin)</span>}
+                {admin === (user._id || user.id) && <span style={{ color: "#E0E7FF" }}> (Admin)</span>}
                 <CloseIcon fontSize="8px" style={{ opacity: 0.9 }} />
             </Badge>
         </motion.div>

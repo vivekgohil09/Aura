@@ -50,11 +50,11 @@ function AmbientVFXBackground() {
           width: '540px',
           height: '540px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(245, 158, 11, 0.06) 60%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(91, 95, 239, 0.18) 0%, rgba(128, 103, 232, 0.06) 60%, transparent 80%)',
           filter: 'blur(55px)'
         }}
       />
-      {/* Bottom Left Subtle Amber Orb */}
+      {/* Bottom Left Subtle Aura Violet Orb */}
       <motion.div
         animate={{
           scale: [1, 1.2, 1],
@@ -70,7 +70,7 @@ function AmbientVFXBackground() {
           width: '560px',
           height: '560px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, rgba(212, 175, 55, 0.05) 60%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(128, 103, 232, 0.16) 0%, rgba(91, 95, 239, 0.05) 60%, transparent 80%)',
           filter: 'blur(60px)'
         }}
       />
@@ -174,8 +174,8 @@ export default function SignUpPage() {
         minHeight: 'calc(100vh - 80px)', 
         position: 'relative',
         zIndex: 1,
-        background: 'transparent',
-        backgroundImage: 'radial-gradient(at 10% 10%, rgba(212, 175, 55, 0.12) 0px, transparent 55%), radial-gradient(at 90% 90%, rgba(245, 158, 11, 0.08) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.8) 0px, transparent 100%)'
+        background: 'var(--aura-ivory, #FCFBF7)',
+        backgroundImage: 'radial-gradient(at 10% 10%, rgba(91, 95, 239, 0.08) 0px, transparent 55%), radial-gradient(at 90% 90%, rgba(128, 103, 232, 0.06) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.8) 0px, transparent 100%)'
       }}>
         <CssBaseline />
         <Grid
@@ -203,7 +203,7 @@ export default function SignUpPage() {
               position: 'absolute', top: '6%', right: '8%',
               width: 140, height: 140,
               borderRadius: '50%',
-              background: 'radial-gradient(circle at 35% 35%, rgba(212, 175, 55, 0.25), rgba(245, 158, 11, 0.05) 60%, transparent)',
+              background: 'radial-gradient(circle at 35% 35%, rgba(91, 95, 239, 0.2), rgba(128, 103, 232, 0.05) 60%, transparent)',
               filter: 'blur(22px)',
               pointerEvents: 'none'
             }}
@@ -216,7 +216,7 @@ export default function SignUpPage() {
               position: 'absolute', bottom: '8%', left: '6%',
               width: 170, height: 170,
               borderRadius: '50%',
-              background: 'radial-gradient(circle at 40% 40%, rgba(15, 23, 42, 0.08), rgba(212, 175, 55, 0.08) 60%, transparent)',
+              background: 'radial-gradient(circle at 40% 40%, rgba(23, 24, 39, 0.04), rgba(91, 95, 239, 0.08) 60%, transparent)',
               filter: 'blur(28px)',
               pointerEvents: 'none'
             }}
@@ -230,7 +230,7 @@ export default function SignUpPage() {
               transform: 'translate(-50%, -50%)',
               width: 420, height: 420,
               borderRadius: '50%',
-              border: '1.5px solid rgba(212, 175, 55, 0.2)',
+              border: '1.5px solid rgba(91, 95, 239, 0.16)',
               pointerEvents: 'none'
             }}
           />
@@ -243,13 +243,13 @@ export default function SignUpPage() {
               transform: 'translate(-50%, -50%)',
               width: 280, height: 280,
               borderRadius: '50%',
-              border: '1px dashed rgba(212, 175, 55, 0.25)',
+              border: '1px dashed rgba(128, 103, 232, 0.2)',
               pointerEvents: 'none'
             }}
           />
           {/* Particle Dots */}
           <motion.div animate={{ y: [0, -12, 0], opacity: [0.6, 1, 0.6] }} transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-            style={{ position: 'absolute', top: '20%', left: '15%', width: 9, height: 9, borderRadius: '50%', background: '#D4AF37', boxShadow: '0 0 14px rgba(212, 175, 55, 0.8)', pointerEvents: 'none' }}
+            style={{ position: 'absolute', top: '20%', left: '15%', width: 9, height: 9, borderRadius: '50%', background: '#5B5FEF', boxShadow: '0 0 14px rgba(91, 95, 239, 0.6)', pointerEvents: 'none' }}
           />
           <motion.div
             initial={{ opacity: 0, x: -40, scale: 0.92 }}
@@ -268,15 +268,15 @@ export default function SignUpPage() {
                 textAlign: 'center',
                 width: '100%',
                 p: { md: 4, lg: 5 },
-                background: 'rgba(255, 255, 255, 0.85)',
+                background: 'rgba(255, 255, 255, 0.9)',
                 borderRadius: '28px',
                 backdropFilter: 'blur(30px)',
                 WebkitBackdropFilter: 'blur(30px)',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
-                boxShadow: '0 20px 60px rgba(15, 23, 42, 0.08), 0 0 25px rgba(212, 175, 55, 0.12)',
+                border: '1px solid rgba(23, 24, 39, 0.06)',
+                boxShadow: '0 20px 60px rgba(23, 24, 39, 0.04), 0 0 25px rgba(91, 95, 239, 0.08)',
                 overflow: 'hidden'
               }}>
-                <Box sx={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', borderRadius: '2px', zIndex: 3 }} />
+                <Box sx={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, transparent, #5B5FEF, transparent)', borderRadius: '2px', zIndex: 3 }} />
                 
                 <motion.div
                   animate={{
@@ -294,8 +294,8 @@ export default function SignUpPage() {
                     width: '68px',
                     height: '68px',
                     borderRadius: '20px',
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
-                    boxShadow: '0 10px 30px rgba(212, 175, 55, 0.4)'
+                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                    boxShadow: '0 10px 30px rgba(91, 95, 239, 0.35)'
                   }}
                 >
                   <Feather size={36} color="#FFFFFF" strokeWidth={2.2} />
@@ -306,13 +306,11 @@ export default function SignUpPage() {
                   lineHeight: 1,
                   marginBottom: '0.35rem',
                   fontWeight: 900,
-                  fontFamily: "'Outfit', sans-serif",
-                  background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  color: '#171827',
                   letterSpacing: '-0.03em'
                 }}>AURA</h1>
-                <p style={{ color: '#D4AF37', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Create Your Luxury Account</p>
+                <p style={{ color: '#5B5FEF', fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Join The Living Network</p>
               </Box>
             </motion.div>
           </motion.div>
@@ -327,7 +325,7 @@ export default function SignUpPage() {
           className="page-animate"
           sx={{
             background: 'transparent',
-            borderLeft: { xs: 'none', md: '1px solid rgba(212, 175, 55, 0.2)' },
+            borderLeft: { xs: 'none', md: '1px solid rgba(23, 24, 39, 0.06)' },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -347,7 +345,7 @@ export default function SignUpPage() {
               style={{
                 position: 'absolute', top: '10%', left: '5%',
                 width: 140, height: 140, borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(212, 175, 55, 0.4), transparent 70%)',
+                background: 'radial-gradient(circle, rgba(91, 95, 239, 0.3), transparent 70%)',
                 filter: 'blur(25px)'
               }}
             />
@@ -365,20 +363,20 @@ export default function SignUpPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                background: 'rgba(255, 255, 255, 0.88)',
+                background: 'rgba(255, 255, 255, 0.92)',
                 backdropFilter: 'blur(30px)',
                 WebkitBackdropFilter: 'blur(30px)',
                 p: { xs: 3.5, sm: 4.5 },
                 borderRadius: '28px',
-                border: '1.5px solid rgba(212, 175, 55, 0.35)',
-                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.08), 0 0 20px rgba(212, 175, 55, 0.1)',
+                border: '1px solid rgba(23, 24, 39, 0.06)',
+                boxShadow: '0 20px 50px rgba(23, 24, 39, 0.04), 0 0 20px rgba(91, 95, 239, 0.06)',
                 position: 'relative',
                 zIndex: 1
               }}
             >
-              <h1 style={{ fontSize: '2.1rem', marginBottom: '0.25rem', fontWeight: 900, fontFamily: "'Outfit', sans-serif", color: '#0F172A', letterSpacing: '-0.03em' }}>Create Account</h1>
-              <Typography variant="body2" sx={{ color: '#64748B', mb: 3, fontFamily: "'Inter', sans-serif", fontSize: '0.88rem' }}>
-                Fill in your details to join <strong style={{ color: '#D4AF37' }}>AURA</strong>
+              <h1 style={{ fontSize: '2.1rem', marginBottom: '0.25rem', fontWeight: 900, fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#171827', letterSpacing: '-0.03em' }}>Create Account</h1>
+              <Typography variant="body2" sx={{ color: '#727486', mb: 3, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.88rem' }}>
+                Fill in your details to join <strong style={{ color: '#5B5FEF' }}>AURA</strong>
               </Typography>
               <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
                 <TextField
@@ -395,31 +393,31 @@ export default function SignUpPage() {
                   onChange={(e) => setName(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: '#0F172A',
+                      color: '#171827',
                       backgroundColor: '#FFFFFF',
                       borderRadius: '16px',
-                      fontFamily: "'Inter', sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontWeight: 600,
                       '& fieldset': {
-                        borderColor: 'rgba(226, 232, 240, 0.9)',
+                        borderColor: 'rgba(23, 24, 39, 0.08)',
                         borderWidth: '1.5px'
                       },
                       '&:hover fieldset': {
-                        borderColor: '#D4AF37'
+                        borderColor: '#5B5FEF'
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#D4AF37',
+                        borderColor: '#5B5FEF',
                         borderWidth: '2px',
-                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
+                        boxShadow: '0 4px 16px rgba(91, 95, 239, 0.15)'
                       }
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#64748B',
-                      fontFamily: "'Inter', sans-serif",
+                      color: '#727486',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontSize: '0.9rem',
                       fontWeight: 500,
                       '&.Mui-focused': {
-                        color: '#D4AF37'
+                        color: '#5B5FEF'
                       }
                     }
                   }}
@@ -437,31 +435,31 @@ export default function SignUpPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: '#0F172A',
+                      color: '#171827',
                       backgroundColor: '#FFFFFF',
                       borderRadius: '16px',
-                      fontFamily: "'Inter', sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontWeight: 600,
                       '& fieldset': {
-                        borderColor: 'rgba(226, 232, 240, 0.9)',
+                        borderColor: 'rgba(23, 24, 39, 0.08)',
                         borderWidth: '1.5px'
                       },
                       '&:hover fieldset': {
-                        borderColor: '#D4AF37'
+                        borderColor: '#5B5FEF'
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#D4AF37',
+                        borderColor: '#5B5FEF',
                         borderWidth: '2px',
-                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
+                        boxShadow: '0 4px 16px rgba(91, 95, 239, 0.15)'
                       }
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#64748B',
-                      fontFamily: "'Inter', sans-serif",
+                      color: '#727486',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontSize: '0.9rem',
                       fontWeight: 500,
                       '&.Mui-focused': {
-                        color: '#D4AF37'
+                        color: '#5B5FEF'
                       }
                     }
                   }}
@@ -480,31 +478,31 @@ export default function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: '#0F172A',
+                      color: '#171827',
                       backgroundColor: '#FFFFFF',
                       borderRadius: '16px',
-                      fontFamily: "'Inter', sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontWeight: 600,
                       '& fieldset': {
-                        borderColor: 'rgba(226, 232, 240, 0.9)',
+                        borderColor: 'rgba(23, 24, 39, 0.08)',
                         borderWidth: '1.5px'
                       },
                       '&:hover fieldset': {
-                        borderColor: '#D4AF37'
+                        borderColor: '#5B5FEF'
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#D4AF37',
+                        borderColor: '#5B5FEF',
                         borderWidth: '2px',
-                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.15)'
+                        boxShadow: '0 4px 16px rgba(91, 95, 239, 0.15)'
                       }
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#64748B',
-                      fontFamily: "'Inter', sans-serif",
+                      color: '#727486',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontSize: '0.9rem',
                       fontWeight: 500,
                       '&.Mui-focused': {
-                        color: '#D4AF37'
+                        color: '#5B5FEF'
                       }
                     }
                   }}
@@ -516,15 +514,15 @@ export default function SignUpPage() {
                     fullWidth
                     variant="contained"
                     style={{
-                      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                      background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                       color: '#FFFFFF',
-                      border: '1px solid rgba(212, 175, 55, 0.5)',
+                      border: 'none',
                       fontWeight: 800,
-                      fontFamily: "'Outfit', sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontSize: '1rem',
                       padding: '14px',
                       borderRadius: '16px',
-                      boxShadow: '0 10px 28px rgba(15, 23, 42, 0.2)',
+                      boxShadow: '0 10px 28px rgba(91, 95, 239, 0.28)',
                       textTransform: 'none',
                       letterSpacing: '0.04em'
                     }}
@@ -540,16 +538,16 @@ export default function SignUpPage() {
 
                 <Grid container justifyContent="center" alignItems="center" sx={{ mt: 1, mb: 1 }}>
                   <Grid item xs={12} sx={{ textAlign: 'center' }}>
-                    <Typography variant="body2" component="span" sx={{ color: '#64748B', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', mr: 0.5 }}>
+                    <Typography variant="body2" component="span" sx={{ color: '#727486', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.875rem', mr: 0.5 }}>
                       Already have an account?
                     </Typography>
                     <Link to="/login" style={{
                       cursor: "pointer",
                       textDecoration: "none",
-                      color: "#0F172A",
+                      color: "#5B5FEF",
                       fontSize: "0.875rem",
                       fontWeight: 800,
-                      fontFamily: "'Inter', sans-serif"
+                      fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}>
                       Sign In
                     </Link>

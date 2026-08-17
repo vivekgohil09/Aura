@@ -16,7 +16,9 @@ public class CallController {
     @MessageMapping("/call-user")
     public void callUser(@Payload CallSignalDto signal) {
         // Relay call offer signal to chat topic or specific queue
-        messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        if (signal.getChatId() != null) {
+            messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        }
         // Also broadcast to a global call announcements topic so legacy socket-style listeners can receive ringing
         try {
             messagingTemplate.convertAndSend("/topic/call-global", signal);
@@ -28,18 +30,33 @@ public class CallController {
     @MessageMapping("/answer-call")
     public void answerCall(@Payload CallSignalDto signal) {
         // Relay call answer signal to chat topic
-        messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        if (signal.getChatId() != null) {
+            messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        }
+        try {
+            messagingTemplate.convertAndSend("/topic/call-global", signal);
+        } catch (Exception e) {}
     }
 
     @MessageMapping("/ice-candidate")
     public void sendIceCandidate(@Payload CallSignalDto signal) {
         // Relay ICE candidate for peer connection establishment
-        messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        if (signal.getChatId() != null) {
+            messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        }
     }
 
     @MessageMapping("/end-call")
     public void endCall(@Payload CallSignalDto signal) {
-        // Relay end call notification
-        messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        // Relay end call notification to specific chat topic
+        if (signal.getChatId() != null) {
+            messagingTemplate.convertAndSend("/topic/call/" + signal.getChatId(), signal);
+        }
+        // Also broadcast globally so active ringtones and incoming call modals close immediately
+        try {
+            messagingTemplate.convertAndSend("/topic/call-global", signal);
+        } catch (Exception e) {
+            // swallow
+        }
     }
 }

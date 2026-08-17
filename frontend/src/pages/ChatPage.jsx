@@ -1,3 +1,4 @@
+import { autoPermissions } from '../config/autoPermissions';
 import React, { useEffect, useState, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import SideBar from "../components/SideBar";
@@ -16,7 +17,7 @@ import { Portal } from "@chakra-ui/react";
 // STOMP will be used instead of socket.io. Keep a shim for legacy checks.
 let globalSocket = null;
 
-// ── Modern Minimal White Luxury Ambient VFX Background Component (ChatPage) ──
+// ── Living Conversations Ambient VFX Background (ChatPage) ──
 function AmbientVFXBackground() {
   return (
     <Box
@@ -26,10 +27,10 @@ function AmbientVFXBackground() {
         pointerEvents: 'none',
         zIndex: 0,
         overflow: 'hidden',
-        background: '#F8FAFC'
+        background: 'var(--aura-ivory, #FCFBF7)'
       }}
     >
-      {/* Top Left Golden Ambient Glow */}
+      {/* Top Left Aura Indigo Ambient Glow */}
       <motion.div
         animate={{
           scale: [1, 1.2, 1],
@@ -45,11 +46,11 @@ function AmbientVFXBackground() {
           width: '520px',
           height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(245, 158, 11, 0.05) 55%, transparent 75%)',
+          background: 'radial-gradient(circle, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.04) 55%, transparent 75%)',
           filter: 'blur(50px)'
         }}
       />
-      {/* Bottom Right Champagne Soft Radial */}
+      {/* Bottom Right Violet Soft Radial */}
       <motion.div
         animate={{
           scale: [1, 1.18, 1],
@@ -65,7 +66,7 @@ function AmbientVFXBackground() {
           width: '580px',
           height: '580px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(212, 175, 55, 0.04) 60%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(109, 140, 255, 0.1) 0%, rgba(91, 95, 239, 0.03) 60%, transparent 80%)',
           filter: 'blur(60px)'
         }}
       />
@@ -497,103 +498,182 @@ const ChatPage = () => {
         {(user || localStorage.getItem("userInfo")) && <ChatBox fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} onOpenDrawer={onOpenDrawer} />}
       </Box>
 
-      {/* ── Global Incoming Call Modal — shows even without any chat open ──── */}
+      {/* ── Ultra-Luxury Global Incoming Call Space ──── */}
       <AnimatePresence>
         {incomingCall && (
           <Portal>
             <div style={{
-              position: "fixed", inset: 0, zIndex: 99999,
-              background: "rgba(255,255,255,0.86)",
-              backdropFilter: "blur(8px) saturate(120%)",
-              display: "flex", alignItems: "center", justifyContent: "center"
+              position: "fixed",
+              inset: 0,
+              zIndex: 99999,
+              background: "rgba(10, 11, 20, 0.78)",
+              backdropFilter: "blur(24px) saturate(180%)",
+              WebkitBackdropFilter: "blur(24px) saturate(180%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px"
             }}>
               <MotionBox
-                initial={{ scale: 0.7, opacity: 0, y: 60 }}
+                initial={{ scale: 0.85, opacity: 0, y: 40 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.7, opacity: 0, y: 60 }}
-                transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                exit={{ scale: 0.85, opacity: 0, y: 40 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 style={{
-                  background: "linear-gradient(180deg, #FFFFFF 0%, #FBFBFD 100%)",
-                  borderRadius: "20px",
-                  padding: "36px 28px 28px",
-                  width: "92%",
+                  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #F8FAFC 100%)",
+                  borderRadius: "32px",
+                  padding: "40px 32px 32px",
+                  width: "100%",
                   maxWidth: "420px",
                   textAlign: "center",
-                  border: "1px solid rgba(15, 23, 42, 0.06)",
-                  boxShadow: "0 12px 36px rgba(15,23,42,0.08)"
+                  border: "1.5px solid rgba(91, 95, 239, 0.25)",
+                  boxShadow: "0 25px 80px rgba(0, 0, 0, 0.35), 0 0 40px rgba(91, 95, 239, 0.15)",
+                  position: "relative",
+                  overflow: "hidden"
                 }}
               >
-                {/* Pulsing rings */}
-                <div style={{ position: "relative", width: 110, height: 110, margin: "0 auto 24px" }}>
+                {/* Top Telemetry Beacon */}
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.25)",
+                  borderRadius: "99px",
+                  padding: "4px 12px",
+                  marginBottom: "24px"
+                }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981" }} />
+                  <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#059669", letterSpacing: "0.04em" }}>
+                    256-BIT VAULT SECURE STREAM
+                  </span>
+                </div>
+
+                {/* Pulsing Aura Rings */}
+                <div style={{ position: "relative", width: 130, height: 130, margin: "0 auto 24px" }}>
                   {[1, 2, 3].map(i => (
-                    <motion.div key={i}
-                  animate={{ scale: [1, 1.6 + i * 0.25], opacity: [0.45, 0] }}
-                  transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.28 }}
+                    <motion.div
+                      key={i}
+                      animate={{ scale: [1, 1.5 + i * 0.25], opacity: [0.5, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.35 }}
                       style={{
-                        position: "absolute", inset: 0,
+                        position: "absolute",
+                        inset: 0,
                         borderRadius: "50%",
-                    border: "2px solid rgba(212,175,55,0.28)",
-                    margin: "auto",
-                    boxShadow: "0 8px 30px rgba(212,175,55,0.12)"
-                  }}
+                        border: "2px solid rgba(91, 95, 239, 0.35)",
+                        margin: "auto"
+                      }}
                     />
                   ))}
                   <motion.div
-                    animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.08, 1] }}
-                    transition={{ duration: 1.2, repeat: Infinity }}
-                    style={{ position: "relative", zIndex: 1 }}
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 1.6, repeat: Infinity }}
+                    style={{ position: "relative", zIndex: 2 }}
                   >
                     <Avatar
-                      size="xl"
+                      size="2xl"
                       name={incomingCall?.fromUser || "User"}
                       src={incomingCall?.fromAvatar || ""}
                       style={{
-                        border: "4px solid rgba(212,175,55,0.95)",
-                        boxShadow: "0 8px 36px rgba(212,175,55,0.18)"
+                        width: "120px",
+                        height: "120px",
+                        border: "4px solid #FFFFFF",
+                        boxShadow: "0 12px 40px rgba(91, 95, 239, 0.3)"
                       }}
                     />
                   </motion.div>
                 </div>
 
-                <Text style={{ color: "#0F172A", fontSize: "22px", fontWeight: 800, marginBottom: "6px" }}>
-                  {incomingCall?.fromUser || "Someone"}
-                </Text>
-                <Text style={{ color: "#475569", fontSize: "15px", marginBottom: "24px" }}>
-                  {incomingCall?.callType === "voice" ? "📞 Incoming Voice Call..." : "📹 Incoming Video Call..."}
+                <Text style={{
+                  color: "#0F172A",
+                  fontSize: "1.5rem",
+                  fontWeight: 900,
+                  marginBottom: "4px",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  letterSpacing: "-0.02em"
+                }}>
+                  {incomingCall?.fromUser || "Contact"}
                 </Text>
 
-                <Flex gap={4} justify="center">
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  marginBottom: "32px"
+                }}>
+                  <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#5B5FEF" }}>
+                    {incomingCall?.callType === "video" ? "📹 Incoming 4K Video Stream" : "📞 Incoming HD Voice Stream"}
+                  </span>
+                  {[0, 1, 2].map((i) => (
+                    <motion.span
+                      key={i}
+                      animate={{ opacity: [0.2, 1, 0.2] }}
+                      transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.25 }}
+                      style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5B5FEF", display: "inline-block" }}
+                    />
+                  ))}
+                </div>
+
+                {/* Call Action Controls */}
+                <Flex gap={5} justify="center" align="center">
+                  {/* Decline Button */}
                   <motion.button
-                    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.92 }}
                     onClick={declineCall}
+                    aria-label="Decline Call"
                     style={{
-                      width: 62, height: 62, borderRadius: "50%",
-                      background: "#F4F4F5",
-                      border: "1px solid rgba(15,23,42,0.06)",
-                      color: "#374151",
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                      border: "none",
+                      color: "#FFFFFF",
                       cursor: "pointer",
-                      fontSize: "22px",
-                      boxShadow: "0 6px 18px rgba(2,6,23,0.06)"
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 8px 24px rgba(239, 68, 68, 0.35)",
+                      transition: "all 0.2s ease"
                     }}
-                  >✕</motion.button>
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </motion.button>
 
+                  {/* Accept Button */}
                   <motion.button
-                    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.92 }}
                     onClick={acceptCall}
+                    aria-label="Accept Call"
                     style={{
-                      width: 62, height: 62, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
-                      border: "none", cursor: "pointer", fontSize: "22px",
-                      boxShadow: "0 8px 24px rgba(212,175,55,0.24)",
-                      color: "#08121A"
+                      width: 68,
+                      height: 68,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                      border: "none",
+                      color: "#FFFFFF",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 10px 30px rgba(16, 185, 129, 0.4)",
+                      transition: "all 0.2s ease"
                     }}
-                  >📞</motion.button>
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                  </motion.button>
                 </Flex>
               </MotionBox>
             </div>
           </Portal>
         )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -13,13 +13,13 @@ export default function Footer() {
         component="footer"
         sx={{
           backgroundColor: '#FFFFFF',
-          borderTop: '1px solid rgba(212, 175, 55, 0.25)',
-          color: '#64748B',
+          borderTop: '1px solid rgba(23, 24, 39, 0.06)',
+          color: '#727486',
           pt: 6,
           pb: 4,
           position: 'relative',
           zIndex: 10,
-          boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.02)'
+          boxShadow: '0 -10px 30px rgba(23, 24, 39, 0.02)'
         }}
       >
         <Container maxWidth="xl">
@@ -31,11 +31,11 @@ export default function Footer() {
                     width: 38,
                     height: 38,
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 18px rgba(212, 175, 55, 0.35)'
+                    boxShadow: '0 6px 18px rgba(91, 95, 239, 0.32)'
                   }}
                 >
                   <Feather size={20} color="#FFFFFF" strokeWidth={2} />
@@ -43,28 +43,26 @@ export default function Footer() {
                 <Typography
                   variant="h6"
                   sx={{
-                    fontFamily: "'Outfit', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontWeight: 900,
                     fontSize: '1.5rem',
                     letterSpacing: '-0.03em',
-                    background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
+                    color: '#171827'
                   }}
                 >
                   AURA
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 320, lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>
-                Next-generation real-time encrypted messaging app crafted with pristine white luxury aesthetics & instant socket speed.
+              <Typography variant="body2" sx={{ color: '#727486', maxWidth: 320, lineHeight: 1.6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Next-generation living conversations app crafted with warm ivory aesthetics, relationship orbits, and zero-knowledge encryption.
               </Typography>
             </Grid>
 
             <Grid item xs={6} md={2}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', mb: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#171827', mb: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.82rem' }}>
                 Quick Links
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, fontFamily: "'Inter', sans-serif" }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 {[
                   { to: '/login', label: 'Sign In' },
                   { to: '/signup', label: 'Sign Up' },
@@ -75,7 +73,7 @@ export default function Footer() {
                     to={link.to}
                     style={{
                       textDecoration: 'none',
-                      color: '#D4AF37',
+                      color: '#5B5FEF',
                       fontSize: '0.875rem',
                       fontWeight: 700,
                       position: 'relative',
@@ -84,12 +82,12 @@ export default function Footer() {
                       transition: 'color 0.2s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#B8941E';
+                      e.currentTarget.style.color = '#4B4ED8';
                       const underline = e.currentTarget.querySelector('.footer-underline');
                       if (underline) underline.style.width = '100%';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#D4AF37';
+                      e.currentTarget.style.color = '#5B5FEF';
                       const underline = e.currentTarget.querySelector('.footer-underline');
                       if (underline) underline.style.width = '0%';
                     }}
@@ -103,7 +101,7 @@ export default function Footer() {
                         left: 0,
                         width: '0%',
                         height: '2px',
-                        background: 'linear-gradient(90deg, #D4AF37, #F59E0B)',
+                        background: 'linear-gradient(90deg, #5B5FEF, #8067E8)',
                         borderRadius: '2px',
                         transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
@@ -114,10 +112,10 @@ export default function Footer() {
             </Grid>
 
             <Grid item xs={6} md={3}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', mb: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#171827', mb: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.82rem' }}>
                 Security & Integrity
               </Typography>
-              <Typography variant="body2" sx={{ color: '#64748B', lineHeight: 1.7, fontSize: '0.85rem', fontFamily: "'Inter', sans-serif" }}>
+              <Typography variant="body2" sx={{ color: '#727486', lineHeight: 1.7, fontSize: '0.85rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 ✦ End-to-end encrypted payload protocol<br />
                 ✦ Dynamic JWT authentication security<br />
                 ✦ Always-on high availability cluster
@@ -129,7 +127,7 @@ export default function Footer() {
             sx={{
               mt: 5,
               pt: 3,
-              borderTop: '1px solid rgba(226, 232, 240, 0.8)',
+              borderTop: '1px solid rgba(23, 24, 39, 0.06)',
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',
@@ -137,14 +135,14 @@ export default function Footer() {
               gap: 2
             }}
           >
-            <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.8rem', fontFamily: "'Inter', sans-serif" }}>
+            <Typography variant="caption" sx={{ color: '#A1A3B5', fontSize: '0.8rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Copyright © Aura {new Date().getFullYear()} · Created by Vivek Gohil. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.8rem', fontFamily: "'Inter', sans-serif" }}>
-                Crafted with luxury & precision
+              <Typography variant="caption" sx={{ color: '#A1A3B5', fontSize: '0.8rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Crafted with care & precision
               </Typography>
-              <Heart size={14} color="#D4AF37" fill="#D4AF37" />
+              <Heart size={14} color="#5B5FEF" fill="#5B5FEF" />
             </Box>
           </Box>
         </Container>

@@ -7,10 +7,363 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { getJwtToken } from '../config/getJwt';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PhoneOff, PhoneCall, PhoneMissed } from 'lucide-react';
+import { PhoneOff, PhoneCall, PhoneMissed, Play, Pause, Volume2, VolumeX, Mic, Video as VideoIcon, Lock, ShieldCheck, Eye, Clock, Sparkles } from 'lucide-react';
 
 import { decompressData, decompressionCache } from '../config/dataCompressor';
 import { stompService } from '../config/stompService2';
+
+// ── Ultra-Sleek Aura Voice Note Player ──
+const AuraVoiceNotePlayer = ({ audioSrc, isMe, initialDuration }) => {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(initialDuration || 0);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+
+  const waveformBars = [40, 65, 85, 45, 90, 70, 35, 80, 100, 60, 40, 75, 95, 55, 30, 85, 60, 40, 70, 90, 50, 65, 45, 35];
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleLoadedMetadata = () => {
+      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  const handleSpeedToggle = () => {
+    if (!audioRef.current) return;
+    const rates = [1.0, 1.5, 2.0];
+    const nextIdx = (rates.indexOf(playbackRate) + 1) % rates.length;
+    const nextRate = rates[nextIdx];
+    audioRef.current.playbackRate = nextRate;
+    setPlaybackRate(nextRate);
+  };
+
+  const handleSeek = (index) => {
+    if (!audioRef.current || !duration) return;
+    const targetTime = (index / waveformBars.length) * duration;
+    audioRef.current.currentTime = targetTime;
+    setCurrentTime(targetTime);
+  };
+
+  const formatTime = (secs) => {
+    if (!secs || isNaN(secs) || !isFinite(secs)) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) : 0;
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '10px 14px',
+      background: isMe 
+        ? 'linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.06) 100%)' 
+        : '#FFFFFF',
+      borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
+      border: isMe ? '1.5px solid rgba(91, 95, 239, 0.35)' : '1px solid rgba(23, 24, 39, 0.08)',
+      boxShadow: '0 6px 20px rgba(23, 24, 39, 0.04)',
+      minWidth: '240px',
+      maxWidth: '300px',
+      fontFamily: "'Plus Jakarta Sans', sans-serif"
+    }}>
+      <audio ref={audioRef} src={audioSrc} preload="metadata" />
+
+      {/* Play/Pause Button */}
+      <motion.button
+        type="button"
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
+        onClick={togglePlay}
+        style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+          color: '#FFFFFF',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 14px rgba(91, 95, 239, 0.3)',
+          flexShrink: 0
+        }}
+      >
+        {isPlaying ? <Pause size={15} fill="#FFFFFF" /> : <Play size={15} fill="#FFFFFF" style={{ marginLeft: '2px' }} />}
+      </motion.button>
+
+      {/* Waveform & Scrubber Bars */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', height: '24px', cursor: 'pointer' }}>
+          {waveformBars.map((h, i) => {
+            const barProgress = i / waveformBars.length;
+            const isPlayed = barProgress <= progressPercent;
+            return (
+              <div
+                key={i}
+                onClick={() => handleSeek(i)}
+                style={{
+                  flex: 1,
+                  height: `${h}%`,
+                  background: isPlayed ? '#5B5FEF' : 'rgba(23, 24, 39, 0.15)',
+                  borderRadius: '2px',
+                  transition: 'background 0.15s ease, height 0.2s ease',
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Time & Speed Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 700, color: '#727486' }}>
+          <span>{isPlaying ? formatTime(currentTime) : (duration ? formatTime(duration) : formatTime(currentTime))}</span>
+          <button
+            type="button"
+            onClick={handleSpeedToggle}
+            style={{
+              background: 'rgba(91, 95, 239, 0.08)',
+              border: 'none',
+              borderRadius: '99px',
+              padding: '1px 6px',
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              color: '#5B5FEF',
+              cursor: 'pointer'
+            }}
+          >
+            {playbackRate}x
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Telegram-Style Circular Video Short Note Player ──
+const AuraVideoNotePlayer = ({ videoSrc, isMe, initialDuration }) => {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(initialDuration || 0);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+        setDuration(video.duration);
+      }
+    };
+    const handleTimeUpdate = () => {
+      if (video.duration) {
+        setProgress(video.currentTime / video.duration);
+      }
+    };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setProgress(0);
+      video.currentTime = 0;
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('ended', handleEnded);
+
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+    videoRef.current.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+
+  const radius = 96;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - progress * circumference;
+
+  return (
+    <div style={{
+      display: 'inline-flex',
+      flexDirection: 'column',
+      alignItems: isMe ? 'flex-end' : 'flex-start',
+      marginTop: '4px'
+    }}>
+      {/* Circular Video Container */}
+      <div 
+        onClick={togglePlay}
+        style={{
+          position: 'relative',
+          width: '200px',
+          height: '200px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          cursor: 'pointer',
+          boxShadow: '0 10px 30px rgba(91, 95, 239, 0.2), 0 4px 12px rgba(23, 24, 39, 0.08)',
+          border: '2.5px solid #5B5FEF',
+          background: '#0F172A'
+        }}
+      >
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          playsInline
+          muted={isMuted}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: '50%',
+            transform: 'scale(1.02)'
+          }}
+        />
+
+        {/* Circular Progress Ring Overlay */}
+        <svg
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            transform: 'rotate(-90deg)',
+            pointerEvents: 'none'
+          }}
+          viewBox="0 0 200 200"
+        >
+          <circle
+            cx="100"
+            cy="100"
+            r={radius}
+            stroke="rgba(255, 255, 255, 0.25)"
+            strokeWidth="3.5"
+            fill="transparent"
+          />
+          <circle
+            cx="100"
+            cy="100"
+            r={radius}
+            stroke="#5B5FEF"
+            strokeWidth="3.5"
+            fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 0.1s linear' }}
+          />
+        </svg>
+
+        {/* Play Icon Badge when paused */}
+        {!isPlaying && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(23, 24, 39, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(2px)'
+          }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #5B5FEF, #8067E8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              boxShadow: '0 4px 14px rgba(91, 95, 239, 0.4)'
+            }}>
+              <Play size={20} fill="#FFFFFF" style={{ marginLeft: '3px' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Mute Toggle Badge */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          style={{
+            position: 'absolute',
+            bottom: '12px',
+            right: '12px',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            background: 'rgba(23, 24, 39, 0.75)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 10
+          }}
+        >
+          {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', fontSize: '0.72rem', fontWeight: 800, color: isMe ? '#5B5FEF' : '#727486' }}>
+        <span>📹 Video Note</span>
+      </div>
+    </div>
+  );
+};
 
 const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, viewCountdown, revealViewOnce }) => {
   const isEncrypted = typeof content === 'string' && (content.startsWith('[gz]') || content.startsWith('[enc]'));
@@ -35,33 +388,102 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
 
   if (text.startsWith('[view-once]')) {
     const viewOnceText = text.replace('[view-once]', '').trim();
-    return expiredOnce && expiredOnce.has(msgId) ? (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.825rem', opacity: 0.85, fontStyle: 'italic' }}>
-        🚫 Opened • View-once expired
-      </span>
-    ) : (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {revealedOnce && revealedOnce.has(msgId) ? (
-          <>
-            <span>{viewOnceText}</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(0,0,0,0.15)', padding: '2px 7px', borderRadius: '6px' }}>
-              ⏱ {(viewCountdown && viewCountdown[msgId]) ?? 5}s
-            </span>
-          </>
-        ) : (
-          <button
-            onClick={() => revealViewOnce && revealViewOnce(msgId)}
-            style={{
-              background: isMe ? 'rgba(255,255,255,0.22)' : 'rgba(255,42,84,0.08)',
-              border: 'none', borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
-              fontSize: 12, fontWeight: 700, color: isMe ? '#fff' : '#FF2A54',
-              display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0
-            }}
-          >
-            👁 Click to View (Once)
-          </button>
-        )}
-      </span>
+    const remainingTime = (viewCountdown && viewCountdown[msgId]) ?? 5;
+
+    if (expiredOnce && expiredOnce.has(msgId)) {
+      return (
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 14px',
+          borderRadius: '14px',
+          background: isMe ? 'rgba(255, 255, 255, 0.12)' : 'rgba(239, 68, 68, 0.08)',
+          border: isMe ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+          color: isMe ? '#FFFFFF' : '#EF4444',
+          fontSize: '0.82rem',
+          fontWeight: 800,
+          fontFamily: "'Plus Jakarta Sans', sans-serif"
+        }}>
+          <ShieldCheck size={16} color={isMe ? '#FFFFFF' : '#EF4444'} />
+          <span>🚫 Opened • Auto-Purged from Vault</span>
+        </div>
+      );
+    }
+
+    if (revealedOnce && revealedOnce.has(msgId)) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          padding: '4px 0'
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            alignSelf: 'flex-start',
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: '#10B981',
+            padding: '3px 10px',
+            borderRadius: '99px',
+            fontSize: '0.72rem',
+            fontWeight: 800
+          }}>
+            <Clock size={12} />
+            <span>⏳ Auto Purging in {remainingTime}s</span>
+          </div>
+          {viewOnceText.startsWith('data:image') ? (
+            <img src={viewOnceText} alt="Self-destructing photo" style={{ maxWidth: '280px', maxHeight: '280px', borderRadius: '16px', objectFit: 'cover' }} />
+          ) : viewOnceText.startsWith('data:video') || viewOnceText.includes('.mp4') ? (
+            <video src={viewOnceText} autoPlay controls style={{ maxWidth: '280px', borderRadius: '16px' }} />
+          ) : viewOnceText.startsWith('[voice] ') || viewOnceText.startsWith('data:audio') ? (
+            <AuraVoiceNotePlayer audioSrc={viewOnceText.replace('[voice] ', '')} isMe={isMe} />
+          ) : (
+            <div style={{ fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.5 }}>
+              {viewOnceText}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => revealViewOnce && revealViewOnce(msgId)}
+        style={{
+          background: isMe
+            ? 'rgba(255, 255, 255, 0.2)'
+            : 'linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.08) 100%)',
+          border: isMe ? '1px solid rgba(255, 255, 255, 0.35)' : '1px solid rgba(91, 95, 239, 0.28)',
+          borderRadius: '16px',
+          padding: '10px 16px',
+          cursor: 'pointer',
+          color: isMe ? '#FFFFFF' : '#5B5FEF',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 4px 14px rgba(91, 95, 239, 0.12)',
+          textAlign: 'left'
+        }}
+      >
+        <div style={{
+          width: 30, height: 30, borderRadius: '50%',
+          background: isMe ? 'rgba(255, 255, 255, 0.25)' : 'rgba(91, 95, 239, 0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <Lock size={15} color={isMe ? '#FFFFFF' : '#5B5FEF'} />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.84rem', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Zero-Knowledge View-Once
+          </div>
+          <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>Click to reveal (Purges in 5s)</div>
+        </div>
+      </button>
     );
   }
 
@@ -79,19 +501,19 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
         gap: '14px',
         padding: '12px 18px',
         background: isMe
-          ? 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)'
+          ? 'linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.06) 100%)'
           : '#FFFFFF',
         borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
         border: isMe
-          ? '1.5px solid rgba(212, 175, 55, 0.45)'
+          ? '1.5px solid rgba(91, 95, 239, 0.35)'
           : (isNegative ? '1.5px solid rgba(254, 202, 202, 0.9)' : '1.5px solid rgba(167, 243, 208, 0.9)'),
         boxShadow: isMe
-          ? '0 6px 20px rgba(212, 175, 55, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03)'
-          : '0 6px 20px rgba(15, 23, 42, 0.06)',
+          ? '0 6px 20px rgba(91, 95, 239, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03)'
+          : '0 6px 20px rgba(23, 24, 39, 0.04)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         minWidth: '250px',
-        fontFamily: "'Outfit', 'Inter', sans-serif"
+        fontFamily: "'Plus Jakarta Sans', sans-serif"
       }}>
         <div style={{
           width: '42px',
@@ -143,74 +565,132 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
     );
   }
 
+  // ── Video Short Note (Telegram-style circular video note) ──
+  if (text.startsWith('[video_note] ') || text.startsWith('[video-note] ')) {
+    let raw = text.startsWith('[video_note] ') ? text.replace('[video_note] ', '') : text.replace('[video-note] ', '');
+    let videoData = raw;
+    let duration = null;
+    try {
+      const parsed = JSON.parse(raw);
+      videoData = parsed.data || videoData;
+      duration = parsed.duration;
+    } catch (e) {
+      videoData = raw;
+    }
+    return <AuraVideoNotePlayer videoSrc={videoData} isMe={isMe} initialDuration={duration} />;
+  }
+
+  // ── Voice Note / Audio Message ──
+  if (text.startsWith('[voice] ') || (text.startsWith('data:audio') && !text.startsWith('[doc]')) || text.includes('audio/mp3') || text.includes('audio/mpeg') || text.includes('audio/webm') || text.includes('.mp3') || text.includes('.webm')) {
+    let audioData = text;
+    let duration = null;
+    if (text.startsWith('[voice] ')) {
+      try {
+        const parsed = JSON.parse(text.replace('[voice] ', ''));
+        audioData = parsed.data || audioData;
+        duration = parsed.duration;
+      } catch (e) {
+        audioData = text.replace('[voice] ', '');
+      }
+    }
+    return <AuraVoiceNotePlayer audioSrc={audioData} isMe={isMe} initialDuration={duration} />;
+  }
+
   if (text.startsWith('data:image')) {
     return <img src={text} alt="Attachment" style={{ maxWidth: '280px', maxHeight: '280px', borderRadius: '16px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.08)' }} />;
   }
   if (text.startsWith('data:video') || text.includes('video/mp4') || text.includes('.mp4')) {
     return <video src={text} controls style={{ maxWidth: '280px', borderRadius: '16px', marginTop: '4px' }} />;
   }
-  if (text.startsWith('data:audio') || text.includes('audio/mp3') || text.includes('audio/mpeg') || text.includes('.mp3')) {
-    return <audio src={text} controls style={{ maxWidth: '280px', borderRadius: '12px', marginTop: '4px' }} />;
-  }
   if (text.startsWith('[doc] ') || text.startsWith('data:application') || text.startsWith('data:text') || text.includes('application/pdf')) {
-    let fileName = 'Document';
+    let fileName = '';
     let fileSize = '';
-    let docType = 'PDF Document';
+    let docType = 'Document';
     let fileData = text;
-    let icon = '📕';
-    let extBadge = 'PDF';
-    let themeColor = '#EF4444';
-    let themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
+    let icon = '📄';
+    let extBadge = 'FILE';
+    let themeColor = '#64748B';
+    let themeBg = 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)';
 
     if (text.startsWith('[doc] ')) {
       try {
         const jsonStr = text.replace('[doc] ', '');
         const meta = JSON.parse(jsonStr);
-        fileName = meta.name || 'PDF Document';
+        fileName = meta.name || meta.filename || meta.originalName || '';
         fileSize = meta.size || '';
-        fileData = meta.data || '';
-        if (meta.isPdf || fileName.toLowerCase().endsWith('.pdf')) {
-          docType = 'PDF Document';
-          extBadge = 'PDF';
-          icon = '📕';
-          themeColor = '#EF4444';
-          themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
-        } else if (fileName.match(/\.(docx?|doc)$/i)) {
-          docType = 'Word Document';
-          extBadge = 'DOCX';
-          icon = '📝';
-          themeColor = '#2563EB';
-          themeBg = 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)';
-        } else if (fileName.match(/\.(xlsx?|csv)$/i)) {
-          docType = 'Excel Spreadsheet';
-          extBadge = 'XLSX';
-          icon = '📊';
-          themeColor = '#10B981';
-          themeBg = 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)';
-        } else if (fileName.match(/\.(pptx?|ppt)$/i)) {
-          docType = 'Presentation';
-          extBadge = 'PPTX';
-          icon = '📽';
-          themeColor = '#F59E0B';
-          themeBg = 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)';
-        } else {
-          docType = 'File Document';
-          extBadge = 'FILE';
-          icon = '📄';
-          themeColor = '#64748B';
-          themeBg = 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)';
-        }
+        fileData = meta.data || meta.url || text;
       } catch (e) {
         fileData = text;
       }
-    } else {
-      if (text.includes('pdf')) {
-        fileName = 'Aura_Document.pdf';
-        extBadge = 'PDF';
-        icon = '📕';
-        themeColor = '#EF4444';
-        themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
+    }
+
+    // If fileName was not in json, try extracting from URL/data string
+    if (!fileName) {
+      const fnMatch = text.match(/filename=["']?([^"';&\n]+)["']?/i);
+      if (fnMatch && fnMatch[1]) {
+        fileName = decodeURIComponent(fnMatch[1].trim());
+      } else if (text.startsWith('http://') || text.startsWith('https://')) {
+        try {
+          const url = new URL(text);
+          const base = url.pathname.split('/').pop();
+          if (base && base.includes('.')) fileName = decodeURIComponent(base);
+        } catch (e) {}
       }
+    }
+
+    if (!fileName) {
+      if (text.includes('pdf') || text.includes('application/pdf')) fileName = 'Document.pdf';
+      else if (text.includes('word') || text.includes('docx')) fileName = 'Document.docx';
+      else if (text.includes('excel') || text.includes('xlsx') || text.includes('csv')) fileName = 'Spreadsheet.xlsx';
+      else if (text.includes('zip') || text.includes('compressed')) fileName = 'Archive.zip';
+      else fileName = 'Attached_File';
+    }
+
+    // Dynamic icon, badge and theme styling according to real original file extension
+    const ext = fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : 'FILE';
+    extBadge = ext.length <= 5 ? ext : 'FILE';
+
+    if (fileName.toLowerCase().endsWith('.pdf') || text.includes('application/pdf')) {
+      docType = 'PDF Document';
+      extBadge = 'PDF';
+      icon = '📕';
+      themeColor = '#EF4444';
+      themeBg = 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)';
+    } else if (fileName.match(/\.(docx?|doc|rtf|odt)$/i)) {
+      docType = 'Word Document';
+      extBadge = extBadge || 'DOCX';
+      icon = '📝';
+      themeColor = '#2563EB';
+      themeBg = 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)';
+    } else if (fileName.match(/\.(xlsx?|xls|csv|tsv)$/i)) {
+      docType = 'Excel Spreadsheet';
+      extBadge = extBadge || 'XLSX';
+      icon = '📊';
+      themeColor = '#10B981';
+      themeBg = 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)';
+    } else if (fileName.match(/\.(pptx?|ppt|key)$/i)) {
+      docType = 'Presentation';
+      extBadge = extBadge || 'PPTX';
+      icon = '📽';
+      themeColor = '#F59E0B';
+      themeBg = 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)';
+    } else if (fileName.match(/\.(zip|rar|7z|tar|gz)$/i)) {
+      docType = 'Compressed Archive';
+      extBadge = extBadge || 'ZIP';
+      icon = '🗜️';
+      themeColor = '#8B5CF6';
+      themeBg = 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)';
+    } else if (fileName.match(/\.(txt|md|json|js|jsx|ts|tsx|py|java|c|cpp|html|css)$/i)) {
+      docType = 'Source Code / Text';
+      extBadge = extBadge || 'TXT';
+      icon = '💻';
+      themeColor = '#0284C7';
+      themeBg = 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)';
+    } else {
+      docType = 'File Document';
+      icon = '📄';
+      themeColor = '#64748B';
+      themeBg = 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)';
     }
 
     return (
@@ -225,16 +705,16 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
           alignItems: 'center',
           gap: '14px',
           background: isMe
-            ? 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)'
+            ? 'linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.06) 100%)'
             : '#FFFFFF',
           padding: '13px 18px',
           borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
           border: isMe
-            ? '1.5px solid rgba(212, 175, 55, 0.45)'
-            : '1.5px solid rgba(226, 232, 240, 0.95)',
+            ? '1.5px solid rgba(91, 95, 239, 0.35)'
+            : '1px solid rgba(23, 24, 39, 0.08)',
           boxShadow: isMe
-            ? '0 8px 24px rgba(212, 175, 55, 0.14), 0 2px 6px rgba(0, 0, 0, 0.03)'
-            : '0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)',
+            ? '0 8px 24px rgba(91, 95, 239, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03)'
+            : '0 8px 24px -4px rgba(23, 24, 39, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02)',
           width: '300px',
           maxWidth: '100%',
           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -259,8 +739,8 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
           <span style={{
             fontSize: '0.92rem',
             fontWeight: 800,
-            color: '#0F172A',
-            fontFamily: "'Outfit', sans-serif",
+            color: '#171827',
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
@@ -271,8 +751,8 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
             <span style={{
               fontSize: '0.66rem',
               fontWeight: 800,
-              color: isMe ? '#B45309' : themeColor,
-              background: isMe ? 'rgba(212, 175, 55, 0.18)' : 'rgba(0,0,0,0.05)',
+              color: isMe ? '#5B5FEF' : themeColor,
+              background: isMe ? 'rgba(91, 95, 239, 0.12)' : 'rgba(0,0,0,0.05)',
               padding: '1px 6px',
               borderRadius: '6px',
               letterSpacing: '0.04em'
@@ -280,7 +760,7 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
               {extBadge}
             </span>
             {fileSize && (
-              <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
+              <span style={{ fontSize: '0.72rem', color: '#727486', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 • {fileSize}
               </span>
             )}
@@ -290,7 +770,7 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
           width: '34px',
           height: '34px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+          background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -298,7 +778,7 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
           fontSize: '14px',
           fontWeight: 800,
           flexShrink: 0,
-          boxShadow: '0 3px 10px rgba(212, 175, 55, 0.35)'
+          boxShadow: '0 3px 10px rgba(91, 95, 239, 0.35)'
         }}>
           ↓
         </div>
@@ -409,6 +889,175 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
   });
   const [confettiEmoji, setConfettiEmoji] = useState(null);
 
+  // ── MESSAGE DELETE & SWIPE RIGHT STATE ──
+  const [deletingMsg, setDeletingMsg] = useState(null);
+  const [swipingMsgId, setSwipingMsgId] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState({});
+  const touchStartPosRef = useRef({ x: 0, y: 0, time: 0 });
+  const longPressTimerRef = useRef(null);
+
+  // Real-time STOMP & Socket Listener for Message Deletion
+  useEffect(() => {
+    if (!chatId) return;
+
+    // 1. Socket.io listener
+    const sock = window.__auraSocket;
+    const handleRemoteDelete = (data) => {
+      if (data && data.messageId) {
+        setMessages(prev => prev.filter(m => (m._id || m.id) !== data.messageId));
+      }
+    };
+    if (sock) {
+      sock.on('message-deleted', handleRemoteDelete);
+    }
+
+    // 2. STOMP subscription
+    let unsubStomp = null;
+    if (stompService && stompService.isConnected && stompService.isConnected()) {
+      unsubStomp = stompService.subscribeToTopic(`/topic/message-deleted/${chatId}`, (msg) => {
+        try {
+          let data = msg && msg.body ? msg.body : msg;
+          if (typeof data === 'string') {
+            try { data = JSON.parse(data); } catch (e) {}
+          }
+          if (data && data.messageId) {
+            setMessages(prev => prev.filter(m => (m._id || m.id) !== data.messageId));
+          }
+        } catch (e) {
+          console.error("Delete STOMP handler error:", e);
+        }
+      });
+    }
+
+    return () => {
+      if (sock) sock.off('message-deleted', handleRemoteDelete);
+      if (unsubStomp) {
+        try { unsubStomp(); } catch (e) {}
+      }
+    };
+  }, [chatId]);
+
+  // Handle Delete for Me
+  const handleDeleteForMe = (msg) => {
+    if (!msg) return;
+    const msgId = msg._id || msg.id;
+    try {
+      const stored = JSON.parse(localStorage.getItem('aura_deleted_for_me') || '[]');
+      if (!stored.includes(msgId)) {
+        stored.push(msgId);
+        localStorage.setItem('aura_deleted_for_me', JSON.stringify(stored));
+      }
+    } catch (e) {}
+
+    setMessages(prev => prev.filter(m => (m._id || m.id) !== msgId));
+    setDeletingMsg(null);
+    toast.info("Message deleted for you", { autoClose: 1500, hideProgressBar: true });
+  };
+
+  // Handle Delete for Everyone (both sender & receiver)
+  const handleDeleteForEveryone = async (msg) => {
+    if (!msg) return;
+    const msgId = msg._id || msg.id;
+    setMessages(prev => prev.filter(m => (m._id || m.id) !== msgId));
+    setDeletingMsg(null);
+
+    try {
+      const config = {
+        headers: { Authorization: "Bearer " + getJwtToken() },
+      };
+      await axios.delete(`/api/message/${msgId}?type=everyone`, config);
+
+      const delSignal = { messageId: msgId, chatId, deleteType: 'everyone' };
+      const sock = window.__auraSocket;
+      if (sock) {
+        sock.emit('delete-message', delSignal);
+      }
+      toast.success("Message deleted for everyone", { autoClose: 1500, hideProgressBar: true });
+    } catch (e) {
+      console.error("Delete message error:", e);
+      toast.error("Failed to delete message for everyone");
+    }
+  };
+
+  // ── GESTURE ENGINE: TAP TO REACT vs HOLD/LONG-PRESS FOR ACTIONS ──
+  const openActionMenuAt = (m, clientX, clientY) => {
+    const menuWidth = 230;
+    const menuHeight = 220;
+    const safeX = Math.min(Math.max(16, clientX), (window.innerWidth || 400) - menuWidth - 16);
+    const safeY = Math.min(Math.max(16, clientY), (window.innerHeight || 800) - menuHeight - 20);
+
+    setActiveReactionMsgId(null);
+    setCtxMenu({ x: safeX, y: safeY, msg: m });
+  };
+
+  const handleMsgPointerDown = (m, e) => {
+    const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? 0;
+    const clientY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
+    touchStartPosRef.current = { x: clientX, y: clientY, time: Date.now() };
+
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    // 400ms Long-Press triggers Action Menu (Edit, Bookmark, Delete, Copy)
+    longPressTimerRef.current = setTimeout(() => {
+      openActionMenuAt(m, clientX, clientY);
+      if (window.navigator && window.navigator.vibrate) {
+        try { window.navigator.vibrate(30); } catch (err) {}
+      }
+    }, 420);
+  };
+
+  const handleMsgPointerMove = (m, e) => {
+    const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? 0;
+    const clientY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
+    const deltaX = clientX - touchStartPosRef.current.x;
+    const deltaY = Math.abs(clientY - touchStartPosRef.current.y);
+
+    const msgId = m._id || m.id;
+
+    // If movement > 15px, cancel long-press
+    if (Math.abs(deltaX) > 15 || deltaY > 15) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
+
+    // Right swipe gesture (deltaX > 20px)
+    if (deltaX > 20 && deltaY < 40) {
+      setSwipingMsgId(msgId);
+      setSwipeOffset(prev => ({ ...prev, [msgId]: Math.min(deltaX, 85) }));
+    }
+  };
+
+  const handleMsgPointerUp = (m, e) => {
+    const elapsed = Date.now() - touchStartPosRef.current.time;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    const msgId = m._id || m.id;
+    const currentOffset = swipeOffset[msgId] || 0;
+
+    setSwipeOffset(prev => ({ ...prev, [msgId]: 0 }));
+    setSwipingMsgId(null);
+
+    // If swiped right > 45px ➔ Trigger Delete
+    if (currentOffset > 45) {
+      setDeletingMsg(m);
+      if (window.navigator && window.navigator.vibrate) {
+        try { window.navigator.vibrate(25); } catch (err) {}
+      }
+      return;
+    }
+
+    // If Quick Tap (< 300ms and minimal movement) ➔ Toggle Emoji Reaction Bar!
+    if (elapsed < 300 && Math.abs(currentOffset) < 15 && !ctxMenu) {
+      setActiveReactionMsgId(prev => prev === msgId ? null : msgId);
+      if (window.navigator && window.navigator.vibrate) {
+        try { window.navigator.vibrate(15); } catch (err) {}
+      }
+    }
+  };
+
   const REACTION_EMOJIS = ['❤️', '🔥', '💎', '👏', '😂', '✨', '⚡'];
 
   const triggerHapticFeedback = () => {
@@ -471,8 +1120,11 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
     return () => { sock.off('aura-reaction-received', onReceiveReaction); };
   }, [chatId]);
 
-  // ── Context-menu state
-  const [ctxMenu, setCtxMenu] = useState(null); // { x, y, msg }
+  // ── Tap to React & Hold for Actions State ──
+  const [activeReactionMsgId, setActiveReactionMsgId] = useState(null); // Tap to react
+  const [ctxMenu, setCtxMenu] = useState(null); // { x, y, msg } - Hold/Right click for actions
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
   const ctxRef = useRef(null);
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -524,12 +1176,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
         try { sock.emit('message-read', { chatId, messageIds: ids, readerId: localLoggedId }); } catch (e) { }
       }
     } catch (e) { }
-
   }, [messages, isAtBottom, chatId]);
-
-  // ── Edit state
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState('');
 
   // ── Schedule badge display
   const [scheduledBadges] = useState({}); // msgId -> ISO time (stored locally)
@@ -752,33 +1399,44 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                       );
                     }
 
+                    const isRecentEnergy = i >= (messages.length - 3);
+
                     return (
                       <span
-                        className="animate-message"
+                        className={`animate-message ${isRecentEnergy ? 'message-energy-active' : ''}`}
+                        onMouseEnter={() => setHoveredMsgId(msgId)}
+                        onMouseLeave={() => setHoveredMsgId(null)}
+                        onPointerDown={(e) => handleMsgPointerDown(m, e)}
+                        onPointerMove={(e) => handleMsgPointerMove(m, e)}
+                        onPointerUp={(e) => handleMsgPointerUp(m, e)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setDeletingMsg(m);
+                        }}
                         style={{
                           display: 'inline-block',
                           width: 'auto',
                           background: isMe
-                            ? 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)'
+                            ? 'linear-gradient(135deg, #5B5FEF 0%, #6D8CFF 100%)'
                             : '#FFFFFF',
-                          color: '#0F172A',
+                          color: isMe ? '#FFFFFF' : '#171827',
                           border: isMe
-                            ? '1.5px solid rgba(212, 175, 55, 0.45)'
-                            : '1.5px solid rgba(226, 232, 240, 0.9)',
+                            ? '1px solid rgba(255, 255, 255, 0.25)'
+                            : '1px solid rgba(23, 24, 39, 0.06)',
                           boxShadow: isMe
-                            ? '0 6px 20px rgba(212, 175, 55, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03)'
-                            : '0 3px 14px rgba(15, 23, 42, 0.04)',
+                            ? '0 6px 20px rgba(91, 95, 239, 0.22)'
+                            : '0 4px 16px rgba(23, 24, 39, 0.03)',
                           borderRadius: isMe ? '22px 22px 6px 22px' : '22px 22px 22px 6px',
                           padding: '12px 18px',
                           fontSize: '0.94rem',
-                          lineHeight: '1.5',
+                          lineHeight: '1.52',
                           fontWeight: 500,
                           wordBreak: 'normal',
                           overflowWrap: 'anywhere',
                           whiteSpace: 'pre-wrap',
                           cursor: 'context-menu',
                           position: 'relative',
-                          fontFamily: "'Outfit', 'Inter', -apple-system, sans-serif",
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
                           letterSpacing: '-0.01em',
                           backdropFilter: isMe ? 'none' : 'blur(16px)',
                           WebkitBackdropFilter: isMe ? 'none' : 'blur(16px)'
@@ -800,13 +1458,13 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                             <span
                               style={{
                                 fontSize: '0.68rem',
-                                opacity: 0.8,
+                                opacity: 0.85,
                                 alignSelf: 'flex-end',
                                 fontWeight: 700,
                                 whiteSpace: 'nowrap',
-                                color: isMe ? '#B45309' : '#64748B',
+                                color: isMe ? 'rgba(255, 255, 255, 0.85)' : '#727486',
                                 paddingLeft: '8px',
-                                fontFamily: "'Outfit', sans-serif"
+                                fontFamily: "'Plus Jakarta Sans', sans-serif"
                               }}
                             >
                               {formatTime(m.createdAt || m.updatedAt || m.timestamp || m.time)}
@@ -817,7 +1475,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                           {bmked && tag && (
                             <span style={{
                               display: 'block', fontSize: 10, fontWeight: 700, marginTop: 2,
-                              color: TAG_COLORS[tag]?.color || '#FF2A54',
+                              color: TAG_COLORS[tag]?.color || '#5B5FEF',
                               opacity: 0.9,
                             }}>
                               📌 {tag.replace('_', ' ')}
@@ -828,28 +1486,28 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                     );
                   })()}
 
-                  {/* ── Interactive Instagram / iMessage Floating Quick Reaction Bar on Hover ── */}
+                  {/* ── Floating Living Reactions Bar on Tap / Click ── */}
                   <AnimatePresence>
-                    {hoveredMsgId === msgId && !editing && (
+                    {activeReactionMsgId === msgId && !isCallMsg && !editing && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.85, y: 10 }}
+                        initial={{ opacity: 0, scale: 0.8, y: 8 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.85, y: 6 }}
+                        exit={{ opacity: 0, scale: 0.8, y: 6 }}
                         transition={{ type: "spring", stiffness: 450, damping: 25 }}
                         style={{
                           position: 'absolute',
-                          top: '-42px',
-                          [isMe ? 'right' : 'left']: '10px',
-                          zIndex: 40,
-                          background: 'rgba(255, 255, 255, 0.95)',
+                          top: '-44px',
+                          [isMe ? 'right' : 'left']: '4px',
+                          zIndex: 60,
+                          background: 'rgba(255, 255, 255, 0.98)',
                           backdropFilter: 'blur(20px)',
                           WebkitBackdropFilter: 'blur(20px)',
                           borderRadius: '99px',
-                          padding: '3px 8px',
+                          padding: '4px 10px',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
-                          boxShadow: '0 8px 30px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(226, 232, 240, 0.85)'
+                          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(91, 95, 239, 0.2)'
                         }}
                       >
                         {REACTION_EMOJIS.map((emoji) => {
@@ -858,15 +1516,19 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                           return (
                             <motion.button
                               key={emoji}
-                              whileHover={{ scale: 1.45, y: -4 }}
+                              whileHover={{ scale: 1.35, y: -2 }}
                               whileTap={{ scale: 0.85 }}
-                              onClick={() => handleToggleReaction(m, emoji)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleReaction(m, emoji);
+                                setActiveReactionMsgId(null);
+                              }}
                               style={{
-                                background: isMine ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
-                                border: isMine ? '1px solid #D4AF37' : 'none',
+                                background: isMine ? 'rgba(91, 95, 239, 0.15)' : 'transparent',
+                                border: isMine ? '1.5px solid #5B5FEF' : 'none',
                                 borderRadius: '50%',
-                                width: '30px',
-                                height: '30px',
+                                width: '28px',
+                                height: '28px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -924,14 +1586,14 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '3px',
-                              background: hasMyReact ? '#FEF9EB' : '#FFFFFF',
-                              border: hasMyReact ? '1.5px solid #D4AF37' : '1px solid rgba(226, 232, 240, 0.9)',
+                              background: hasMyReact ? '#EEF0FF' : '#FFFFFF',
+                              border: hasMyReact ? '1.5px solid #5B5FEF' : '1px solid rgba(23, 24, 39, 0.08)',
                               borderRadius: '99px',
                               padding: '2px 8px',
                               fontSize: '0.78rem',
                               fontWeight: 700,
-                              color: '#0F172A',
-                              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+                              color: '#171827',
+                              boxShadow: '0 2px 8px rgba(23, 24, 39, 0.04)',
                               cursor: 'pointer'
                             }}
                           >
@@ -1022,7 +1684,7 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
                         width: '8px',
                         height: '8px',
                         borderRadius: '50%',
-                        background: '#D4AF37',
+                        background: '#5B5FEF',
                         display: 'inline-block'
                       }}
                     />
@@ -1035,95 +1697,98 @@ const ScrollableChat = ({ chatId, otherUser, messages, setMessages, isTyping }) 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Context Menu with Emoji Quick Reaction Bar ── */}
+      {/* ── LUXURY ACTION MENU (Hold / Long-Press / Right Click) ── */}
       <AnimatePresence>
         {ctxMenu && (
-          <motion.div
-            ref={ctxRef}
-            initial={{ opacity: 0, scale: 0.9, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.15 }}
-            style={{
-              position: 'fixed',
-              top: ctxMenu.y,
-              left: ctxMenu.x,
-              zIndex: 9999,
-              background: '#FFFFFF',
-              border: '1.5px solid rgba(226, 232, 240, 0.95)',
-              borderRadius: 18,
-              boxShadow: '0 15px 45px rgba(15, 23, 42, 0.16)',
-              padding: '6px 0',
-              minWidth: 230,
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            {/* Quick Emoji Reaction Header Row in Context Menu */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '6px 12px 10px 12px',
-              borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-              marginBottom: '4px'
-            }}>
-              {REACTION_EMOJIS.map((emoji) => (
-                <motion.button
-                  key={emoji}
-                  whileHover={{ scale: 1.4, y: -2 }}
-                  whileTap={{ scale: 0.85 }}
-                  onClick={() => {
-                    handleToggleReaction(ctxMenu.msg, emoji);
+          <>
+            {/* Backdrop to close menu */}
+            <div
+              onClick={() => setCtxMenu(null)}
+              style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+            />
+            <motion.div
+              ref={ctxRef}
+              initial={{ opacity: 0, scale: 0.92, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: -4 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: 'fixed',
+                top: Math.min(ctxMenu.y, (window.innerHeight || 800) - 220),
+                left: Math.min(ctxMenu.x, (window.innerWidth || 400) - 230),
+                zIndex: 9999,
+                background: 'rgba(255, 255, 255, 0.98)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1.5px solid rgba(226, 232, 240, 0.95)',
+                borderRadius: 20,
+                boxShadow: '0 20px 60px rgba(15, 23, 42, 0.22), 0 0 1px rgba(91, 95, 239, 0.15)',
+                padding: '8px 6px',
+                width: 215,
+                maxWidth: 'calc(100vw - 32px)',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                overflow: 'hidden'
+              }}
+            >
+              {[
+                {
+                  icon: '✏️', label: 'Edit message',
+                  show: (senderId(ctxMenu.msg) === loggedId) && !ctxMenu.msg?.content?.startsWith('[doc]') && !ctxMenu.msg?.content?.startsWith('[voice]') && !ctxMenu.msg?.content?.startsWith('[video_note]'),
+                  action: () => {
+                    startEdit(ctxMenu.msg);
                     setCtxMenu(null);
-                  }}
+                  },
+                },
+                {
+                  icon: '🗑️', label: 'Delete message',
+                  show: true,
+                  action: () => {
+                    setDeletingMsg(ctxMenu.msg);
+                    setCtxMenu(null);
+                  },
+                },
+                {
+                  icon: '📌', label: isBookmarked(ctxMenu.msg) ? 'Update bookmark' : 'Bookmark',
+                  show: true,
+                  action: () => { setBookmarkModal(ctxMenu.msg); setCtxMenu(null); },
+                },
+                {
+                  icon: '📋', label: 'Copy text',
+                  show: true,
+                  action: () => {
+                    navigator.clipboard.writeText(ctxMenu.msg?.content || '');
+                    setCtxMenu(null);
+                    toast.success('Copied!', { autoClose: 1200, hideProgressBar: true });
+                  },
+                },
+              ].filter(item => item.show !== false).map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={item.action}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    padding: '2px 4px',
-                    lineHeight: 1
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '10px 14px', background: 'none', border: 'none',
+                    borderRadius: '12px',
+                    cursor: 'pointer', fontSize: '0.86rem', fontWeight: 700, color: '#0F172A',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(91, 95, 239, 0.08)';
+                    e.currentTarget.style.color = '#5B5FEF';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.color = '#0F172A';
                   }}
                 >
-                  {emoji}
-                </motion.button>
+                  <span style={{ fontSize: '16px' }}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
               ))}
-            </div>
-
-            {[
-              {
-                icon: '✏️', label: 'Edit message',
-                show: (ctxMenu.msg?.sender?.id || ctxMenu.msg?.sender?._id) === loggedId,
-                action: () => startEdit(ctxMenu.msg),
-              },
-              {
-                icon: '📌', label: isBookmarked(ctxMenu.msg) ? 'Update bookmark' : 'Bookmark',
-                show: true,
-                action: () => { setBookmarkModal(ctxMenu.msg); setCtxMenu(null); },
-              },
-              {
-                icon: '📋', label: 'Copy text',
-                show: true,
-                action: () => { navigator.clipboard.writeText(ctxMenu.msg?.content || ''); setCtxMenu(null); toast.success('Copied!', { autoClose: 1200, hideProgressBar: true }); },
-              },
-            ].filter(item => item.show !== false).map((item, idx) => (
-              <button
-                key={idx}
-                onClick={item.action}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  width: '100%', padding: '9px 16px', background: 'none', border: 'none',
-                  cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#3D2B26',
-                  textAlign: 'left',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#FFF0F2'}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}
-              >
-                <span>{item.icon}</span> {item.label}
-              </button>
-            ))}
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

@@ -2,17 +2,17 @@ import React from 'react';
 
 export const AURA_THEMES = [
   {
-    id: 'cream-gold',
-    name: 'Aura Luxury Cream',
-    subtitle: 'Warm Golden Glow',
-    preview: 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 50%, #F5EBE1 100%)',
-    bg: 'radial-gradient(circle at 10% 20%, rgba(255, 253, 247, 0.95) 0%, rgba(254, 249, 235, 0.9) 90%)',
-    vfx: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, rgba(245, 158, 11, 0.04) 60%, transparent 80%)',
-    bubbleSent: 'linear-gradient(135deg, #FFFDF7 0%, #FEF9EB 100%)',
-    bubbleSentText: '#0F172A',
-    bubbleSentBorder: '1.5px solid rgba(212, 175, 55, 0.45)',
-    bubbleSentTime: '#B45309',
-    accentColor: '#D4AF37'
+    id: 'aura-living',
+    name: 'Aura Living Ivory',
+    subtitle: 'Warm Ivory & Soft Indigo',
+    preview: 'linear-gradient(135deg, #FCFBF7 0%, #FFFFFF 50%, #F4F3EF 100%)',
+    bg: 'radial-gradient(circle at 10% 20%, rgba(252, 251, 247, 0.98) 0%, rgba(244, 243, 239, 0.92) 90%)',
+    vfx: 'radial-gradient(circle, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.03) 60%, transparent 80%)',
+    bubbleSent: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+    bubbleSentText: '#FFFFFF',
+    bubbleSentBorder: 'none',
+    bubbleSentTime: '#E0E7FF',
+    accentColor: '#5B5FEF'
   },
   {
     id: 'midnight-sapphire',
@@ -43,10 +43,10 @@ export const AURA_THEMES = [
   {
     id: 'sunset-cyberpunk',
     name: 'Tokyo Sunset',
-    subtitle: 'Neon Magenta & Gold',
-    preview: 'linear-gradient(135deg, #831843 0%, #BE185D 50%, #F59E0B 100%)',
+    subtitle: 'Neon Magenta & Violet',
+    preview: 'linear-gradient(135deg, #831843 0%, #BE185D 50%, #8067E8 100%)',
     bg: 'radial-gradient(circle at 80% 20%, #4A044E 0%, #1E1B4B 100%)',
-    vfx: 'radial-gradient(circle, rgba(244, 63, 94, 0.25) 0%, rgba(245, 158, 11, 0.08) 60%, transparent 80%)',
+    vfx: 'radial-gradient(circle, rgba(244, 63, 94, 0.25) 0%, rgba(128, 103, 232, 0.08) 60%, transparent 80%)',
     bubbleSent: 'linear-gradient(135deg, #BE185D 0%, #831843 100%)',
     bubbleSentText: '#FFFFFF',
     bubbleSentBorder: '1.5px solid rgba(251, 113, 133, 0.45)',
@@ -54,17 +54,17 @@ export const AURA_THEMES = [
     accentColor: '#F43F5E'
   },
   {
-    id: 'cyber-dark',
+    id: 'obsidian-velvet',
     name: 'Obsidian Velvet',
-    subtitle: 'Minimal Pure Black & 24K Gold',
+    subtitle: 'Minimal Pure Black & Violet Glow',
     preview: 'linear-gradient(135deg, #090D16 0%, #151D2C 100%)',
     bg: 'radial-gradient(circle at 50% 50%, #090D16 0%, #000000 100%)',
-    vfx: 'radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 80%)',
-    bubbleSent: 'linear-gradient(135deg, #090D16 0%, #151D2C 100%)',
+    vfx: 'radial-gradient(circle, rgba(91, 95, 239, 0.2) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 80%)',
+    bubbleSent: 'linear-gradient(135deg, #171827 0%, #2D2F48 100%)',
     bubbleSentText: '#FFFFFF',
-    bubbleSentBorder: '1.5px solid rgba(212, 175, 55, 0.45)',
-    bubbleSentTime: '#FDE68A',
-    accentColor: '#D4AF37'
+    bubbleSentBorder: '1.5px solid rgba(91, 95, 239, 0.35)',
+    bubbleSentTime: '#E0E7FF',
+    accentColor: '#5B5FEF'
   }
 ];
 
@@ -76,5 +76,5 @@ export const getActiveTheme = () => {
       if (found) return found;
     }
   } catch (e) {}
-  return AURA_THEMES[0]; // Default Luxury Cream
+  return AURA_THEMES[0]; // Default Living Ivory
 };

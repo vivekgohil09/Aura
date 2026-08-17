@@ -47,4 +47,14 @@ public class MessageController {
         messageService.markChatAsRead(chatId, currentUser.getId());
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{messageId}")
+    public ResponseEntity<Void> deleteMessage(
+            @PathVariable String messageId,
+            @RequestParam(defaultValue = "everyone") String type,
+            @AuthenticationPrincipal User currentUser) {
+        messageService.deleteMessage(messageId, type, currentUser != null ? currentUser.getId() : null);
+        return ResponseEntity.ok().build();
+    }
+
 }

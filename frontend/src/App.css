@@ -5,41 +5,46 @@
      AURA DESIGN SYSTEM — Gold + Slate Luxury Palette
      ═══════════════════════════════════════════════ */
 
-  /* Core Backgrounds */
-  --bg-main: #FAFAFC;
-  --bg-secondary: #F8FAFC;
+  /* Core Living Canvas Backgrounds */
+  --bg-main: #FCFBF7;
+  --bg-secondary: #F4F3EF;
   --bg-card: #FFFFFF;
-  --bg-surface: #F1F5F9;
+  --bg-surface: #FFFFFF;
 
-  /* Core Text */
-  --text-primary: #0F172A;
-  --text-secondary: #334155;
-  --text-muted: #64748B;
-  --text-faint: #94A3B8;
+  /* Core Living Text */
+  --text-primary: #171827;
+  --text-secondary: #727486;
+  --text-muted: #A1A3B5;
+  --text-faint: #C4C6D4;
 
-  /* Accent — Gold */
-  --accent-gold: #D4AF37;
-  --accent-gold-light: #F59E0B;
-  --accent-gold-soft: rgba(212, 175, 55, 0.12);
-  --accent-gold-border: rgba(212, 175, 55, 0.35);
-  --accent-gold-glow: rgba(212, 175, 55, 0.18);
+  /* Signature Accents — Aura Indigo, Violet, Blue */
+  --accent-brand: #5B5FEF;
+  --accent-brand-cyan: #6D8CFF;
+  --accent-brand-soft: rgba(91, 95, 239, 0.09);
+  --accent-brand-border: rgba(91, 95, 239, 0.22);
+  --accent-brand-glow: rgba(91, 95, 239, 0.16);
+  --accent-gold: #5B5FEF;
+  --accent-gold-light: #8067E8;
+  --accent-gold-soft: rgba(91, 95, 239, 0.09);
+  --accent-gold-border: rgba(91, 95, 239, 0.22);
+  --accent-gold-glow: rgba(91, 95, 239, 0.16);
 
-  /* Accent — Semantic */
-  --success: #10B981;
-  --error: #EF4444;
-  --warning: #F59E0B;
-  --info: #0284C7;
+  /* Semantic Presence */
+  --success: #36C98F;
+  --error: #F06C7A;
+  --warning: #F4B860;
+  --info: #6D8CFF;
 
   /* Typography */
-  --font-heading: 'Outfit', 'Inter', sans-serif;
-  --font-body: 'Inter', 'Outfit', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
 
   /* Cards & Shadows */
-  --border-subtle: 1px solid rgba(226, 232, 240, 0.9);
-  --border-gold: 1px solid rgba(212, 175, 55, 0.3);
-  --shadow-card: 0 14px 40px rgba(15, 23, 42, 0.06);
-  --shadow-elevated: 0 20px 50px rgba(15, 23, 42, 0.08), 0 0 20px rgba(212, 175, 55, 0.1);
-  --shadow-hover: 0 20px 48px rgba(15, 23, 42, 0.1);
+  --border-subtle: 1px solid rgba(23, 24, 39, 0.06);
+  --border-gold: 1px solid rgba(91, 95, 239, 0.22);
+  --shadow-card: 0 4px 20px rgba(23, 24, 39, 0.03);
+  --shadow-elevated: 0 12px 36px rgba(23, 24, 39, 0.06), 0 0 20px rgba(91, 95, 239, 0.08);
+  --shadow-hover: 0 16px 40px rgba(23, 24, 39, 0.08);
 
   /* Transitions */
   --transition-smooth: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -95,7 +100,7 @@ label {
    GRADIENT TEXT
    ═══════════════════════════════════════════════ */
 .gradient-text {
-  background: linear-gradient(135deg, #0F172A 0%, #D4AF37 60%, #F59E0B 100%);
+  background: linear-gradient(135deg, #171827 0%, #5B5FEF 60%, #8067E8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
@@ -103,20 +108,20 @@ label {
 }
 
 /* ═══════════════════════════════════════════════
-   BUTTON SYSTEM — Gold + Slate
+   BUTTON SYSTEM — Living Aura
    ═══════════════════════════════════════════════ */
 
-/* PRIMARY BUTTON — Dark Slate with Gold accent */
+/* PRIMARY BUTTON — Aura Dark with Indigo accent */
 .btn-primary-aura {
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+  background: linear-gradient(135deg, #171827 0%, #2D2F48 100%) !important;
   color: #FFFFFF !important;
   border-radius: 14px !important;
   font-weight: 700 !important;
   font-family: var(--font-heading) !important;
-  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+  border: 1px solid rgba(91, 95, 239, 0.3) !important;
   padding: 12px 28px !important;
   transition: var(--transition-smooth) !important;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18) !important;
+  box-shadow: 0 8px 24px rgba(23, 24, 39, 0.15) !important;
   cursor: pointer !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -125,14 +130,14 @@ label {
 }
 
 .btn-primary-aura:hover {
-  background: linear-gradient(135deg, #1E293B 0%, #334155 100%) !important;
+  background: linear-gradient(135deg, #2D2F48 0%, #3D4068 100%) !important;
   transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.24) !important;
+  box-shadow: 0 12px 32px rgba(23, 24, 39, 0.22) !important;
 }
 
-/* SECONDARY BUTTON — Gold Gradient */
+/* SECONDARY BUTTON — Living Indigo Gradient */
 .btn-secondary-aura {
-  background: linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%) !important;
+  background: linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%) !important;
   color: #FFFFFF !important;
   border-radius: 14px !important;
   font-weight: 700 !important;
@@ -140,7 +145,7 @@ label {
   border: none !important;
   padding: 12px 28px !important;
   transition: var(--transition-smooth) !important;
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(91, 95, 239, 0.28) !important;
   cursor: pointer !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -150,17 +155,17 @@ label {
 
 .btn-secondary-aura:hover {
   transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 12px 32px rgba(212, 175, 55, 0.4) !important;
+  box-shadow: 0 12px 32px rgba(91, 95, 239, 0.38) !important;
 }
 
 /* SOFT/GHOST BUTTON */
 .btn-soft-aura {
-  background-color: rgba(212, 175, 55, 0.08) !important;
-  color: #D4AF37 !important;
+  background-color: rgba(91, 95, 239, 0.08) !important;
+  color: #5B5FEF !important;
   border-radius: 14px !important;
   font-weight: 700 !important;
   font-family: var(--font-heading) !important;
-  border: 1px solid rgba(212, 175, 55, 0.25) !important;
+  border: 1px solid rgba(91, 95, 239, 0.2) !important;
   padding: 12px 28px !important;
   transition: var(--transition-smooth) !important;
   cursor: pointer !important;
@@ -171,7 +176,7 @@ label {
 }
 
 .btn-soft-aura:hover {
-  background-color: rgba(212, 175, 55, 0.16) !important;
+  background-color: rgba(91, 95, 239, 0.16) !important;
   transform: translateY(-2px) !important;
 }
 
@@ -181,7 +186,7 @@ label {
 
 .aura-card {
   background-color: #FFFFFF !important;
-  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border: 1px solid rgba(23, 24, 39, 0.08) !important;
   border-radius: 24px !important;
   box-shadow: var(--shadow-card) !important;
   transition: var(--transition-smooth) !important;
@@ -190,7 +195,7 @@ label {
 .aura-card:hover {
   transform: translateY(-4px) !important;
   box-shadow: var(--shadow-hover) !important;
-  border-color: rgba(212, 175, 55, 0.3) !important;
+  border-color: rgba(91, 95, 239, 0.3) !important;
 }
 
 /* Glassmorphic Panel */
@@ -198,14 +203,14 @@ label {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid rgba(23, 24, 39, 0.08);
   box-shadow: var(--shadow-card);
   border-radius: 24px;
   transition: var(--transition-smooth);
 }
 
 .glass-panel:hover {
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(91, 95, 239, 0.3);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -233,7 +238,7 @@ button:active,
    FOCUS RING — Accessibility
    ═══════════════════════════════════════════════ */
 :focus-visible {
-  outline: 2px solid #D4AF37;
+  outline: 2px solid #5B5FEF;
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -241,7 +246,7 @@ button:active,
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 2px solid #D4AF37;
+  outline: 2px solid #5B5FEF;
   outline-offset: 2px;
 }
 
@@ -483,7 +488,7 @@ img, .chakra-avatar__img {
 
 .image-logo,
 .image-logo2 {
-  filter: drop-shadow(0 4px 10px rgba(212, 175, 55, 0.4));
+  filter: drop-shadow(0 4px 10px rgba(91, 95, 239, 0.3));
   transition: var(--transition-smooth);
 }
 
@@ -669,9 +674,9 @@ input:-webkit-autofill:active {
 }
 
 .chakra-avatar {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 50%, #F1F5F9 100%) !important;
-  border: 1.5px solid rgba(212, 175, 55, 0.4) !important;
-  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 50%, #F4F3EF 100%) !important;
+  border: 1.5px solid rgba(91, 95, 239, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(91, 95, 239, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
   position: relative !important;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
 }
@@ -681,13 +686,13 @@ input:-webkit-autofill:active {
 }
 
 .chakra-avatar__initials {
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: var(--font-heading) !important;
   font-weight: 800 !important;
   letter-spacing: 0.02em !important;
-  background: linear-gradient(135deg, #B45309 0%, #D4AF37 50%, #B45309 100%) !important;
+  background: linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
-  filter: drop-shadow(0 1px 1px rgba(212, 175, 55, 0.2)) !important;
+  filter: drop-shadow(0 1px 2px rgba(91, 95, 239, 0.2)) !important;
   text-transform: uppercase !important;
   line-height: 1 !important;
 }
@@ -779,7 +784,7 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.6);
+  background: rgba(91, 95, 239, 0.6);
 }
 
 /* ═══════════════════════════════════════════════

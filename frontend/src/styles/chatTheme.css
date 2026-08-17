@@ -1,207 +1,450 @@
-/* chatTheme.css - Advanced Luxury Design Tokens & Glassmorphism 2.0 */
+/* ==========================================================================
+   AURA: "LIVING CONVERSATIONS" BESPOKE DESIGN SYSTEM
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --primary-hue: 45;
-  --primary-saturation: 92%;
-  --primary-lightness: 52%;
-  --accent-gold-primary: #D4AF37;
-  --accent-gold-secondary: #F59E0B;
-  --accent-gold-gradient: linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%);
-  --bubble-sent-bg: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-  --bubble-received-bg: rgba(255, 255, 255, 0.96);
-  --glass-advanced: rgba(255, 255, 255, 0.88);
-  --glass-border-subtle: 1px solid rgba(226, 232, 240, 0.85);
-  --glass-border-gold: 1px solid rgba(212, 175, 55, 0.35);
-  --shadow-lux: 0 20px 40px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
-  --shadow-sent: 0 8px 24px rgba(15, 23, 42, 0.22), 0 0 12px rgba(212, 175, 55, 0.15);
+  /* ── 1. Bespoke Living Identity Tokens ── */
+  --aura-ivory: #FCFBF7;         /* Base canvas environment */
+  --aura-pearl: #FFFFFF;         /* Elevated surface panels */
+  --aura-cloud: #F4F3EF;         /* Secondary soft docks */
+
+  --aura-indigo: #5B5FEF;        /* Signature Brand Identity */
+  --aura-violet: #8067E8;        /* Secondary Atmospheric Gradient */
+  --aura-blue: #6D8CFF;          /* Atmospheric Field Accent */
+
+  --text-dark: #171827;          /* Primary Editorial Text */
+  --text-soft: #727486;          /* Secondary Editorial Subtitle */
+  --text-faint: #A1A3B5;         /* Muted Metadata */
+
+  --aura-success: #36C98F;       /* Presence Pulse: Active */
+  --aura-warning: #F4B860;       /* Presence Pulse: Away */
+  --aura-error: #F06C7A;         /* Presence Pulse: Busy */
+
+  /* ── 2. Subtle Living Atmospheric Gradients ── */
+  --aura-gradient-brand: linear-gradient(135deg, #5B5FEF 0%, #8067E8 50%, #6D8CFF 100%);
+  --aura-gradient-sent: linear-gradient(135deg, #5B5FEF 0%, #6D8CFF 100%);
+  --aura-gradient-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 251, 247, 0.9) 100%);
+  --aura-gradient-orbit: radial-gradient(circle at 50% 50%, rgba(91, 95, 239, 0.08) 0%, rgba(128, 103, 232, 0.04) 40%, transparent 70%);
+
+  /* Dynamic Atmosphere Tints */
+  --aura-atmosphere-work: linear-gradient(90deg, rgba(91, 95, 239, 0.08) 0%, rgba(109, 140, 255, 0.06) 100%);
+  --aura-atmosphere-friend: linear-gradient(90deg, rgba(128, 103, 232, 0.08) 0%, rgba(240, 108, 122, 0.06) 100%);
+  --aura-atmosphere-group: linear-gradient(90deg, rgba(109, 140, 255, 0.08) 0%, rgba(128, 103, 232, 0.06) 100%);
+
+  /* ── 3. Thin Luminous Borders & Soft Depth ── */
+  --aura-border-thin: 1px solid rgba(23, 24, 39, 0.06);
+  --aura-border-luminous: 1px solid rgba(91, 95, 239, 0.22);
+  --aura-border-active: 1.5px solid #5B5FEF;
+
+  --aura-shadow-canvas: 0 4px 20px rgba(23, 24, 39, 0.03);
+  --aura-shadow-dock: 0 12px 36px rgba(23, 24, 39, 0.06), 0 0 20px rgba(91, 95, 239, 0.08);
+  --aura-shadow-energy: 0 4px 18px rgba(91, 95, 239, 0.16);
+
+  /* ── 4. Typography ── */
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* Glassmorphism Container 2.0 */
-.glass {
-  background: var(--glass-advanced);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: var(--glass-border-subtle);
-  border-radius: 20px;
-  box-shadow: var(--shadow-lux);
+/* Global Reset & Base Canvas */
+body {
+  background-color: var(--aura-ivory);
+  color: var(--text-dark);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Advanced Chat Header */
-.chat-header {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1.5px solid rgba(212, 175, 55, 0.22);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+/* Fluid Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(114, 116, 134, 0.2);
+  border-radius: 99px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(91, 95, 239, 0.5);
 }
 
-/* Message Bubbles 2.0 */
-.chat-bubble {
-  max-width: 82%;
-  padding: 10px 16px;
-  border-radius: 20px;
-  margin: 4px 0;
-  line-height: 1.45;
-  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+/* ── 5. Presence Pulse Animations ── */
+@keyframes presencePulseActive {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(54, 201, 143, 0.55);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(54, 201, 143, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(54, 201, 143, 0);
+  }
+}
+
+@keyframes presencePulseAway {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(244, 184, 96, 0.55);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(244, 184, 96, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(244, 184, 96, 0);
+  }
+}
+
+.aura-presence-pulse-active {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--aura-success);
+  border: 1.5px solid #FFFFFF;
+  animation: presencePulseActive 2.4s infinite ease-in-out;
+}
+
+.aura-presence-pulse-away {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--aura-warning);
+  border: 1.5px solid #FFFFFF;
+  animation: presencePulseAway 2.8s infinite ease-in-out;
+}
+
+.aura-presence-pulse-offline {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #A1A3B5;
+  border: 1.5px solid #FFFFFF;
+}
+
+/* ── 6. Message Canvas & Message Energy ── */
+.message-canvas {
+  background: var(--aura-ivory);
+  background-image: radial-gradient(rgba(91, 95, 239, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.aura-message-bubble {
+  max-width: 80%;
+  padding: 12px 18px;
+  font-family: var(--font-main);
+  font-size: 0.94rem;
+  line-height: 1.52;
+  position: relative;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  word-break: break-word;
 }
 
-.chat-bubble.sent {
-  background: var(--bubble-sent-bg);
+/* Organic Asymmetrical Sent Bubble */
+.aura-message-sent {
+  background: var(--aura-gradient-sent);
   color: #FFFFFF;
+  border-radius: 22px 22px 6px 22px;
   align-self: flex-end;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  box-shadow: var(--shadow-sent);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(91, 95, 239, 0.22);
 }
 
-.chat-bubble.received {
-  background: var(--bubble-received-bg);
-  color: #0F172A;
+/* Organic Asymmetrical Received Bubble */
+.aura-message-received {
+  background: var(--aura-pearl);
+  color: var(--text-dark);
+  border-radius: 22px 22px 22px 6px;
   align-self: flex-start;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(23, 24, 39, 0.06);
+  box-shadow: 0 4px 16px rgba(23, 24, 39, 0.03);
 }
 
-/* Input area */
-.chat-input {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 8px 12px;
-  font-family: 'Inter', 'Outfit', sans-serif;
-  color: var(--text-light);
-  width: 100%;
-  resize: none;
+/* Message Energy — Luminous Edge for Active Messages */
+.message-energy-active {
+  box-shadow: 0 4px 18px rgba(91, 95, 239, 0.16), 0 0 0 1px rgba(91, 95, 239, 0.25) !important;
 }
 
-/* Call control buttons */
-.call-control {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-}
-.call-control:hover {
-  transform: scale(1.08);
-  background: var(--accent-gradient);
-  color: #fff;
-}
-
-/* Micro‑animations (using framer‑motion classes) */
-.motion-hover {
-  transition: transform 0.2s;
-}
-.motion-hover:hover {
-  transform: scale(1.04);
-}
-
-/* Button styles */
-.send-button {
-  background: var(--accent-gradient);
-  border-radius: 16px;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
-  color: #fff;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.schedule-button {
-  padding: 13px 20px;
-  background: #F4F4F5;
-  border: 1px solid #E4E4E7;
-  border-radius: 99px;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 700;
-  color: #71717A;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-.cancel-button {
-  padding: 13px 18px;
-  border: 1px solid #E4E4E7;
-  border-radius: 99px;
-  font-weight: 800;
-  font-size: 14px;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Schedule modal */
-.schedule-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 10, 12, 0.45);
+/* ── 7. Floating Command Dock ── */
+.aura-command-dock {
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  z-index: 10001;
+  border: 1.5px solid rgba(91, 95, 239, 0.22);
+  box-shadow: var(--aura-shadow-dock);
+  border-radius: 24px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-command-dock:focus-within {
+  border-color: var(--aura-indigo);
+  box-shadow: 0 14px 44px rgba(23, 24, 39, 0.08), 0 0 0 3px rgba(91, 95, 239, 0.12);
+}
+
+/* ── 8. Reaction Halo ── */
+.aura-reaction-halo {
+  position: absolute;
+  top: -36px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(91, 95, 239, 0.2);
+  border-radius: 99px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(23, 24, 39, 0.08);
+  z-index: 20;
+  animation: haloPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes haloPop {
+  0% { transform: scale(0.75) translateY(6px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.aura-reaction-item {
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.aura-reaction-item:hover {
+  transform: scale(1.35);
+}
+
+/* ── 9. Conversation Orbit Canvas ── */
+.aura-orbit-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  background: var(--aura-ivory);
+  overflow: hidden;
 }
 
-/* Pending badge container */
-.pending-badge-container {
-  margin-top: 8px;
+.aura-orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(91, 95, 239, 0.2);
+  pointer-events: none;
+}
+
+.aura-orbit-center-node {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%);
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-family: var(--font-display);
+  box-shadow: 0 10px 30px rgba(91, 95, 239, 0.35);
+  position: relative;
+  z-index: 10;
 }
 
-/* Scheduled badge */
-.scheduled-badge {
-  font-size: 11px;
-  font-weight: 700;
-  background: #EEF2FF;
-  color: #4F46E5;
-  border: 1px solid #C7D2FE;
+.aura-orbit-satellite {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 5;
+}
+.aura-orbit-satellite:hover {
+  transform: scale(1.15);
+  z-index: 15;
+}
+
+/* ── 10. Midnight Orbit Luxury Dark Theme Tokens ── */
+body.theme-midnight, .theme-midnight {
+  --aura-ivory: #0E0F19;
+  --aura-pearl: #161726;
+  --aura-cloud: #1F2033;
+  --text-dark: #FFFFFF;
+  --text-soft: #94A3B8;
+  --text-faint: #64748B;
+  --aura-border-thin: 1px solid rgba(255, 255, 255, 0.08);
+  --aura-border-luminous: 1px solid rgba(91, 95, 239, 0.4);
+  --aura-shadow-canvas: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --aura-shadow-dock: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 25px rgba(91, 95, 239, 0.15);
+}
+
+.theme-midnight .aura-message-received {
+  background: #1A1B2E;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.theme-midnight .aura-command-dock {
+  background: rgba(22, 23, 38, 0.94);
+  border-color: rgba(91, 95, 239, 0.35);
+}
+
+.theme-midnight .aura-chat-list-header {
+  background: rgba(22, 23, 38, 0.98) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── 11. Quick Burst Reactions Dock ── */
+.aura-burst-dock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 99px;
-  padding: 4px 10px;
+  border: 1px solid rgba(91, 95, 239, 0.2);
+  box-shadow: 0 8px 24px rgba(91, 95, 239, 0.12);
+  width: fit-content;
+  margin-bottom: 8px;
+  transition: all 0.25s ease;
 }
 
-/* Mobile Responsiveness & Touch Target Enhancements */
-@media (max-width: 768px) {
-  .chat-header {
-    padding: 10px 12px !important;
-    border-radius: 0 0 16px 16px;
-  }
-  
-  .chat-bubble {
-    max-width: 88%;
-    font-size: 0.9rem;
-    padding: 10px 14px;
-  }
-
-  .chat-input {
-    font-size: 0.95rem;
-    padding: 10px 14px;
-    border-radius: 20px;
-  }
-
-  .call-control, .send-button {
-    min-width: 44px;
-    min-height: 44px;
-    width: 44px;
-    height: 44px;
-  }
-  
-  .schedule-modal {
-    padding: 12px;
-  }
+.theme-midnight .aura-burst-dock {
+  background: rgba(22, 23, 38, 0.92);
+  border: 1px solid rgba(91, 95, 239, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+.aura-burst-dock-btn {
+  background: rgba(91, 95, 239, 0.06);
+  border: none;
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease;
+}
+
+.aura-burst-dock-btn:hover {
+  transform: scale(1.25) translateY(-2px);
+  background: rgba(91, 95, 239, 0.18);
+}
+
+.aura-burst-dock-btn:active {
+  transform: scale(0.85);
+}
+
+/* ── 12. Live Telemetry Status Pill ── */
+.aura-telemetry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10B981;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aura-telemetry-pill:hover {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: #10B981;
+  transform: translateY(-1px);
+}
+
+
+/* ── FUTURISTIC LIVING ORBIT RADAR SYSTEM ── */
+.aura-orbit-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justifyContent: center;
+  background: radial-gradient(circle at 50% 50%, rgba(91, 95, 239, 0.08) 0%, rgba(248, 250, 252, 0.95) 60%, #F1F5F9 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: inset 0 2px 20px rgba(91, 95, 239, 0.04);
+}
+
+.theme-midnight .aura-orbit-viewport {
+  background: radial-gradient(circle at 50% 50%, rgba(91, 95, 239, 0.15) 0%, rgba(15, 17, 30, 0.98) 60%, #080910 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.aura-radar-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 380px;
+  height: 380px;
+  margin-top: -190px;
+  margin-left: -190px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(91, 95, 239, 0.18) 0deg, rgba(91, 95, 239, 0.04) 45deg, transparent 90deg);
+  pointer-events: none;
+  animation: auraRadarSweep 8s linear infinite;
+  z-index: 2;
+}
+
+@keyframes auraRadarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.aura-orbit-ring-cosmic {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px dashed rgba(91, 95, 239, 0.22);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.aura-orbit-ring-solid {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(91, 95, 239, 0.12);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.aura-orbit-center-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justifyContent: center;
+  cursor: default;
+}

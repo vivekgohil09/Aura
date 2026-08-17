@@ -105,4 +105,39 @@ public class MessageService {
         messageRepository.saveAll(unread);
         messagingTemplate.convertAndSend("/topic/message-read/" + chatId, java.util.Map.of("messageIds", ids));
     }
+
+    public void deleteMessage(String messageId, String deleteType, String userId) {
+        Optional<Message> msgOpt = messageRepository.findById(messageId);
+        if (msgOpt.isEmpty()) return;
+        Message message = msgOpt.get();
+        Chat chat = message.getChat();
+
+        if ("everyone".equalsIgnoreCase(deleteType)) {
+            messageRepository.delete(message);
+
+            if (chat != null && chat.getLatestMessage() != null && messageId.equals(chat.getLatestMessage().getId())) {
+                List<Message> remaining = messageRepository.findByChatIdOrderByCreatedAtAsc(chat.getId());
+                if (!remaining.isEmpty()) {
+                    chat.setLatestMessage(remaining.get(remaining.size() - 1));
+                } else {
+                    chat.setLatestMessage(null);
+                }
+                chatRepository.save(chat);
+            }
+
+            java.util.Map<String, Object> delPayload = new java.util.HashMap<>();
+            delPayload.put("messageId", messageId);
+            delPayload.put("chatId", chat != null ? chat.getId() : null);
+            delPayload.put("deleteType", "everyone");
+
+            if (chat != null) {
+                try {
+                    messagingTemplate.convertAndSend("/topic/message-deleted/" + chat.getId(), delPayload);
+                    messagingTemplate.convertAndSend("/topic/chat/" + chat.getId(), delPayload);
+                    messagingTemplate.convertAndSend("/topic/conversations/" + chat.getId(), delPayload);
+                } catch (Exception e) {}
+            }
+        }
+    }
+
 }

@@ -107,6 +107,20 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
     const [loadingChat, setLoadingChat] = useState(false);
     const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [themeMode, setThemeMode] = useState(() => localStorage.getItem('aura_theme') || 'pearl');
+
+    useEffect(() => {
+        if (themeMode === 'midnight') {
+            document.body.classList.add('theme-midnight');
+        } else {
+            document.body.classList.remove('theme-midnight');
+        }
+        localStorage.setItem('aura_theme', themeMode);
+    }, [themeMode]);
+
+    const toggleThemeMode = () => {
+        setThemeMode(prev => prev === 'pearl' ? 'midnight' : 'pearl');
+    };
     const dispatch = useDispatch();
     const searchContainerRef = useRef(null);
     const drawerSearchInputRef = useRef(null);
@@ -836,8 +850,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 style={{
                     backdropFilter: "blur(24px)",
                     WebkitBackdropFilter: "blur(24px)",
-                    borderBottom: "1.5px solid rgba(212, 175, 55, 0.25)",
-                    boxShadow: "0 8px 30px rgba(15, 23, 42, 0.04)"
+                    borderBottom: "1px solid rgba(23, 24, 39, 0.06)",
+                    boxShadow: "0 8px 30px rgba(23, 24, 39, 0.03)"
                 }}
             >
                 <div className="d-flex align-items-center gap-2 gap-sm-3" style={{ flex: 1, minWidth: 0 }}>
@@ -852,21 +866,29 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             width: '38px',
                             height: '38px',
                             borderRadius: '12px',
-                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 6px 18px rgba(212, 175, 55, 0.35)',
+                            boxShadow: '0 6px 18px rgba(91, 95, 239, 0.32)',
                             position: 'relative'
                         }}>
                             <Feather size={20} color="#FFFFFF" strokeWidth={2.2} />
                         </Box>
                         <Box display="block">
-                            <h2 className="gradient-text m-0" style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>AURA</h2>
+                            <h2 style={{
+                                fontSize: "1.25rem",
+                                fontWeight: 900,
+                                letterSpacing: "-0.03em",
+                                lineHeight: 1,
+                                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                color: "#171827",
+                                margin: 0
+                            }}>AURA</h2>
                         </Box>
                     </motion.div>
 
-                    {/* Luxury Glass Search Bar — Desktop & Tablet */}
+                    {/* Living Pearl Search Bar — Desktop & Tablet */}
                     <Tooltip label="Search users by @username (⌘K)" hasArrow placement="bottom-start">
                         <Box ref={searchContainerRef} display={{ base: "none", sm: "block" }} style={{ flex: 1, maxWidth: '440px', position: 'relative' }}>
                             <Box
@@ -875,26 +897,26 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '10px',
-                                    background: 'rgba(248, 250, 252, 0.95)',
+                                    background: '#F4F3EF',
                                     backdropFilter: 'blur(16px)',
                                     WebkitBackdropFilter: 'blur(16px)',
-                                    border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                                    border: '1px solid rgba(23, 24, 39, 0.06)',
                                     borderRadius: '16px',
                                     px: 3,
                                     height: '42px',
                                     cursor: 'pointer',
                                     transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
+                                    boxShadow: '0 2px 8px rgba(23, 24, 39, 0.02)',
                                     '&:hover': {
                                         background: '#FFFFFF',
-                                        borderColor: 'rgba(212, 175, 55, 0.45)',
-                                        boxShadow: '0 4px 16px rgba(212, 175, 55, 0.1)',
+                                        borderColor: 'rgba(91, 95, 239, 0.35)',
+                                        boxShadow: '0 4px 16px rgba(91, 95, 239, 0.08)',
                                         transform: 'translateY(-1px)'
                                     },
                                     '&:focus-within': {
                                         background: '#FFFFFF',
-                                        borderColor: '#D4AF37',
-                                        boxShadow: '0 6px 24px rgba(212, 175, 55, 0.18), 0 0 0 3px rgba(212, 175, 55, 0.1)',
+                                        borderColor: '#5B5FEF',
+                                        boxShadow: '0 6px 24px rgba(91, 95, 239, 0.16), 0 0 0 3px rgba(91, 95, 239, 0.1)',
                                     }
                                 }}
                             >
@@ -905,8 +927,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     w="26px"
                                     h="26px"
                                     borderRadius="8px"
-                                    bg="rgba(212, 175, 55, 0.12)"
-                                    color="#D4AF37"
+                                    bg="rgba(91, 95, 239, 0.1)"
+                                    color="#5B5FEF"
                                     flexShrink={0}
                                 >
                                     <Search size={14} strokeWidth={2.4} />
@@ -998,15 +1020,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         right: 0,
                                         background: '#FFFFFF',
                                         borderRadius: '20px',
-                                        border: '1.5px solid rgba(212, 175, 55, 0.35)',
-                                        boxShadow: '0 20px 50px rgba(15, 23, 42, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)',
+                                        border: '1px solid rgba(23, 24, 39, 0.08)',
+                                        boxShadow: '0 20px 50px rgba(23, 24, 39, 0.12), 0 0 20px rgba(91, 95, 239, 0.06)',
                                         padding: '8px',
                                         zIndex: 1000,
                                         maxHeight: '340px',
                                         overflowY: 'auto'
                                     }}
                                 >
-                                    <div style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, color: '#B45309', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                    <div style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, color: '#5B5FEF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                                         ✦ Matching Users ({searchResult.length})
                                     </div>
                                     {(searchResult || []).filter(u => u && (u.id || u._id)).map((u) => (
@@ -1025,7 +1047,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 transition: 'all 0.2s ease'
                                             }}
                                             _hover={{
-                                                background: 'rgba(212, 175, 55, 0.08)',
+                                                background: 'rgba(91, 95, 239, 0.08)',
                                                 transform: 'translateX(3px)'
                                             }}
                                         >
@@ -1035,12 +1057,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     <Text fontWeight="800" fontSize="0.88rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif">
                                                         {u?.name || 'User'}
                                                     </Text>
-                                                    <Text fontWeight="700" fontSize="0.75rem" color="#B45309" m={0} fontFamily="'Outfit', sans-serif">
+                                                    <Text fontWeight="700" fontSize="0.75rem" color="#5B5FEF" m={0} fontFamily="'Plus Jakarta Sans', sans-serif">
                                                         @{u?.username || (u?.email ? u.email.split('@')[0] : 'user')}
                                                     </Text>
                                                 </Box>
                                             </Box>
-                                            <Badge bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)" color="#FFFFFF" borderRadius="99px" px={3} py={1} fontSize="0.72rem" fontWeight="800" boxShadow="0 2px 8px rgba(212, 175, 55, 0.25)">
+                                            <Badge bg="linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)" color="#FFFFFF" borderRadius="99px" px={3} py={1} fontSize="0.72rem" fontWeight="800" boxShadow="0 2px 8px rgba(91, 95, 239, 0.25)">
                                                 + Add User
                                             </Badge>
                                         </Box>
@@ -1070,7 +1092,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 justifyContent: 'center',
                                 cursor: 'pointer',
                                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                                color: '#0F172A'
+                                color: '#171827'
                             }}
                             aria-label="Search"
                         >
@@ -1086,7 +1108,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             whileTap={{ scale: 0.92 }}
                             onClick={() => setIsQrScannerOpen(true)}
                             style={{
-                                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                 color: '#FFFFFF',
                                 border: 'none',
                                 borderRadius: '12px',
@@ -1098,7 +1120,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0 4px 12px rgba(212, 175, 55, 0.35)',
+                                boxShadow: '0 4px 12px rgba(91, 95, 239, 0.32)',
                                 touchAction: 'manipulation',
                                 WebkitTapHighlightColor: 'transparent'
                             }}
@@ -1131,14 +1153,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
                             }}
                         >
-                            <BellIcon fontSize="1.2rem" color="#0F172A" />
+                            <BellIcon fontSize="1.2rem" color="#171827" />
                             {((notification && notification.length > 0) || (pendingReceivedRequests && pendingReceivedRequests.length > 0)) && (
                                 <span
                                     style={{
                                         position: 'absolute',
                                         top: '-4px',
                                         right: '-4px',
-                                        background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                        background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                         color: '#FFFFFF',
                                         fontSize: '0.65rem',
                                         fontWeight: 800,
@@ -1150,7 +1172,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         justifyContent: 'center',
                                         padding: '0 4px',
                                         border: '2px solid #FFFFFF',
-                                        boxShadow: '0 3px 8px rgba(212, 175, 55, 0.4)'
+                                        boxShadow: '0 3px 8px rgba(91, 95, 239, 0.4)'
                                     }}
                                 >
                                     {(notification?.length || 0) + (pendingReceivedRequests?.length || 0)}
@@ -1164,19 +1186,19 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             minW="320px"
                             maxW="380px"
                             style={{
-                                boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
-                                border: "1.5px solid rgba(212, 175, 55, 0.25)",
+                                boxShadow: "0 18px 45px rgba(23, 24, 39, 0.08)",
+                                border: "1px solid rgba(23, 24, 39, 0.06)",
                                 zIndex: 9999
                             }}
                         >
                             <Box px={3} py={2} borderBottom="1px solid #F1F5F9" display="flex" alignItems="center" justifyContent="space-between">
-                                <Text fontWeight="800" fontSize="0.88rem" color="#0F172A" margin={0} fontFamily="'Outfit', sans-serif">
+                                <Text fontWeight="800" fontSize="0.88rem" color="#171827" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
                                     Notifications ({(notification?.length || 0) + (pendingReceivedRequests?.length || 0)})
                                 </Text>
                                 {notification && notification.length > 0 && (
                                     <Text
                                         fontSize="0.75rem"
-                                        color="#D4AF37"
+                                        color="#5B5FEF"
                                         fontWeight="700"
                                         cursor="pointer"
                                         onClick={() => dispatch(setNotification([]))}
@@ -1190,10 +1212,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             {pendingReceivedRequests && pendingReceivedRequests.length > 0 && (
                                 <Box p={2} borderBottom="1px solid #F1F5F9">
                                     <Box display="flex" alignItems="center" justifyContent="space-between" px={1} mb={2}>
-                                        <Text fontSize="0.74rem" fontWeight="900" color="#B45309" textTransform="uppercase" letterSpacing="0.08em" m={0} fontFamily="'Outfit', sans-serif">
-                                            ✦ Friend Requests ({pendingReceivedRequests.length})
+                                        <Text fontSize="0.74rem" fontWeight="900" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" m={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                                            ✦ Orbit Requests ({pendingReceivedRequests.length})
                                         </Text>
-                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#D4AF37', background: 'rgba(212, 175, 55, 0.12)', padding: '2px 8px', borderRadius: '99px' }}>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#5B5FEF', background: 'rgba(91, 95, 239, 0.1)', padding: '2px 8px', borderRadius: '99px' }}>
                                             Pending
                                         </span>
                                     </Box>
@@ -1212,10 +1234,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 >
                                                     <Box
                                                         p={3}
-                                                        bg="linear-gradient(135deg, #FFFDF8 0%, #FFF9EB 100%)"
+                                                        bg="#FFFFFF"
                                                         borderRadius="18px"
-                                                        border="1.5px solid rgba(212, 175, 55, 0.35)"
-                                                        boxShadow="0 6px 18px rgba(212, 175, 55, 0.1)"
+                                                        border="1px solid rgba(23, 24, 39, 0.08)"
+                                                        boxShadow="0 4px 16px rgba(23, 24, 39, 0.04)"
                                                         display="flex"
                                                         flexDirection="column"
                                                         gap={2.5}
@@ -1229,9 +1251,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                 borderRadius: '50%',
                                                                 padding: '2px',
                                                                 background: sOnline
-                                                                    ? 'linear-gradient(135deg, #10B981 0%, #D4AF37 100%)'
-                                                                    : 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
-                                                                boxShadow: '0 3px 10px rgba(212, 175, 55, 0.25)',
+                                                                    ? 'linear-gradient(135deg, #10B981 0%, #5B5FEF 100%)'
+                                                                    : 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                                                                boxShadow: '0 3px 10px rgba(91, 95, 239, 0.2)',
                                                                 flexShrink: 0
                                                             }}>
                                                                 <Avatar size="full" name={senderUser?.name} src={senderUser?.pic} />
@@ -1250,14 +1272,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                             </Box>
                                                             <Box textAlign="left" style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                                                 <Box display="flex" alignItems="center" gap={1}>
-                                                                    <Text fontWeight="900" fontSize="0.9rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                    <Text fontWeight="900" fontSize="0.9rem" color="#171827" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
                                                                         {senderUser?.name || 'User'}
                                                                     </Text>
                                                                     {sOnline && (
                                                                         <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#10B981' }}>●</span>
                                                                     )}
                                                                 </Box>
-                                                                <Text fontSize="0.75rem" color="#D4AF37" fontWeight="700" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                <Text fontSize="0.75rem" color="#5B5FEF" fontWeight="700" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
                                                                     @{senderUser?.username || (senderUser?.email ? senderUser.email.split('@')[0] : 'user')}
                                                                 </Text>
                                                             </Box>
@@ -1273,7 +1295,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                     borderRadius: '99px',
                                                                     fontWeight: 800,
                                                                     fontSize: '0.78rem',
-                                                                    fontFamily: "'Outfit', sans-serif",
+                                                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                                                                     border: 'none',
                                                                     height: '32px',
                                                                     boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
@@ -1287,13 +1309,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                 size="sm"
                                                                 onClick={() => handleRespondFriendRequest(req.id || req._id, 'REJECT', senderUser)}
                                                                 style={{
-                                                                    background: '#F1F5F9',
-                                                                    color: '#64748B',
+                                                                    background: '#F4F3EF',
+                                                                    color: '#727486',
                                                                     borderRadius: '99px',
                                                                     fontWeight: 700,
                                                                     fontSize: '0.78rem',
-                                                                    fontFamily: "'Outfit', sans-serif",
-                                                                    border: '1px solid #E2E8F0',
+                                                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                                                    border: '1px solid rgba(23, 24, 39, 0.08)',
                                                                     height: '32px',
                                                                     padding: '0 14px',
                                                                     cursor: 'pointer'
@@ -1334,7 +1356,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 >
                                     {notif.isRequest || notif.isChatRequest || notif.type === 'chat-request' ? (
                                         <Box w="100%">
-                                            <Text fontSize="0.82rem" fontWeight="700" color="#0F172A" margin={0}>
+                                            <Text fontSize="0.82rem" fontWeight="700" color="#171827" margin={0}>
                                                 📩 Chat Request from @{notif.senderUsername || notif.senderName}
                                             </Text>
                                             <Box display="flex" alignItems="center" gap="10px" mt={2}>
@@ -1343,12 +1365,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     h="30px"
                                                     px={3}
                                                     style={{
-                                                        background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
+                                                        background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
                                                         color: "#FFFFFF",
                                                         borderRadius: "99px",
                                                         fontWeight: 800,
                                                         fontSize: "0.75rem",
-                                                        boxShadow: "0 2px 8px rgba(212, 175, 55, 0.3)"
+                                                        boxShadow: "0 2px 8px rgba(91, 95, 239, 0.25)"
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -1423,35 +1445,35 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 src={(!user?.pic || user?.pic.includes("icon-library.com")) ? undefined : user.pic}
                                 fontWeight="800"
                                 style={{
-                                    border: "1.5px solid #D4AF37",
+                                    border: "1.5px solid #5B5FEF",
                                     width: "38px",
                                     height: "38px",
-                                    boxShadow: "0 2px 10px rgba(212, 175, 55, 0.3)"
+                                    boxShadow: "0 2px 10px rgba(91, 95, 239, 0.25)"
                                 }}
                             />
                         </MenuButton>
                         <MenuList
                             bg="#FFFFFF"
-                            borderColor="rgba(212, 175, 55, 0.3)"
-                            color="#0F172A"
+                            borderColor="rgba(23, 24, 39, 0.08)"
+                            color="#171827"
                             borderRadius="20px"
                             p={1.5}
                             style={{
-                                boxShadow: "0 16px 45px rgba(15, 23, 42, 0.12)",
-                                border: "1.5px solid rgba(212, 175, 55, 0.3)"
+                                boxShadow: "0 16px 45px rgba(23, 24, 39, 0.08)",
+                                border: "1px solid rgba(23, 24, 39, 0.08)"
                             }}
                         >
                             <MenuItem
                                 bg="#FFFFFF"
-                                color="#0F172A"
+                                color="#171827"
                                 borderRadius="14px"
-                                fontFamily="'Outfit', sans-serif"
+                                fontFamily="'Plus Jakarta Sans', sans-serif"
                                 fontWeight="700"
-                                _hover={{ bg: "rgba(212, 175, 55, 0.08)", color: "#D4AF37" }}
+                                _hover={{ bg: "rgba(91, 95, 239, 0.08)", color: "#5B5FEF" }}
                                 onClick={onOpen}
                                 style={{ transition: "all 0.15s ease", padding: "10px 14px" }}
                             >
-                                <i className="fa fa-user me-3" style={{ color: "#D4AF37" }} aria-hidden="true"></i> Profile
+                                <i className="fa fa-user me-3" style={{ color: "#5B5FEF" }} aria-hidden="true"></i> Profile
                             </MenuItem>
                             <MenuItem
                                 bg="#FFFFFF"
@@ -1476,23 +1498,23 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 onClose={onCloseDrawer}
                 size="md"
             >
-                <DrawerOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(15, 23, 42, 0.45)" }} />
+                <DrawerOverlay style={{ backdropFilter: "blur(20px)", background: "rgba(23, 24, 39, 0.45)" }} />
                 <DrawerContent style={{
                     background: "#FFFFFF",
-                    color: "#0F172A",
-                    borderRight: "1.5px solid rgba(212, 175, 55, 0.3)",
-                    boxShadow: "0 30px 80px rgba(15, 23, 42, 0.2), 0 0 40px rgba(212, 175, 55, 0.08)",
+                    color: "#171827",
+                    borderRight: "1px solid rgba(23, 24, 39, 0.08)",
+                    boxShadow: "0 30px 80px rgba(23, 24, 39, 0.15), 0 0 40px rgba(91, 95, 239, 0.06)",
                     maxWidth: "460px",
                     display: "flex",
                     flexDirection: "column"
                 }}>
-                    {loadingChat && (<Progress size='xs' height='3.5px' colorScheme='amber' isIndeterminate bg="rgba(212, 175, 55, 0.2)" />)}
+                    {loadingChat && (<Progress size='xs' height='3.5px' colorScheme='purple' isIndeterminate bg="rgba(91, 95, 239, 0.15)" />)}
                     
                     {/* ── DRAWER HEADER ── */}
                     <DrawerHeader style={{
-                        borderBottom: "1px solid rgba(241, 245, 249, 0.9)",
+                        borderBottom: "1px solid rgba(23, 24, 39, 0.06)",
                         padding: "22px 24px 18px",
-                        background: "linear-gradient(180deg, rgba(254, 249, 235, 0.5) 0%, rgba(255, 255, 255, 0) 100%)"
+                        background: "linear-gradient(180deg, rgba(244, 243, 239, 0.6) 0%, rgba(255, 255, 255, 0) 100%)"
                     }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -1503,11 +1525,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         width: '44px',
                                         height: '44px',
                                         borderRadius: '16px',
-                                        background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                        background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: '0 8px 20px rgba(212, 175, 55, 0.35)',
+                                        boxShadow: '0 8px 20px rgba(91, 95, 239, 0.28)',
                                         flexShrink: 0
                                     }}
                                 >
@@ -1518,8 +1540,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '5px',
-                                        background: 'rgba(212, 175, 55, 0.12)',
-                                        color: '#B45309',
+                                        background: 'rgba(91, 95, 239, 0.1)',
+                                        color: '#5B5FEF',
                                         fontSize: '0.68rem',
                                         fontWeight: 900,
                                         letterSpacing: '0.12em',
@@ -1534,8 +1556,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         margin: 0,
                                         fontSize: "1.3rem",
                                         fontWeight: 900,
-                                        color: "#0F172A",
-                                        fontFamily: "'Outfit', sans-serif",
+                                        color: "#171827",
+                                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                                         letterSpacing: "-0.02em",
                                         lineHeight: 1.15
                                     }}>
@@ -1551,10 +1573,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 onClick={onCloseDrawer}
                                 style={{
                                     borderRadius: "50%",
-                                    border: "1px solid #E2E8F0",
+                                    border: "1px solid rgba(23, 24, 39, 0.08)",
                                     width: "34px",
                                     height: "34px",
-                                    color: "#64748B",
+                                    color: "#727486",
                                     background: "#FFFFFF",
                                     display: "flex",
                                     alignItems: "center",
@@ -1562,7 +1584,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     cursor: "pointer",
                                     fontSize: "13px",
                                     fontWeight: "bold",
-                                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.05)",
+                                    boxShadow: "0 2px 8px rgba(23, 24, 39, 0.03)",
                                     transition: "all 0.15s ease",
                                     padding: 0
                                 }}
@@ -1580,7 +1602,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             <Box style={{ position: 'relative', width: '100%' }}>
                                 <Search
                                     size={20}
-                                    color="#D4AF37"
+                                    color="#5B5FEF"
                                     style={{
                                         position: 'absolute',
                                         left: '18px',
@@ -1595,22 +1617,22 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     bg="#FFFFFF"
-                                    color="#0F172A"
+                                    color="#171827"
                                     pl="50px"
                                     pr={search ? "46px" : "18px"}
                                     h="52px"
                                     fontWeight="600"
-                                    fontFamily="'Outfit', sans-serif"
+                                    fontFamily="'Plus Jakarta Sans', sans-serif"
                                     fontSize="0.96rem"
                                     borderRadius="18px"
                                     style={{
-                                        border: "1.5px solid rgba(226, 232, 240, 0.95)",
-                                        boxShadow: "0 2px 10px rgba(15, 23, 42, 0.03)"
+                                        border: "1.5px solid rgba(23, 24, 39, 0.08)",
+                                        boxShadow: "0 2px 10px rgba(23, 24, 39, 0.02)"
                                     }}
                                     _focus={{
-                                        borderColor: "#D4AF37",
+                                        borderColor: "#5B5FEF",
                                         bg: "#FFFFFF",
-                                        boxShadow: "0 0 0 3.5px rgba(212, 175, 55, 0.18), 0 8px 25px rgba(212, 175, 55, 0.12)"
+                                        boxShadow: "0 0 0 3.5px rgba(91, 95, 239, 0.15), 0 8px 25px rgba(91, 95, 239, 0.1)"
                                     }}
                                 />
                                 {search && (
@@ -1626,7 +1648,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             transform: 'translateY(-50%)',
                                             border: 'none',
                                             background: 'rgba(100, 116, 139, 0.14)',
-                                            color: '#64748B',
+                                            color: '#727486',
                                             borderRadius: '50%',
                                             width: '24px',
                                             height: '24px',
@@ -1657,12 +1679,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         borderRadius: '99px',
                                         fontSize: '0.76rem',
                                         fontWeight: 800,
-                                        fontFamily: "'Outfit', sans-serif",
-                                        border: drawerFilter === 'all' ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
-                                        background: drawerFilter === 'all' ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : '#FFFFFF',
-                                        color: drawerFilter === 'all' ? '#FFFFFF' : '#64748B',
+                                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                        border: drawerFilter === 'all' ? 'none' : '1px solid rgba(23, 24, 39, 0.08)',
+                                        background: drawerFilter === 'all' ? 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)' : '#FFFFFF',
+                                        color: drawerFilter === 'all' ? '#FFFFFF' : '#727486',
                                         cursor: 'pointer',
-                                        boxShadow: drawerFilter === 'all' ? '0 4px 12px rgba(212, 175, 55, 0.3)' : 'none',
+                                        boxShadow: drawerFilter === 'all' ? '0 4px 12px rgba(91, 95, 239, 0.28)' : 'none',
                                         transition: 'all 0.18s ease',
                                         whiteSpace: 'nowrap'
                                     }}
@@ -1794,19 +1816,19 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             width: '54px',
                                             height: '54px',
                                             borderRadius: '50%',
-                                            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
+                                            background: 'linear-gradient(135deg, rgba(91, 95, 239, 0.15) 0%, rgba(128, 103, 232, 0.05) 100%)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            color: '#D4AF37',
-                                            boxShadow: '0 4px 14px rgba(212, 175, 55, 0.15)'
+                                            color: '#5B5FEF',
+                                            boxShadow: '0 4px 14px rgba(91, 95, 239, 0.15)'
                                         }}>
                                             <Search size={24} />
                                         </Box>
-                                        <Text fontWeight="800" fontSize="1.05rem" color="#0F172A" fontFamily="'Outfit', sans-serif" mb={1}>
+                                        <Text fontWeight="800" fontSize="1.05rem" color="#171827" fontFamily="'Plus Jakarta Sans', sans-serif" mb={1}>
                                             {drawerFilter === 'online' ? "No Users Online Right Now" : drawerFilter === 'friends' ? "No Friends In Search" : "No users found"}
                                         </Text>
-                                        <Text fontSize="0.84rem" color="#64748B" fontFamily="'Inter', sans-serif" maxW="280px" mx="auto" lineHeight="1.5">
+                                        <Text fontSize="0.84rem" color="#727486" fontFamily="'Plus Jakarta Sans', sans-serif" maxW="280px" mx="auto" lineHeight="1.5">
                                             {search.trim()
                                                 ? `We couldn't find anyone matching "${search.trim()}". Try typing their exact @username or full name.`
                                                 : drawerFilter === 'friends'
@@ -1864,24 +1886,24 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         borderRadius: '20px',
                                                         background: '#FFFFFF',
                                                         border: isMe
-                                                            ? '1.5px solid rgba(212, 175, 55, 0.4)'
+                                                            ? '1.5px solid rgba(91, 95, 239, 0.4)'
                                                             : isFriend
-                                                            ? '1.5px solid rgba(139, 92, 246, 0.35)'
+                                                            ? '1.5px solid rgba(128, 103, 232, 0.35)'
                                                             : isSentRequest
-                                                            ? '1.5px solid rgba(245, 158, 11, 0.35)'
-                                                            : '1.5px solid rgba(226, 232, 240, 0.85)',
+                                                            ? '1.5px solid rgba(91, 95, 239, 0.25)'
+                                                            : '1px solid rgba(23, 24, 39, 0.08)',
                                                         boxShadow: isFriend
-                                                            ? '0 4px 16px rgba(139, 92, 246, 0.08)'
+                                                            ? '0 4px 16px rgba(128, 103, 232, 0.08)'
                                                             : isSentRequest
-                                                            ? '0 4px 16px rgba(245, 158, 11, 0.06)'
-                                                            : '0 4px 16px rgba(15, 23, 42, 0.04)',
+                                                            ? '0 4px 16px rgba(91, 95, 239, 0.06)'
+                                                            : '0 4px 16px rgba(23, 24, 39, 0.03)',
                                                         cursor: isMe ? 'default' : 'pointer',
                                                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                                                     }}
                                                     _hover={{
-                                                        borderColor: '#D4AF37',
-                                                        boxShadow: '0 10px 28px rgba(212, 175, 55, 0.18)',
-                                                        background: isMe ? '#FFFFFF' : '#FFFDF8'
+                                                        borderColor: '#5B5FEF',
+                                                        boxShadow: '0 10px 28px rgba(91, 95, 239, 0.15)',
+                                                        background: isMe ? '#FFFFFF' : '#FCFBF7'
                                                     }}
                                                 >
                                                     <Box style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
@@ -1894,15 +1916,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                             borderRadius: '50%',
                                                             padding: '2px',
                                                             background: isOnlineNow
-                                                                ? 'linear-gradient(135deg, #10B981 0%, #D4AF37 100%)'
+                                                                ? 'linear-gradient(135deg, #10B981 0%, #5B5FEF 100%)'
                                                                 : isFriend
-                                                                ? 'linear-gradient(135deg, #8B5CF6 0%, #D4AF37 100%)'
+                                                                ? 'linear-gradient(135deg, #8067E8 0%, #5B5FEF 100%)'
                                                                 : isSentRequest
-                                                                ? 'linear-gradient(135deg, #F59E0B 0%, #D4AF37 100%)'
-                                                                : 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                                ? 'linear-gradient(135deg, #6D8CFF 0%, #5B5FEF 100%)'
+                                                                : 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                                             boxShadow: isOnlineNow
                                                                 ? '0 4px 14px rgba(16, 185, 129, 0.35)'
-                                                                : '0 4px 12px rgba(212, 175, 55, 0.25)',
+                                                                : '0 4px 12px rgba(91, 95, 239, 0.2)',
                                                             flexShrink: 0
                                                         }}>
                                                             <Avatar
@@ -1926,7 +1948,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                     width: '13px',
                                                                     height: '13px',
                                                                     borderRadius: '50%',
-                                                                    background: isOnlineNow ? '#10B981' : '#94A3B8',
+                                                                    background: isOnlineNow ? '#10B981' : '#A1A3B5',
                                                                     border: '2.5px solid #FFFFFF',
                                                                     boxShadow: isOnlineNow ? '0 0 8px rgba(16, 185, 129, 0.6)' : 'none'
                                                                 }}
@@ -1936,19 +1958,19 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         {/* User Details */}
                                                         <Box textAlign="left" style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                                             <Box display="flex" alignItems="center" gap={1.5} style={{ overflow: 'hidden' }}>
-                                                                <Text fontWeight="900" fontSize="0.98rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                                <Text fontWeight="900" fontSize="0.98rem" color="#171827" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
                                                                     {u?.name || 'User'}
                                                                 </Text>
                                                                 {isMe ? (
-                                                                    <Badge bg="linear-gradient(135deg, #D4AF37, #F59E0B)" color="#FFFFFF" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="900">
+                                                                    <Badge bg="linear-gradient(135deg, #5B5FEF, #8067E8)" color="#FFFFFF" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="900">
                                                                         You
                                                                     </Badge>
                                                                 ) : isFriend ? (
-                                                                    <Badge bg="linear-gradient(135deg, #8B5CF6, #6D28D9)" color="#FFFFFF" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="900">
+                                                                    <Badge bg="linear-gradient(135deg, #8067E8, #5B5FEF)" color="#FFFFFF" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="900">
                                                                         ⭐ Friend
                                                                     </Badge>
                                                                 ) : isSentRequest ? (
-                                                                    <Badge bg="rgba(245, 158, 11, 0.15)" color="#B45309" border="1px solid rgba(245, 158, 11, 0.3)" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="800">
+                                                                    <Badge bg="rgba(91, 95, 239, 0.12)" color="#5B5FEF" border="1px solid rgba(91, 95, 239, 0.25)" borderRadius="99px" px={2} py={0.5} fontSize="0.65rem" fontWeight="800">
                                                                         ⏳ Request Sent
                                                                     </Badge>
                                                                 ) : incomingReq ? (
@@ -1961,7 +1983,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                     </span>
                                                                 )}
                                                             </Box>
-                                                            <Text fontWeight="700" fontSize="0.8rem" color="#D4AF37" m={0} fontFamily="'Outfit', sans-serif" isTruncated>
+                                                            <Text fontWeight="700" fontSize="0.8rem" color="#5B5FEF" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
                                                                 @{u?.username || (u?.email ? u.email.split('@')[0] : 'user')}
                                                             </Text>
                                                         </Box>
@@ -1979,21 +2001,21 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                             accessChat(targetId);
                                                                         }}
                                                                         style={{
-                                                                            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                                                                            background: 'linear-gradient(135deg, #171827 0%, #2D2F48 100%)',
                                                                             color: '#FFFFFF',
                                                                             borderRadius: '99px',
                                                                             padding: '0 16px',
                                                                             height: '36px',
                                                                             fontWeight: 800,
                                                                             fontSize: '0.8rem',
-                                                                            fontFamily: "'Outfit', sans-serif",
-                                                                            border: '1px solid rgba(212, 175, 55, 0.4)',
-                                                                            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.2)',
+                                                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                                                            border: '1px solid rgba(91, 95, 239, 0.3)',
+                                                                            boxShadow: '0 4px 14px rgba(23, 24, 39, 0.15)',
                                                                             cursor: 'pointer'
                                                                         }}
                                                                         _hover={{
-                                                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
-                                                                            boxShadow: '0 6px 20px rgba(212, 175, 55, 0.35)'
+                                                                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                                                                            boxShadow: '0 6px 20px rgba(91, 95, 239, 0.3)'
                                                                         }}
                                                                     >
                                                                         💬 Chat
@@ -2016,7 +2038,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                                 height: '36px',
                                                                                 fontWeight: 800,
                                                                                 fontSize: '0.78rem',
-                                                                                fontFamily: "'Outfit', sans-serif",
+                                                                                fontFamily: "'Plus Jakarta Sans', sans-serif",
                                                                                 border: 'none',
                                                                                 boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
                                                                                 cursor: 'pointer'
@@ -2033,15 +2055,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                                 handleRespondFriendRequest(incomingReq.id || incomingReq._id, 'REJECT', u);
                                                                             }}
                                                                             style={{
-                                                                                background: '#F1F5F9',
-                                                                                color: '#64748B',
+                                                                                background: '#F4F3EF',
+                                                                                color: '#727486',
                                                                                 borderRadius: '99px',
                                                                                 padding: '0 10px',
                                                                                 height: '36px',
                                                                                 fontWeight: 700,
                                                                                 fontSize: '0.78rem',
-                                                                                fontFamily: "'Outfit', sans-serif",
-                                                                                border: '1px solid #E2E8F0',
+                                                                                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                                                                border: '1px solid rgba(23, 24, 39, 0.08)',
                                                                                 cursor: 'pointer'
                                                                             }}
                                                                         >
@@ -2056,8 +2078,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                 >
                                                                     <div
                                                                         style={{
-                                                                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(212, 175, 55, 0.08) 100%)',
-                                                                            color: '#B45309',
+                                                                            background: 'rgba(91, 95, 239, 0.1)',
+                                                                            color: '#5B5FEF',
                                                                             borderRadius: '99px',
                                                                             padding: '0 14px',
                                                                             height: '36px',
@@ -2066,9 +2088,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                             gap: '6px',
                                                                             fontWeight: 800,
                                                                             fontSize: '0.78rem',
-                                                                            fontFamily: "'Outfit', sans-serif",
-                                                                            border: '1.5px solid rgba(212, 175, 55, 0.4)',
-                                                                            boxShadow: '0 2px 10px rgba(212, 175, 55, 0.12)',
+                                                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                                                            border: '1.5px solid rgba(91, 95, 239, 0.3)',
+                                                                            boxShadow: '0 2px 10px rgba(91, 95, 239, 0.1)',
                                                                             cursor: 'default',
                                                                             userSelect: 'none'
                                                                         }}
@@ -2087,22 +2109,22 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                             handleSendFriendRequest(u);
                                                                         }}
                                                                         style={{
-                                                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                                                             color: '#FFFFFF',
                                                                             borderRadius: '99px',
                                                                             padding: '0 16px',
                                                                             height: '36px',
                                                                             fontWeight: 800,
                                                                             fontSize: '0.8rem',
-                                                                            fontFamily: "'Outfit', sans-serif",
+                                                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
                                                                             border: 'none',
-                                                                            boxShadow: '0 4px 14px rgba(212, 175, 55, 0.35)',
+                                                                            boxShadow: '0 4px 14px rgba(91, 95, 239, 0.28)',
                                                                             cursor: 'pointer',
                                                                             display: 'flex',
                                                                             alignItems: 'center',
                                                                             gap: '5px'
                                                                         }}
-                                                                        _hover={{ opacity: 0.95, boxShadow: '0 6px 20px rgba(212, 175, 55, 0.45)' }}
+                                                                        _hover={{ opacity: 0.95, boxShadow: '0 6px 20px rgba(91, 95, 239, 0.4)' }}
                                                                     >
                                                                         + Add Friend
                                                                     </Button>
@@ -2128,9 +2150,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                     borderRadius="28px"
                     style={{
                         background: "#FFFFFF",
-                        color: "#0F172A",
-                        border: "1.5px solid rgba(212, 175, 55, 0.3)",
-                        boxShadow: "0 40px 100px rgba(15, 23, 42, 0.2)",
+                        color: "#171827",
+                        border: "1px solid rgba(23, 24, 39, 0.08)",
+                        boxShadow: "0 40px 100px rgba(23, 24, 39, 0.15)",
                         overflow: "hidden"
                     }}
                 >
@@ -2143,19 +2165,19 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         <Box sx={{
                             height: '110px',
                             width: '100%',
-                            background: 'linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(255, 255, 255, 0) 100%), #FFFFFF',
+                            background: 'linear-gradient(180deg, rgba(91, 95, 239, 0.08) 0%, rgba(255, 255, 255, 0) 100%), #FFFFFF',
                             position: 'relative',
                             display: 'flex',
                             alignItems: 'flex-start',
                             justifyContent: 'space-between',
                             p: 3.5,
                             px: 4,
-                            borderBottom: '1px solid rgba(212, 175, 55, 0.2)'
+                            borderBottom: '1px solid rgba(23, 24, 39, 0.06)'
                         }}>
                             <Badge
                                 sx={{
-                                    bg: 'rgba(212, 175, 55, 0.12)',
-                                    color: '#D4AF37',
+                                    bg: 'rgba(91, 95, 239, 0.1)',
+                                    color: '#5B5FEF',
                                     borderRadius: '99px',
                                     px: 3,
                                     py: 1,
@@ -2163,7 +2185,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     fontWeight: 900,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.1em',
-                                    border: '1px solid rgba(212, 175, 55, 0.35)'
+                                    border: '1px solid rgba(91, 95, 239, 0.25)'
                                 }}
                             >
                                 ✦ Aura Profile
@@ -2175,14 +2197,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         size="sm"
                                         onClick={() => setIsQrScannerOpen(true)}
                                         style={{
-                                            background: 'rgba(212, 175, 55, 0.1)',
-                                            color: '#D4AF37',
+                                            background: 'rgba(91, 95, 239, 0.08)',
+                                            color: '#5B5FEF',
                                             borderRadius: '99px',
                                             padding: '6px 14px',
                                             fontSize: '0.78rem',
                                             fontWeight: 800,
-                                            fontFamily: "'Outfit', sans-serif",
-                                            border: '1px solid rgba(212, 175, 55, 0.35)',
+                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                            border: '1px solid rgba(91, 95, 239, 0.25)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '6px'
@@ -2200,17 +2222,17 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             width: '32px',
                                             height: '32px',
                                             borderRadius: '50%',
-                                            bg: '#F8FAFC',
-                                            color: '#64748B',
+                                            bg: '#F4F3EF',
+                                            color: '#727486',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
-                                            border: '1px solid #E2E8F0',
+                                            border: '1px solid rgba(23, 24, 39, 0.08)',
                                             transition: 'all 0.2s ease',
                                             '&:hover': {
                                                 bg: '#E2E8F0',
-                                                color: '#0F172A'
+                                                color: '#171827'
                                             }
                                         }}
                                     >
@@ -2230,8 +2252,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 padding: '4px',
                                                 borderRadius: '50%',
                                                 overflow: 'hidden',
-                                                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
-                                                boxShadow: '0 0 0 3px #FFFFFF, 0 0 0 5px rgba(212, 175, 55, 0.4), 0 10px 25px rgba(212, 175, 55, 0.3)'
+                                                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                                                boxShadow: '0 0 0 3px #FFFFFF, 0 0 0 5px rgba(91, 95, 239, 0.3), 0 10px 25px rgba(91, 95, 239, 0.2)'
                                             }}>
                                                 <Avatar
                                                     size="2xl"
@@ -2261,13 +2283,13 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     position: 'absolute',
                                                     bottom: '2px',
                                                     right: '2px',
-                                                    bg: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                    bg: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                                     color: '#FFFFFF',
                                                     borderRadius: '50%',
                                                     width: '34px',
                                                     height: '34px',
                                                     cursor: 'pointer',
-                                                    boxShadow: '0 4px 14px rgba(212, 175, 55, 0.4)',
+                                                    boxShadow: '0 4px 14px rgba(91, 95, 239, 0.35)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -2282,18 +2304,18 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 </Box>
 
                                 {/* User Hero Titles */}
-                                <h3 style={{ margin: '14px 0 2px', fontSize: "1.45rem", fontWeight: 900, color: "#0F172A", fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>
+                                <h3 style={{ margin: '14px 0 2px', fontSize: "1.45rem", fontWeight: 900, color: "#171827", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.02em' }}>
                                     {user?.name || "Aura User"}
                                 </h3>
                                 <span style={{
-                                    background: 'rgba(212, 175, 55, 0.1)',
-                                    color: '#D4AF37',
+                                    background: 'rgba(91, 95, 239, 0.08)',
+                                    color: '#5B5FEF',
                                     fontSize: '0.82rem',
                                     fontWeight: 800,
                                     padding: '3px 14px',
                                     borderRadius: '99px',
-                                    border: '1px solid rgba(212, 175, 55, 0.3)',
-                                    fontFamily: "'Inter', sans-serif"
+                                    border: '1px solid rgba(91, 95, 239, 0.2)',
+                                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                                 }}>
                                     @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
                                 </span>
@@ -2308,32 +2330,32 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     px: 3.5,
                                     borderRadius: '18px',
                                     background: '#FFFFFF',
-                                    border: '1.5px solid #F1F5F9',
-                                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.02)',
+                                    border: '1.5px solid rgba(23, 24, 39, 0.06)',
+                                    boxShadow: '0 2px 10px rgba(23, 24, 39, 0.02)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
                                     transition: 'all 0.2s ease',
                                     '&:hover': {
-                                        borderColor: 'rgba(212, 175, 55, 0.4)',
-                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)'
+                                        borderColor: 'rgba(91, 95, 239, 0.4)',
+                                        boxShadow: '0 6px 20px rgba(91, 95, 239, 0.08)'
                                     }
                                 }}>
                                     <Box sx={{
                                         width: '40px',
                                         height: '40px',
                                         borderRadius: '12px',
-                                        background: 'rgba(212, 175, 55, 0.1)',
+                                        background: 'rgba(91, 95, 239, 0.08)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0,
-                                        border: '1px solid rgba(212, 175, 55, 0.3)'
+                                        border: '1px solid rgba(91, 95, 239, 0.2)'
                                     }}>
-                                        <PersonOutlineIcon style={{ color: '#D4AF37', fontSize: 19 }} />
+                                        <PersonOutlineIcon style={{ color: '#5B5FEF', fontSize: 19 }} />
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left' }}>
-                                        <strong style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Display Name</strong>
+                                        <strong style={{ color: '#727486', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Display Name</strong>
                                         {isEditingName ? (
                                             <Input
                                                 value={editName}
@@ -2342,14 +2364,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 size="sm"
                                                 mt={1}
                                                 borderRadius="10px"
-                                                border="1.5px solid #D4AF37"
-                                                focusBorderColor="#D4AF37"
+                                                border="1.5px solid #5B5FEF"
+                                                focusBorderColor="#5B5FEF"
                                                 bg="#FFFFFF"
-                                                color="#0F172A"
+                                                color="#171827"
                                                 fontWeight="700"
                                             />
                                         ) : (
-                                            <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif" }}>{user && user.name}</span>
+                                            <span style={{ fontWeight: 800, color: '#171827', fontSize: '0.95rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{user && user.name}</span>
                                         )}
                                     </span>
                                     {isEditingName ? (
@@ -2357,14 +2379,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="sm"
                                                 onClick={handleSaveName}
-                                                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                                style={{ background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
                                             >
                                                 <CheckIcon fontSize="12px" />
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 onClick={() => setIsEditingName(false)}
-                                                style={{ background: '#F1F5F9', color: '#64748B', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                                style={{ background: '#F4F3EF', color: '#727486', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
                                             >
                                                 <CloseIcon fontSize="10px" />
                                             </Button>
@@ -2374,8 +2396,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="sm"
                                                 onClick={() => { setEditName(user?.name || ''); setIsEditingName(true); }}
-                                                style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
-                                                _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                                style={{ background: 'transparent', color: '#727486', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                _hover={{ background: 'rgba(91, 95, 239, 0.08)', color: '#5B5FEF' }}
                                             >
                                                 <EditIcon fontSize="14px" />
                                             </Button>
@@ -2390,32 +2412,32 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     px: 3.5,
                                     borderRadius: '18px',
                                     background: '#FFFFFF',
-                                    border: '1.5px solid #F1F5F9',
-                                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.02)',
+                                    border: '1.5px solid rgba(23, 24, 39, 0.06)',
+                                    boxShadow: '0 2px 10px rgba(23, 24, 39, 0.02)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
                                     transition: 'all 0.2s ease',
                                     '&:hover': {
-                                        borderColor: 'rgba(212, 175, 55, 0.4)',
-                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)'
+                                        borderColor: 'rgba(91, 95, 239, 0.4)',
+                                        boxShadow: '0 6px 20px rgba(91, 95, 239, 0.08)'
                                     }
                                 }}>
                                     <Box sx={{
                                         width: '40px',
                                         height: '40px',
                                         borderRadius: '12px',
-                                        background: 'rgba(212, 175, 55, 0.1)',
+                                        background: 'rgba(91, 95, 239, 0.08)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0,
-                                        border: '1px solid rgba(212, 175, 55, 0.3)'
+                                        border: '1px solid rgba(91, 95, 239, 0.2)'
                                     }}>
-                                        <AlternateEmailIcon style={{ color: '#D4AF37', fontSize: 19 }} />
+                                        <AlternateEmailIcon style={{ color: '#5B5FEF', fontSize: 19 }} />
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                        <strong style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Username</strong>
+                                        <strong style={{ color: '#727486', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Username</strong>
                                         {isEditingUsername ? (
                                             <Input
                                                 value={editUsername}
@@ -2424,15 +2446,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 size="sm"
                                                 mt={1}
                                                 borderRadius="10px"
-                                                border="1.5px solid #D4AF37"
-                                                focusBorderColor="#D4AF37"
+                                                border="1.5px solid #5B5FEF"
+                                                focusBorderColor="#5B5FEF"
                                                 bg="#FFFFFF"
-                                                color="#0F172A"
+                                                color="#171827"
                                                 fontWeight="700"
                                                 placeholder="e.g. vicky123"
                                             />
                                         ) : (
-                                            <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif" }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
+                                            <span style={{ fontWeight: 800, color: '#171827', fontSize: '0.95rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>@{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}</span>
                                         )}
                                     </span>
                                     {isEditingUsername ? (
@@ -2440,14 +2462,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="sm"
                                                 onClick={handleSaveUsername}
-                                                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                                style={{ background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
                                             >
                                                 <CheckIcon fontSize="12px" />
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 onClick={() => setIsEditingUsername(false)}
-                                                style={{ background: '#F1F5F9', color: '#64748B', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                                style={{ background: '#F4F3EF', color: '#727486', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
                                             >
                                                 <CloseIcon fontSize="10px" />
                                             </Button>
@@ -2458,8 +2480,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => { setEditUsername(user?.username || ''); setIsEditingUsername(true); }}
-                                                    style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
-                                                    _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                                    style={{ background: 'transparent', color: '#727486', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                    _hover={{ background: 'rgba(91, 95, 239, 0.08)', color: '#5B5FEF' }}
                                                 >
                                                     <EditIcon fontSize="14px" />
                                                 </Button>
@@ -2472,8 +2494,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         navigator.clipboard.writeText(`@${uName}`);
                                                         toast.success('Username copied!', { autoClose: 3000, hideProgressBar: true });
                                                     }}
-                                                    style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
-                                                    _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                                    style={{ background: 'transparent', color: '#727486', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                    _hover={{ background: 'rgba(91, 95, 239, 0.08)', color: '#5B5FEF' }}
                                                 >
                                                     <ContentCopyIcon style={{ fontSize: 14 }} />
                                                 </Button>
@@ -2489,32 +2511,32 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     px: 3.5,
                                     borderRadius: '18px',
                                     background: '#FFFFFF',
-                                    border: '1.5px solid #F1F5F9',
-                                    boxShadow: '0 2px 10px rgba(15, 23, 42, 0.02)',
+                                    border: '1.5px solid rgba(23, 24, 39, 0.06)',
+                                    boxShadow: '0 2px 10px rgba(23, 24, 39, 0.02)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
                                     transition: 'all 0.2s ease',
                                     '&:hover': {
-                                        borderColor: 'rgba(212, 175, 55, 0.4)',
-                                        boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)'
+                                        borderColor: 'rgba(91, 95, 239, 0.4)',
+                                        boxShadow: '0 6px 20px rgba(91, 95, 239, 0.08)'
                                     }
                                 }}>
                                     <Box sx={{
                                         width: '40px',
                                         height: '40px',
                                         borderRadius: '12px',
-                                        background: 'rgba(212, 175, 55, 0.1)',
+                                        background: 'rgba(91, 95, 239, 0.08)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0,
-                                        border: '1px solid rgba(212, 175, 55, 0.3)'
+                                        border: '1px solid rgba(91, 95, 239, 0.2)'
                                     }}>
-                                        <EmailIcon style={{ color: '#D4AF37', fontSize: 19 }} />
+                                        <EmailIcon style={{ color: '#5B5FEF', fontSize: 19 }} />
                                     </Box>
                                     <span style={{ flexGrow: 1, textAlign: 'left', wordBreak: 'break-all' }}>
-                                        <strong style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Email Address</strong>
+                                        <strong style={{ color: '#727486', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '1px' }}>Email Address</strong>
                                         {isEditingEmail ? (
                                             <Input
                                                 value={editEmail}
@@ -2523,14 +2545,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 size="sm"
                                                 mt={1}
                                                 borderRadius="10px"
-                                                border="1.5px solid #D4AF37"
-                                                focusBorderColor="#D4AF37"
+                                                border="1.5px solid #5B5FEF"
+                                                focusBorderColor="#5B5FEF"
                                                 bg="#FFFFFF"
-                                                color="#0F172A"
+                                                color="#171827"
                                                 fontWeight="700"
                                             />
                                         ) : (
-                                            <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif" }}>{user && user.email}</span>
+                                            <span style={{ fontWeight: 800, color: '#171827', fontSize: '0.95rem', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{user && user.email}</span>
                                         )}
                                     </span>
                                     {isEditingEmail ? (
@@ -2538,14 +2560,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="sm"
                                                 onClick={handleSaveEmail}
-                                                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                                style={{ background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)', color: '#FFF', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
                                             >
                                                 <CheckIcon fontSize="12px" />
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 onClick={() => setIsEditingEmail(false)}
-                                                style={{ background: '#F1F5F9', color: '#64748B', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
+                                                style={{ background: '#F4F3EF', color: '#727486', borderRadius: '8px', minW: '30px', padding: '0 8px' }}
                                             >
                                                 <CloseIcon fontSize="10px" />
                                             </Button>
@@ -2555,8 +2577,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Button
                                                 size="sm"
                                                 onClick={() => { setEditEmail(user?.email || ''); setIsEditingEmail(true); }}
-                                                style={{ background: 'transparent', color: '#94A3B8', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
-                                                _hover={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}
+                                                style={{ background: 'transparent', color: '#727486', borderRadius: '10px', padding: '0', minW: '32px', height: '32px' }}
+                                                _hover={{ background: 'rgba(91, 95, 239, 0.08)', color: '#5B5FEF' }}
                                             >
                                                 <EditIcon fontSize="14px" />
                                             </Button>
@@ -2572,16 +2594,16 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         onClick={onClose}
                                         style={{
                                             width: '100%',
-                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                             color: '#FFFFFF',
                                             fontWeight: 800,
                                             height: '48px',
                                             borderRadius: '16px',
                                             border: 'none',
                                             fontSize: '0.94rem',
-                                            fontFamily: "'Outfit', sans-serif",
+                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
                                             letterSpacing: '0.02em',
-                                            boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
+                                            boxShadow: '0 8px 24px rgba(91, 95, 239, 0.28)',
                                             textTransform: 'none',
                                             cursor: 'pointer',
                                             touchAction: 'manipulation',
@@ -2604,9 +2626,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 <ModalContent style={{
                     borderRadius: '32px',
                     background: '#FFFFFF',
-                    color: '#0F172A',
-                    border: '1.5px solid rgba(212, 175, 55, 0.3)',
-                    boxShadow: '0 30px 80px rgba(15, 23, 42, 0.2)',
+                    color: '#171827',
+                    border: '1px solid rgba(23, 24, 39, 0.08)',
+                    boxShadow: '0 30px 80px rgba(23, 24, 39, 0.15)',
                     overflow: 'hidden'
                 }}>
                     <motion.div
@@ -2622,12 +2644,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             p: 4,
                             px: 5,
                             pb: 2,
-                            borderBottom: '1px solid #F1F5F9'
+                            borderBottom: '1px solid rgba(23, 24, 39, 0.06)'
                         }}>
                             <Badge
                                 sx={{
-                                    bg: 'rgba(212, 175, 55, 0.12)',
-                                    color: '#B45309',
+                                    bg: 'rgba(91, 95, 239, 0.1)',
+                                    color: '#5B5FEF',
                                     borderRadius: '99px',
                                     px: 3.5,
                                     py: 1.2,
@@ -2635,9 +2657,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                     fontWeight: 900,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.12em',
-                                    border: '1px solid rgba(212, 175, 55, 0.3)',
-                                    boxShadow: '0 2px 8px rgba(212, 175, 55, 0.08)',
-                                    fontFamily: "'Outfit', sans-serif"
+                                    border: '1px solid rgba(91, 95, 239, 0.25)',
+                                    boxShadow: '0 2px 8px rgba(91, 95, 239, 0.08)',
+                                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                                 }}
                             >
                                 ✦ AURA BARCODE SCANNER
@@ -2649,17 +2671,17 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         width: '34px',
                                         height: '34px',
                                         borderRadius: '50%',
-                                        bg: '#F8FAFC',
-                                        color: '#64748B',
+                                        bg: '#F4F3EF',
+                                        color: '#727486',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease',
-                                        border: '1px solid #E2E8F0',
+                                        border: '1px solid rgba(23, 24, 39, 0.08)',
                                         '&:hover': {
                                             bg: '#E2E8F0',
-                                            color: '#0F172A'
+                                            color: '#171827'
                                         }
                                     }}
                                 >
@@ -2672,11 +2694,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             {/* Mode Tab Switcher */}
                             <Box sx={{
                                 display: 'flex',
-                                background: '#F1F5F9',
+                                background: '#F4F3EF',
                                 borderRadius: '99px',
                                 p: 1,
                                 mb: 4,
-                                border: '1px solid rgba(226, 232, 240, 0.8)'
+                                border: '1px solid rgba(23, 24, 39, 0.06)'
                             }}>
                                 <button
                                     type="button"
@@ -2687,12 +2709,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         borderRadius: '99px',
                                         border: 'none',
                                         background: qrTab === 'scan' ? '#FFFFFF' : 'transparent',
-                                        color: qrTab === 'scan' ? '#B45309' : '#64748B',
+                                        color: qrTab === 'scan' ? '#5B5FEF' : '#727486',
                                         fontWeight: 800,
                                         fontSize: '0.82rem',
-                                        fontFamily: "'Outfit', sans-serif",
+                                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                                         cursor: 'pointer',
-                                        boxShadow: qrTab === 'scan' ? '0 4px 14px rgba(212, 175, 55, 0.18)' : 'none',
+                                        boxShadow: qrTab === 'scan' ? '0 4px 14px rgba(91, 95, 239, 0.18)' : 'none',
                                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -2711,12 +2733,12 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         borderRadius: '99px',
                                         border: 'none',
                                         background: qrTab === 'myQr' ? '#FFFFFF' : 'transparent',
-                                        color: qrTab === 'myQr' ? '#B45309' : '#64748B',
+                                        color: qrTab === 'myQr' ? '#5B5FEF' : '#727486',
                                         fontWeight: 800,
                                         fontSize: '0.82rem',
-                                        fontFamily: "'Outfit', sans-serif",
+                                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                                         cursor: 'pointer',
-                                        boxShadow: qrTab === 'myQr' ? '0 4px 14px rgba(212, 175, 55, 0.18)' : 'none',
+                                        boxShadow: qrTab === 'myQr' ? '0 4px 14px rgba(91, 95, 239, 0.18)' : 'none',
                                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -2735,14 +2757,14 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         width: '240px',
                                         height: '240px',
                                         borderRadius: '28px',
-                                        border: isScanning ? '3px solid #10B981' : '3px solid #D4AF37',
-                                        background: '#0F172A',
+                                        border: isScanning ? '3px solid #10B981' : '3px solid #5B5FEF',
+                                        background: '#171827',
                                         position: 'relative',
                                         overflow: 'hidden',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.3)' : '0 14px 40px rgba(212, 175, 55, 0.25)',
+                                        boxShadow: isScanning ? '0 12px 35px rgba(16, 185, 129, 0.3)' : '0 14px 40px rgba(91, 95, 239, 0.25)',
                                         transition: 'all 0.3s ease',
                                         mb: 4
                                     }}>
@@ -2763,8 +2785,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         {/* Fallback Overlay if Camera is Loading / Off */}
                                         {!cameraActive && (
                                             <Box textAlign="center" color="#FFFFFF" p={2}>
-                                                <QrCode2Icon style={{ fontSize: 46, color: isScanning ? '#10B981' : '#D4AF37', opacity: 0.85 }} />
-                                                <Text fontSize="0.75rem" fontWeight="800" color={cameraError ? '#EF4444' : '#94A3B8'} m={0} mt={1}>
+                                                <QrCode2Icon style={{ fontSize: 46, color: isScanning ? '#10B981' : '#5B5FEF', opacity: 0.85 }} />
+                                                <Text fontSize="0.75rem" fontWeight="800" color={cameraError ? '#EF4444' : '#727486'} m={0} mt={1}>
                                                     {cameraError ? cameraError : 'Initializing Camera...'}
                                                 </Text>
                                                 {cameraError && (
@@ -2772,7 +2794,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                         onClick={startCamera}
                                                         style={{
                                                             marginTop: '8px',
-                                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                                             color: '#FFF',
                                                             border: 'none',
                                                             padding: '4px 12px',
@@ -2795,8 +2817,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             height: '4px',
                                             background: isScanning
                                                 ? 'linear-gradient(90deg, transparent, #10B981, transparent)'
-                                                : 'linear-gradient(90deg, transparent, #D4AF37, transparent)',
-                                            boxShadow: isScanning ? '0 0 20px #10B981' : '0 0 18px #D4AF37',
+                                                : 'linear-gradient(90deg, transparent, #5B5FEF, transparent)',
+                                            boxShadow: isScanning ? '0 0 20px #10B981' : '0 0 18px #5B5FEF',
                                             animation: 'scanLine 1.8s linear infinite',
                                             zIndex: 3
                                         }} />
@@ -2807,8 +2829,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             width: '160px',
                                             height: '160px',
                                             borderRadius: '16px',
-                                            border: '2px dashed rgba(212, 175, 55, 0.6)',
-                                            boxShadow: 'inset 0 0 15px rgba(212, 175, 55, 0.15)',
+                                            border: '2px dashed rgba(91, 95, 239, 0.6)',
+                                            boxShadow: 'inset 0 0 15px rgba(91, 95, 239, 0.15)',
                                             pointerEvents: 'none',
                                             zIndex: 2,
                                             display: 'flex',
@@ -2820,8 +2842,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 bottom: '-22px',
                                                 fontSize: '0.66rem',
                                                 fontWeight: 800,
-                                                color: '#D4AF37',
-                                                background: 'rgba(15, 23, 42, 0.75)',
+                                                color: '#5B5FEF',
+                                                background: 'rgba(23, 24, 39, 0.75)',
                                                 padding: '2px 8px',
                                                 borderRadius: '6px',
                                                 letterSpacing: '0.04em'
@@ -2871,15 +2893,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 style={{
                                                     width: '100%',
                                                     height: '46px',
-                                                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                                     color: '#FFFFFF',
                                                     border: 'none',
                                                     borderRadius: '16px',
                                                     fontSize: '0.88rem',
                                                     fontWeight: 800,
-                                                    fontFamily: "'Outfit', sans-serif",
+                                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                                                     cursor: 'pointer',
-                                                    boxShadow: '0 4px 16px rgba(212, 175, 55, 0.35)',
+                                                    boxShadow: '0 4px 16px rgba(91, 95, 239, 0.28)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -2912,10 +2934,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     <Box display="flex" alignItems="center" gap={3}>
                                                         <Avatar size="md" name={scannedUser.name} src={scannedUser.pic} />
                                                         <Box textAlign="left">
-                                                            <Text fontWeight="800" fontSize="0.9rem" color="#0F172A" m={0} fontFamily="'Outfit', sans-serif">
+                                                            <Text fontWeight="800" fontSize="0.9rem" color="#171827" m={0} fontFamily="'Plus Jakarta Sans', sans-serif">
                                                                 {scannedUser.name}
                                                             </Text>
-                                                            <Text fontWeight="700" fontSize="0.75rem" color="#B45309" m={0} fontFamily="'Outfit', sans-serif">
+                                                            <Text fontWeight="700" fontSize="0.75rem" color="#5B5FEF" m={0} fontFamily="'Plus Jakarta Sans', sans-serif">
                                                                 @{scannedUser.username || (scannedUser.email ? scannedUser.email.split('@')[0] : 'user')}
                                                             </Text>
                                                         </Box>
@@ -2923,11 +2945,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     <Button
                                                         size="sm"
                                                         onClick={() => sendChatRequest(scannedUser)}
-                                                        bg="linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)"
+                                                        bg="linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)"
                                                         color="#FFFFFF"
                                                         fontWeight="800"
                                                         borderRadius="12px"
-                                                        boxShadow="0 4px 12px rgba(212, 175, 55, 0.25)"
+                                                        boxShadow="0 4px 12px rgba(91, 95, 239, 0.25)"
                                                     >
                                                         + Add User
                                                     </Button>
@@ -2944,8 +2966,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Box sx={{
                                                 padding: '4px',
                                                 borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
-                                                boxShadow: '0 8px 25px rgba(212, 175, 55, 0.25)'
+                                                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                                                boxShadow: '0 8px 25px rgba(91, 95, 239, 0.22)'
                                             }}>
                                                 <Avatar
                                                     size="lg"
@@ -2960,20 +2982,20 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                 />
                                             </Box>
                                         </motion.div>
-                                        <h4 style={{ margin: '10px 0 2px', fontSize: '1.3rem', fontWeight: 900, color: '#0F172A', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>
+                                        <h4 style={{ margin: '10px 0 2px', fontSize: '1.3rem', fontWeight: 900, color: '#171827', fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.02em' }}>
                                             {user?.name || "Aura User"}
                                         </h4>
                                         <Badge
                                             sx={{
-                                                bg: 'rgba(212, 175, 55, 0.12)',
-                                                color: '#B45309',
+                                                bg: 'rgba(91, 95, 239, 0.1)',
+                                                color: '#5B5FEF',
                                                 borderRadius: '99px',
                                                 px: 3.5,
                                                 py: 0.8,
                                                 fontSize: '0.8rem',
                                                 fontWeight: 800,
-                                                border: '1px solid rgba(212, 175, 55, 0.3)',
-                                                fontFamily: "'Outfit', sans-serif"
+                                                border: '1px solid rgba(91, 95, 239, 0.2)',
+                                                fontFamily: "'Plus Jakarta Sans', sans-serif"
                                             }}
                                         >
                                             @{user?.username || (user?.email ? user.email.split('@')[0] : 'aura_user')}
@@ -2991,8 +3013,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             p: 4,
                                             borderRadius: '28px',
                                             background: '#FFFFFF',
-                                            border: '1.5px solid rgba(212, 175, 55, 0.25)',
-                                            boxShadow: '0 12px 35px rgba(15, 23, 42, 0.05)',
+                                            border: '1.5px solid rgba(23, 24, 39, 0.08)',
+                                            boxShadow: '0 12px 35px rgba(23, 24, 39, 0.04)',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
@@ -3001,9 +3023,9 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                             <Box sx={{
                                                 p: 3,
                                                 borderRadius: '22px',
-                                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.06) 0%, #FFFFFF 100%)',
-                                                border: '1.5px solid rgba(212, 175, 55, 0.25)',
-                                                boxShadow: '0 6px 20px rgba(212, 175, 55, 0.1)',
+                                                background: 'linear-gradient(135deg, rgba(91, 95, 239, 0.05) 0%, #FFFFFF 100%)',
+                                                border: '1.5px solid rgba(91, 95, 239, 0.15)',
+                                                boxShadow: '0 6px 20px rgba(91, 95, 239, 0.06)',
                                                 mb: 2
                                             }}>
                                                 <img
@@ -3012,8 +3034,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     style={{ width: '155px', height: '155px', borderRadius: '14px', display: 'block' }}
                                                 />
                                             </Box>
-                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Outfit', sans-serif" }}>
-                                                <QrCode2Icon style={{ fontSize: 16, color: '#D4AF37' }} /> Scan QR to quickly connect or view profile
+                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#727486', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                                                <QrCode2Icon style={{ fontSize: 16, color: '#5B5FEF' }} /> Scan QR to quickly connect or view profile
                                             </p>
                                         </Box>
                                     </motion.div>
@@ -3032,22 +3054,22 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         style={{
                                             width: '100%',
                                             background: '#FFFFFF',
-                                            color: '#B45309',
+                                            color: '#5B5FEF',
                                             fontWeight: 800,
                                             height: '48px',
                                             borderRadius: '16px',
-                                            border: '1.5px solid rgba(212, 175, 55, 0.35)',
+                                            border: '1.5px solid rgba(91, 95, 239, 0.25)',
                                             fontSize: '0.88rem',
-                                            fontFamily: "'Outfit', sans-serif",
+                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             gap: '7px',
-                                            boxShadow: '0 4px 12px rgba(212, 175, 55, 0.08)'
+                                            boxShadow: '0 4px 12px rgba(91, 95, 239, 0.08)'
                                         }}
-                                        _hover={{ bg: 'rgba(212, 175, 55, 0.06)' }}
+                                        _hover={{ bg: 'rgba(91, 95, 239, 0.05)' }}
                                     >
-                                        <ContentCopyIcon style={{ fontSize: 15, color: '#D4AF37' }} /> Copy Handle
+                                        <ContentCopyIcon style={{ fontSize: 15, color: '#5B5FEF' }} /> Copy Handle
                                     </Button>
                                 </motion.div>
                                 <motion.div style={{ flex: 1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -3055,15 +3077,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                         onClick={() => setIsQrScannerOpen(false)}
                                         style={{
                                             width: '100%',
-                                            background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                                             color: '#FFFFFF',
                                             fontWeight: 800,
                                             height: '48px',
                                             borderRadius: '16px',
                                             border: 'none',
-                                            boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
+                                            boxShadow: '0 8px 24px rgba(91, 95, 239, 0.28)',
                                             fontSize: '0.92rem',
-                                            fontFamily: "'Outfit', sans-serif",
+                                            fontFamily: "'Plus Jakarta Sans', sans-serif",
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -3269,11 +3291,11 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 <ModalOverlay backdropFilter="blur(20px)" bg="rgba(15, 23, 42, 0.45)" />
                 <ModalContent
                     borderRadius="32px"
-                    border="1.5px solid rgba(212, 175, 55, 0.3)"
+                    border="1px solid rgba(23, 24, 39, 0.08)"
                     bg="#FFFFFF"
                     p={4}
                     style={{
-                        boxShadow: "0 25px 70px rgba(15, 23, 42, 0.2)",
+                        boxShadow: "0 25px 70px rgba(23, 24, 39, 0.15)",
                         maxWidth: "420px",
                         margin: "12px"
                     }}
@@ -3284,20 +3306,20 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             w="58px"
                             h="58px"
                             borderRadius="20px"
-                            bg="linear-gradient(135deg, rgba(212, 175, 55, 0.14) 0%, rgba(245, 158, 11, 0.05) 100%)"
+                            bg="linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.05) 100%)"
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
-                            color="#D4AF37"
+                            color="#5B5FEF"
                             mb={4}
-                            style={{ border: "1px solid rgba(212, 175, 55, 0.3)", boxShadow: "0 6px 20px rgba(212, 175, 55, 0.15)" }}
+                            style={{ border: "1px solid rgba(91, 95, 239, 0.25)", boxShadow: "0 6px 20px rgba(91, 95, 239, 0.12)" }}
                         >
                             <i className="fas fa-sign-out-alt" style={{ fontSize: "22px" }}></i>
                         </Box>
-                        <Text fontSize="1.35rem" fontWeight="900" color="#0F172A" mb={2} fontFamily="'Outfit', sans-serif">
+                        <Text fontSize="1.35rem" fontWeight="900" color="#171827" mb={2} fontFamily="'Plus Jakarta Sans', sans-serif">
                             Confirm Log Out
                         </Text>
-                        <Text fontSize="0.9rem" color="#64748B" mb={6} fontFamily="'Inter', sans-serif" lineHeight="1.5">
+                        <Text fontSize="0.9rem" color="#727486" mb={6} fontFamily="'Plus Jakarta Sans', sans-serif" lineHeight="1.5">
                             Are you sure you want to end your current session? You will need to log in again to access your conversations.
                         </Text>
                         <Box display="flex" gap={3} justifyContent="center" width="100%">
@@ -3305,14 +3327,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 onClick={() => setIsLogoutConfirmOpen(false)}
                                 style={{
                                     flex: 1,
-                                    background: '#F1F5F9',
-                                    color: '#64748B',
+                                    background: '#F4F3EF',
+                                    color: '#727486',
                                     fontWeight: 800,
                                     height: '48px',
                                     borderRadius: '16px',
                                     textTransform: 'none',
                                     boxShadow: 'none',
-                                    fontFamily: "'Outfit', sans-serif"
+                                    border: '1px solid rgba(23, 24, 39, 0.08)',
+                                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                                 }}
                             >
                                 Cancel
@@ -3337,15 +3360,15 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 }}
                                 style={{
                                     flex: 1,
-                                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                                    background: 'linear-gradient(135deg, #171827 0%, #2D2F48 100%)',
                                     color: '#FFFFFF',
                                     fontWeight: 800,
                                     height: '48px',
                                     borderRadius: '16px',
-                                    border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                                    border: '1px solid rgba(91, 95, 239, 0.3)',
                                     textTransform: 'none',
-                                    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
-                                    fontFamily: "'Outfit', sans-serif"
+                                    boxShadow: '0 8px 24px rgba(23, 24, 39, 0.18)',
+                                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                                 }}
                             >
                                 Yes, Logout

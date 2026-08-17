@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, useMotionTemplate, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Feather, MessageCircle, Video, ShieldCheck, Zap, Globe, ArrowRight, Sparkles, Star, Lock } from 'lucide-react';
-// ── Ultra-Luxury 3D Projected Sacred Geometry & Particle VFX Canvas Background ──
+import confetti from 'canvas-confetti';
+import { 
+  Feather, MessageCircle, Video, ShieldCheck, Zap, Globe, ArrowRight, 
+  Sparkles, Star, Lock, Mic, Phone, Check, ChevronDown, Activity, 
+  Users, Shield, Cpu, RefreshCw, Radio, Layers, Compass, Play, Volume2, 
+  Flame, Eye, Clock, CheckCircle2, ChevronRight, Share2, HelpCircle
+} from 'lucide-react';
+
+// ── 1. Ultra-Luxury 3D Projected Sacred Geometry & Particle VFX Canvas Background ──
 function ThreeVFXBackground() {
   const canvasRef = useRef(null);
 
@@ -16,7 +23,7 @@ function ThreeVFXBackground() {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    // Mouse coordinates with smooth damping (Lerp)
+    // Mouse coordinates with smooth damping
     let mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
 
     const handleMouseMove = (e) => {
@@ -36,8 +43,8 @@ function ThreeVFXBackground() {
     const torusKnotPoints = [];
     const p = 2, q = 3;
     const samples = 140;
-    const R = 220; // major radius
-    const r = 70;  // minor radius
+    const R = 230; // major radius
+    const r = 75;  // minor radius
     for (let i = 0; i < samples; i++) {
       const phi = (i / samples) * Math.PI * 2;
       const r_tube = r * (0.8 + 0.2 * Math.cos(q * phi));
@@ -48,18 +55,18 @@ function ThreeVFXBackground() {
     }
 
     // ── Generate Stardust Floating Particles in 3D ──
-    const particleCount = 75;
+    const particleCount = 80;
     const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
-        x: (Math.random() - 0.5) * width * 1.4,
-        y: (Math.random() - 0.5) * height * 1.4,
+        x: (Math.random() - 0.5) * width * 1.5,
+        y: (Math.random() - 0.5) * height * 1.5,
         z: (Math.random() - 0.5) * 600,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
         vz: (Math.random() - 0.5) * 0.3,
         size: Math.random() * 2.2 + 0.8,
-        color: Math.random() > 0.35 ? '#D4AF37' : '#38BDF8',
+        color: Math.random() > 0.4 ? '#5B5FEF' : '#8067E8',
         pulse: Math.random() * Math.PI * 2,
       });
     }
@@ -84,33 +91,30 @@ function ThreeVFXBackground() {
 
     const render = () => {
       time += 0.012;
-      // Damped smooth mouse tracking
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
       mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-      const tiltX = ((mouse.y - height / 2) / height) * 0.8;
-      const tiltY = ((mouse.x - width / 2) / width) * 0.8;
+      const tiltX = ((mouse.y - height / 2) / height) * 0.7;
+      const tiltY = ((mouse.x - width / 2) / width) * 0.7;
 
-      rotX = time * 0.35 + tiltX;
-      rotY = time * 0.45 + tiltY;
+      rotX = time * 0.3 + tiltX;
+      rotY = time * 0.4 + tiltY;
 
       ctx.clearRect(0, 0, width, height);
 
-      const centerX = width / 2 + (mouse.x - width / 2) * 0.04;
-      const centerY = height / 2 + (mouse.y - height / 2) * 0.04;
+      const centerX = width / 2 + (mouse.x - width / 2) * 0.03;
+      const centerY = height / 2 + (mouse.y - height / 2) * 0.03;
 
-      // ── 1. Draw Golden Torus Knot 3D Wireframe ──
+      // 1. Draw 3D Torus Knot Wireframe
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
       const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
 
       const projectedKnot = [];
       for (let i = 0; i < torusKnotPoints.length; i++) {
         const pt = torusKnotPoints[i];
-        // Rotate Y
         let x1 = pt.x * cosY + pt.z * sinY;
         let y1 = pt.y;
         let z1 = -pt.x * sinY + pt.z * cosY;
-        // Rotate X
         let x2 = x1;
         let y2 = y1 * cosX - z1 * sinX;
         let z2 = y1 * sinX + z1 * cosX;
@@ -129,22 +133,22 @@ function ThreeVFXBackground() {
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
         }
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.13)';
-        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = 'rgba(91, 95, 239, 0.14)';
+        ctx.lineWidth = 1.4;
         ctx.stroke();
 
-        // Glowing highlights at key nodes
-        for (let i = 0; i < projectedKnot.length; i += 6) {
+        // Glowing node sparkles
+        for (let i = 0; i < projectedKnot.length; i += 7) {
           const p1 = projectedKnot[i];
-          const alpha = Math.max(0.1, Math.min(0.55, (p1.scale - 0.7) * 1.5));
-          ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
+          const alpha = Math.max(0.1, Math.min(0.5, (p1.scale - 0.7) * 1.4));
+          ctx.fillStyle = `rgba(128, 103, 232, ${alpha})`;
           ctx.beginPath();
           ctx.arc(p1.x, p1.y, Math.max(1, p1.scale * 2.5), 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
-      // ── 2. Draw 3D Floating Particles & Constellations ──
+      // 2. Draw 3D Floating Particles & Constellations
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
@@ -152,7 +156,6 @@ function ThreeVFXBackground() {
         p.z += p.vz;
         p.pulse += 0.03;
 
-        // Wrap around bounds
         if (p.x > width * 0.7) p.x = -width * 0.7;
         if (p.x < -width * 0.7) p.x = width * 0.7;
         if (p.y > height * 0.7) p.y = -height * 0.7;
@@ -160,7 +163,6 @@ function ThreeVFXBackground() {
         if (p.z > 300) p.z = -300;
         if (p.z < -300) p.z = 300;
 
-        // Rotate particles slightly
         let px = p.x * Math.cos(time * 0.08) - p.z * Math.sin(time * 0.08);
         let pz = p.x * Math.sin(time * 0.08) + p.z * Math.cos(time * 0.08);
         let py = p.y;
@@ -169,19 +171,19 @@ function ThreeVFXBackground() {
         if (!proj) continue;
 
         const currentSize = p.size * proj.scale * (1 + 0.25 * Math.sin(p.pulse));
-        const alpha = Math.max(0.12, Math.min(0.75, (proj.scale - 0.5) * 0.8));
+        const alpha = Math.max(0.1, Math.min(0.7, (proj.scale - 0.5) * 0.8));
 
         ctx.beginPath();
         ctx.arc(proj.x, proj.y, Math.max(0.6, currentSize), 0, Math.PI * 2);
-        ctx.fillStyle = p.color === '#D4AF37' 
-          ? `rgba(212, 175, 55, ${alpha})`
-          : `rgba(56, 189, 248, ${alpha})`;
+        ctx.fillStyle = p.color === '#5B5FEF' 
+          ? `rgba(91, 95, 239, ${alpha})`
+          : `rgba(128, 103, 232, ${alpha})`;
         ctx.shadowBlur = 8;
         ctx.shadowColor = p.color;
         ctx.fill();
-        ctx.shadowBlur = 0; // Reset shadow
+        ctx.shadowBlur = 0;
 
-        // Connect nearby particles with subtle golden filament threads
+        // Connect nearby particles with subtle threads
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dx = p.x - p2.x;
@@ -196,7 +198,7 @@ function ThreeVFXBackground() {
               ctx.beginPath();
               ctx.moveTo(proj.x, proj.y);
               ctx.lineTo(proj2.x, proj2.y);
-              ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha})`;
+              ctx.strokeStyle = `rgba(91, 95, 239, ${lineAlpha})`;
               ctx.lineWidth = 0.8;
               ctx.stroke();
             }
@@ -231,57 +233,10 @@ function ThreeVFXBackground() {
   );
 }
 
-// ── Full Page Floating Sparkles VFX ──
-function FullPageVFX() {
-  const [sparkles, setSparkles] = useState([]);
-
-  useEffect(() => {
-    // Generate static random positions once so they don't re-render chaotically
-    const arr = Array.from({ length: 35 }).map((_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      delay: Math.random() * 5,
-      duration: 3 + Math.random() * 4,
-      size: 3 + Math.random() * 5
-    }));
-    setSparkles(arr);
-  }, []);
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
-      {sparkles.map(s => (
-        <motion.div
-          key={s.id}
-          initial={{ y: 0, opacity: 0, scale: 0 }}
-          animate={{
-            y: [0, -150, -300],
-            x: [0, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 150],
-            opacity: [0, 0.7, 0],
-            scale: [0, 1.3, 0.2],
-          }}
-          transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, ease: 'easeOut' }}
-          style={{
-            position: 'absolute',
-            top: `${s.top}%`,
-            left: `${s.left}%`,
-            width: s.size,
-            height: s.size,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #F6D365 0%, #FDA085 100%)',
-            boxShadow: '0 0 12px 3px rgba(212, 175, 55, 0.4)',
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ── Floating Ambient Aurora Glow Orbs VFX ──
+// ── 2. Floating Ambient Glow Orbs ──
 function AuroraGlowOrbs() {
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-      {/* Golden Aura Glow Orb Left */}
       <motion.div
         animate={{
           x: [0, 80, -40, 0],
@@ -293,14 +248,13 @@ function AuroraGlowOrbs() {
           position: 'absolute',
           top: '15%',
           left: '10%',
-          width: '500px',
-          height: '500px',
+          width: '520px',
+          height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.14) 0%, rgba(245, 158, 11, 0.04) 50%, transparent 70%)',
-          filter: 'blur(70px)',
+          background: 'radial-gradient(circle, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.04) 50%, transparent 70%)',
+          filter: 'blur(75px)',
         }}
       />
-      {/* Cyan Cyber Glow Orb Right */}
       <motion.div
         animate={{
           x: [0, -90, 50, 0],
@@ -315,230 +269,888 @@ function AuroraGlowOrbs() {
           width: '600px',
           height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.03) 50%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(109, 140, 255, 0.1) 0%, rgba(91, 95, 239, 0.03) 50%, transparent 70%)',
           filter: 'blur(90px)',
-        }}
-      />
-      {/* Soft Rose Gold Glow Orb Bottom Left */}
-      <motion.div
-        animate={{
-          x: [0, 60, -60, 0],
-          y: [0, -60, 80, 0],
-          scale: [0.9, 1.2, 1, 0.9],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-        style={{
-          position: 'absolute',
-          bottom: '10%',
-          left: '20%',
-          width: '550px',
-          height: '550px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(244, 114, 182, 0.08) 0%, rgba(212, 175, 55, 0.03) 50%, transparent 70%)',
-          filter: 'blur(80px)',
         }}
       />
     </div>
   );
 }
 
-// ── Luxury Glow Layer behind a feature card
-function LuxuryGlow({ active }) {
-  return (
-    <motion.div
-      animate={active ? {
-        opacity: [0.4, 0.85, 0.4],
-        scale: [1, 1.05, 1],
-      } : { opacity: 0 }}
-      transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-      style={{
-        position: 'absolute', inset: -10,
-        borderRadius: '36px',
-        background: 'radial-gradient(ellipse at 50% 50%, rgba(212, 175, 55, 0.25) 0%, rgba(246, 211, 101, 0.1) 50%, transparent 75%)',
-        filter: 'blur(20px)',
-        zIndex: 0,
-        pointerEvents: 'none',
-      }}
-    />
-  );
-}
+// ── 3. Interactive Hero Simulator Widget ──
+function InteractiveHeroPlayground() {
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Hey! Welcome to AURA Living Spaces ✨", sender: "aura", time: "Just now" },
+    { id: 2, text: "Is the latency really sub-millisecond?", sender: "user", time: "Just now" },
+    { id: 3, text: "Yes! 0.42ms average P2P dispatch across global edge relays ⚡", sender: "aura", time: "Just now" },
+  ]);
+  const [inputText, setInputText] = useState("");
+  const [activeTheme, setActiveTheme] = useState("pearl");
+  const [isAudioSimulating, setIsAudioSimulating] = useState(false);
 
-// ── Feature card with scroll-triggered luxury reveal
-const FEATURES = [
-  {
-    icon: <MessageCircle size={32} strokeWidth={1.5} />,
-    title: 'Quantum Instant Messaging',
-    desc: 'Socket-powered instant delivery. Zero lag, ultra-low latency — every message lands in sub-milliseconds.',
-    accent: '#D4AF37',
-    glow: 'rgba(212, 175, 55, 0.18)',
-    embers: [15, 30, 45, 60, 75, 85],
-  },
-  {
-    icon: <Video size={32} strokeWidth={1.5} />,
-    title: 'Ultra-HD 4K Video Calls',
-    desc: 'Crystal-clear peer-to-peer WebRTC video with spatial audio and adaptive noise cancellation.',
-    accent: '#0284C7',
-    glow: 'rgba(2, 132, 199, 0.18)',
-    embers: [10, 25, 40, 55, 70, 90],
-  },
-  {
-    icon: <ShieldCheck size={32} strokeWidth={1.5} />,
-    title: 'Bank-Grade Vault Encryption',
-    desc: 'End-to-end zero-knowledge security architecture. Your data remains completely isolated and encrypted.',
-    accent: '#10B981',
-    glow: 'rgba(16, 185, 129, 0.18)',
-    embers: [20, 35, 50, 65, 80, 92],
-  },
-  {
-    icon: <Zap size={32} strokeWidth={1.5} />,
-    title: 'Sub-Millisecond Socket Sync',
-    desc: 'WebSocket native engine with real-time presence indicators and instant typing telemetry.',
-    accent: '#F59E0B',
-    glow: 'rgba(245, 158, 11, 0.18)',
-    embers: [12, 28, 44, 60, 76, 88],
-  },
-  {
-    icon: <Globe size={32} strokeWidth={1.5} />,
-    title: 'Global P2P Relay Network',
-    desc: 'Distributed edge servers ensure supreme availability and lightning connectivity worldwide.',
-    accent: '#6366F1',
-    glow: 'rgba(99, 102, 241, 0.18)',
-    embers: [18, 33, 48, 63, 78, 94],
-  },
-  {
-    icon: <Sparkles size={32} strokeWidth={1.5} />,
-    title: 'AI Neural Assistant',
-    desc: 'Context-aware intelligent suggestions powered by private on-device machine learning.',
-    accent: '#EC4899',
-    glow: 'rgba(236, 72, 153, 0.18)',
-    embers: [8, 22, 38, 54, 70, 86],
-  },
-];
+  const triggerConfetti = (emoji) => {
+    confetti({
+      particleCount: 25,
+      spread: 60,
+      origin: { y: 0.75 },
+      colors: ['#5B5FEF', '#8067E8', '#6D8CFF', '#10B981', '#F43F5E']
+    });
+    setMessages(prev => [
+      ...prev,
+      { id: Date.now(), text: `Reaction burst: ${emoji}`, sender: "user", time: "Just now" }
+    ]);
+  };
 
-function FeatureCard({ feature, index }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, margin: '-80px' });
-  
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  
-  const handleMouseMove = (e) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    mouseX.set(e.clientX - left - width / 2);
-    mouseY.set(e.clientY - top - height / 2);
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    const newMsg = { id: Date.now(), text: inputText, sender: "user", time: "Just now" };
+    setMessages(prev => [...prev, newMsg]);
+    setInputText("");
+
+    setTimeout(() => {
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now() + 1, text: "Living presence acknowledged! Instant sync broadcasted 🚀", sender: "aura", time: "Just now" }
+      ]);
+    }, 600);
   };
-  
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
-  
-  const rotateX = useSpring(useTransform(mouseY, [-200, 200], [10, -10]), { damping: 20, stiffness: 150 });
-  const rotateY = useSpring(useTransform(mouseX, [-200, 200], [-10, 10]), { damping: 20, stiffness: 150 });
-  const spotlightX = useSpring(useTransform(mouseX, [-200, 200], [0, 100]), { damping: 30, stiffness: 200 });
-  const spotlightY = useSpring(useTransform(mouseY, [-200, 200], [0, 100]), { damping: 30, stiffness: 200 });
-  const accentGlow = useMotionValue(`${feature.accent}20`);
-  const background = useMotionTemplate`radial-gradient(circle at ${spotlightX}% ${spotlightY}%, ${accentGlow} 0%, transparent 60%)`;
 
   return (
     <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 60, scale: 0.92 }}
-      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 60, scale: 0.92 }}
-      transition={{ duration: 0.8, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.5 }}
       style={{
+        width: '100%',
+        maxWidth: '860px',
+        margin: '36px auto 0',
+        borderRadius: '28px',
+        background: activeTheme === 'pearl' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(23, 24, 39, 0.95)',
+        color: activeTheme === 'pearl' ? '#171827' : '#FFFFFF',
+        border: '1px solid rgba(91, 95, 239, 0.25)',
+        boxShadow: '0 25px 70px rgba(91, 95, 239, 0.15), 0 10px 30px rgba(0, 0, 0, 0.04)',
+        backdropFilter: 'blur(30px)',
+        overflow: 'hidden',
         position: 'relative',
-        cursor: 'default',
-        perspective: 1200,
-        height: '100%',
+        zIndex: 2,
+        transition: 'background 0.3s ease, color 0.3s ease'
       }}
     >
-      <LuxuryGlow active={isInView} />
-
-      <motion.div style={{
-        position: 'relative',
-        zIndex: 1,
-        height: '100%',
-        background: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(30px)',
-        WebkitBackdropFilter: 'blur(30px)',
-        borderRadius: '28px',
-        padding: '38px 34px',
-        border: `1px solid ${isInView ? 'rgba(212, 175, 55, 0.35)' : 'rgba(226, 232, 240, 0.9)'}`,
-        boxShadow: isInView
-          ? `0 20px 50px ${feature.glow}, 0 10px 25px rgba(0, 0, 0, 0.03)`
-          : '0 8px 30px rgba(0, 0, 0, 0.03)',
-        rotateX,
-        rotateY,
-        transformStyle: 'preserve-3d',
-        overflow: 'hidden',
+      {/* Playground Header */}
+      <div style={{
+        padding: '14px 20px',
+        borderBottom: activeTheme === 'pearl' ? '1px solid rgba(23, 24, 39, 0.06)' : '1px solid rgba(255, 255, 255, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '10px'
       }}>
-        {/* Spotlight Follow effect */}
-        <motion.div style={{
-          position: 'absolute', inset: 0, background, zIndex: 0, pointerEvents: 'none'
-        }} />
-        
-        {/* Holographic glowing edge */}
-        <motion.div 
-          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-          transition={{ duration: 5, ease: 'linear', repeat: Infinity }}
-          style={{
-            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-            background: `linear-gradient(90deg, transparent, ${feature.accent}25, transparent)`,
-            backgroundSize: '200% 200%',
-            opacity: 0.4,
-          }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+            <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+            <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981', display: 'inline-block' }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '0.04em' }}>
+              LIVE INTERACTIVE PLAYGROUND
+            </span>
+          </div>
+        </div>
 
-        <div style={{ position: 'relative', zIndex: 1, transform: 'translateZ(30px)' }}>
-          <motion.div
-            animate={isInView ? { rotate: [0, -4, 4, 0] } : {}}
-            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+        {/* Theme Switcher Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: activeTheme === 'pearl' ? '#F4F3EF' : 'rgba(255,255,255,0.08)', padding: '3px', borderRadius: '99px' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTheme('pearl')}
             style={{
-              width: 68, height: 68,
-              borderRadius: '20px',
-              background: `linear-gradient(135deg, ${feature.accent}15, ${feature.accent}05)`,
-              border: `1.5px solid ${feature.accent}33`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: '26px',
-              color: feature.accent,
-              boxShadow: `0 8px 24px ${feature.accent}22`,
+              border: 'none',
+              background: activeTheme === 'pearl' ? '#FFFFFF' : 'transparent',
+              color: activeTheme === 'pearl' ? '#5B5FEF' : '#727486',
+              borderRadius: '99px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: activeTheme === 'pearl' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
             }}
           >
-            {feature.icon}
-          </motion.div>
-
-          <h3 style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 800,
-            fontSize: '1.4rem',
-            color: '#0F172A',
-            marginBottom: '12px',
-            letterSpacing: '-0.02em',
-          }}>{feature.title}</h3>
-
-          <p style={{
-            fontFamily: "'Inter', sans-serif",
-            color: '#64748B',
-            fontSize: '0.98rem',
-            lineHeight: 1.65,
-            margin: 0,
-          }}>{feature.desc}</p>
+            ☀️ Warm Pearl
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTheme('midnight')}
+            style={{
+              border: 'none',
+              background: activeTheme === 'midnight' ? '#5B5FEF' : 'transparent',
+              color: activeTheme === 'midnight' ? '#FFFFFF' : '#727486',
+              borderRadius: '99px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: activeTheme === 'midnight' ? '0 2px 8px rgba(91, 95, 239, 0.3)' : 'none'
+            }}
+          >
+            🌙 Midnight Orbit
+          </button>
         </div>
-      </motion.div>
+      </div>
+
+      {/* Interactive Chat Window Stream */}
+      <div style={{
+        padding: '20px',
+        maxHeight: '260px',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
+      }}>
+        {messages.map((m) => {
+          const isUser = m.sender === 'user';
+          return (
+            <motion.div
+              key={m.id}
+              initial={{ opacity: 0, y: 10, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                alignSelf: isUser ? 'flex-end' : 'flex-start',
+                maxWidth: '82%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: isUser ? 'flex-end' : 'flex-start'
+              }}
+            >
+              <div style={{
+                background: isUser 
+                  ? 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)'
+                  : (activeTheme === 'pearl' ? '#F4F3EF' : 'rgba(255, 255, 255, 0.08)'),
+                color: isUser ? '#FFFFFF' : (activeTheme === 'pearl' ? '#171827' : '#FFFFFF'),
+                padding: '10px 16px',
+                borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                fontSize: '0.86rem',
+                fontWeight: 600,
+                lineHeight: 1.45,
+                boxShadow: isUser ? '0 4px 14px rgba(91, 95, 239, 0.25)' : 'none'
+              }}>
+                {m.text}
+              </div>
+              <span style={{ fontSize: '0.65rem', color: '#A1A3B5', marginTop: '3px', padding: '0 4px' }}>
+                {m.time}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Interactive Live Reactions Dock */}
+      <div style={{
+        padding: '10px 20px',
+        borderTop: activeTheme === 'pearl' ? '1px solid rgba(23, 24, 39, 0.05)' : '1px solid rgba(255, 255, 255, 0.06)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '8px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#727486' }}>Burst Reactions:</span>
+          {['✨', '🌌', '🪐', '⚡', '💖', '🔥'].map((emoji) => (
+            <motion.button
+              key={emoji}
+              type="button"
+              whileHover={{ scale: 1.25, y: -2 }}
+              whileTap={{ scale: 0.85 }}
+              onClick={() => triggerConfetti(emoji)}
+              style={{
+                background: activeTheme === 'pearl' ? '#F4F3EF' : 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                borderRadius: '8px',
+                width: '30px',
+                height: '30px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {emoji}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Audio Visualizer Simulator Toggle */}
+        <button
+          type="button"
+          onClick={() => setIsAudioSimulating(!isAudioSimulating)}
+          style={{
+            background: isAudioSimulating ? 'rgba(91, 95, 239, 0.15)' : 'transparent',
+            border: isAudioSimulating ? '1px solid rgba(91, 95, 239, 0.4)' : '1px solid rgba(23, 24, 39, 0.1)',
+            color: isAudioSimulating ? '#5B5FEF' : '#727486',
+            borderRadius: '99px',
+            padding: '4px 12px',
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <Volume2 size={13} color={isAudioSimulating ? '#5B5FEF' : '#727486'} />
+          {isAudioSimulating ? 'Spatial Audio Active' : 'Test Spatial Audio'}
+          {isAudioSimulating && (
+            <span style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}>
+              {[12, 18, 8, 16, 22, 10].map((h, idx) => (
+                <motion.span
+                  key={idx}
+                  animate={{ height: [4, h, 4] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: idx * 0.1 }}
+                  style={{ width: '2px', background: '#5B5FEF', borderRadius: '2px', display: 'inline-block' }}
+                />
+              ))}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Input Field Form */}
+      <form onSubmit={handleSendMessage} style={{
+        padding: '12px 18px',
+        borderTop: activeTheme === 'pearl' ? '1px solid rgba(23, 24, 39, 0.06)' : '1px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'center'
+      }}>
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Type a real-time message into this sandbox orbit…"
+          style={{
+            flex: 1,
+            border: activeTheme === 'pearl' ? '1px solid rgba(23, 24, 39, 0.08)' : '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: '99px',
+            padding: '10px 18px',
+            outline: 'none',
+            fontSize: '0.85rem',
+            background: activeTheme === 'pearl' ? '#F4F3EF' : 'rgba(255, 255, 255, 0.06)',
+            color: activeTheme === 'pearl' ? '#171827' : '#FFFFFF',
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontWeight: 600
+          }}
+        />
+        <motion.button
+          type="submit"
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+            border: 'none',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(91, 95, 239, 0.3)',
+            flexShrink: 0
+          }}
+        >
+          <ArrowRight size={18} color="#FFFFFF" />
+        </motion.button>
+      </form>
     </motion.div>
   );
 }
 
+// ── 4. Live Network Telemetry Stats Bar ──
+function LiveTelemetryBanner() {
+  const stats = [
+    { label: "Dispatch Latency", value: "0.42 ms", icon: <Zap size={18} color="#5B5FEF" />, trend: "Sub-Millisecond" },
+    { label: "Vault Security", value: "256-Bit", icon: <ShieldCheck size={18} color="#10B981" />, trend: "Zero-Knowledge" },
+    { label: "WebRTC Spatial Audio", value: "4K 60fps", icon: <Radio size={18} color="#8067E8" />, trend: "Peer-to-Peer" },
+    { label: "Edge Mesh Availability", value: "99.999%", icon: <Globe size={18} color="#6D8CFF" />, trend: "Global Edge" }
+  ];
+
+  return (
+    <div style={{
+      maxWidth: '1100px',
+      margin: '40px auto 0',
+      padding: '0 20px',
+      position: 'relative',
+      zIndex: 2
+    }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '16px',
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(24px)',
+        borderRadius: '24px',
+        padding: '20px 24px',
+        border: '1px solid rgba(23, 24, 39, 0.08)',
+        boxShadow: '0 12px 36px rgba(23, 24, 39, 0.04)'
+      }}>
+        {stats.map((st, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '6px 0' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '14px',
+              background: 'rgba(91, 95, 239, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              {st.icon}
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontSize: '1.25rem', color: '#171827', lineHeight: 1.1 }}>
+                {st.value}
+              </div>
+              <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#727486', marginTop: '2px' }}>
+                {st.label} <span style={{ color: '#5B5FEF', fontWeight: 800 }}>• {st.trend}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── 5. Interactive Deep-Dive Features Tabs ──
+function InteractiveDeepDiveShowcase() {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const tabs = [
+    {
+      id: 0,
+      title: "Relationship Orbit Gravity",
+      subtitle: "Contacts orbit closer based on closeness & frequency",
+      icon: <Compass size={20} />,
+      content: {
+        headline: "Organic Orbital Relationship Intelligence",
+        desc: "Instead of rigid flat list interfaces, AURA computes relationship proximity. Your closest connections gracefully drift closer to your focal orbit, complete with pulsating beacons and instant telemetry.",
+        highlights: ["Dynamic gravity positioning", "Visual orbit rings", "Breathing presence halos", "Zero algorithm tracking"],
+        accent: "#5B5FEF"
+      }
+    },
+    {
+      id: 1,
+      title: "Spatial HD Audio & 4K Video",
+      subtitle: "Native peer-to-peer WebRTC calling engine",
+      icon: <Video size={20} />,
+      content: {
+        headline: "Ultra-Low Latency Spatial Communications",
+        desc: "Equipped with real-time waveform spectrum equalizers, automated live captioning, and local camera PiP overlays, AURA delivers crystal clear video and voice without centralized data logging.",
+        highlights: ["Adaptive background noise cancellation", "Live subtitle transcription", "Picture-in-picture floating view", "4K 60fps WebRTC streams"],
+        accent: "#8067E8"
+      }
+    },
+    {
+      id: 2,
+      title: "Vault Cryptography & View-Once",
+      subtitle: "Zero-knowledge disappearing privacy controls",
+      icon: <Lock size={20} />,
+      content: {
+        headline: "Absolute Zero-Knowledge Privacy Architecture",
+        desc: "Your data belongs to you alone. Send self-destructing view-once photos and media, locked with client-side keys and verified authenticity handshakes that prevent screenshots and leaks.",
+        highlights: ["View-Once disappearing messages", "Client-side private key generation", "Self-destruct timer telemetry", "Anti-leak encrypted buffer"],
+        accent: "#10B981"
+      }
+    },
+    {
+      id: 3,
+      title: "Atmospheric Living Spaces",
+      subtitle: "Warm Ivory, Soft Pearl & reactive palettes",
+      icon: <Sparkles size={20} />,
+      content: {
+        headline: "Designed for High Visual & Emotional Comfort",
+        desc: "Built from the ground up with soft pearl surfaces, warm ivory lighting, and delicate micro-animations that make digital communication feel natural, calm, and deeply enjoyable.",
+        highlights: ["Warm Ivory (#FCFBF7) foundation", "Micro-interaction haptics", "Fluid 60fps animations", "Accessible high-contrast typography"],
+        accent: "#6D8CFF"
+      }
+    }
+  ];
+
+  const current = tabs[activeTab];
+
+  return (
+    <section style={{
+      padding: 'clamp(70px, 9vw, 130px) clamp(20px, 5vw, 60px)',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, var(--aura-ivory, #FCFBF7) 100%)',
+      position: 'relative',
+      zIndex: 2
+    }}>
+      <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+          <span style={{
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#5B5FEF',
+            display: 'block',
+            marginBottom: '10px'
+          }}>
+            ⚡ ARCHITECTURE MATRIX
+          </span>
+          <h2 style={{
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontWeight: 900,
+            fontSize: 'clamp(2.2rem, 4.5vw, 3.6rem)',
+            color: '#171827',
+            letterSpacing: '-0.04em',
+            margin: 0
+          }}>
+            Engineered for Pure Perfection
+          </h2>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            color: '#727486',
+            fontSize: '1.05rem',
+            maxWidth: 520,
+            margin: '14px auto 0',
+            lineHeight: 1.6
+          }}>
+            Explore how AURA redefines real-time communication across four groundbreaking pillars.
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: '12px',
+          marginBottom: '32px'
+        }}>
+          {tabs.map((t) => {
+            const isSel = activeTab === t.id;
+            return (
+              <motion.button
+                key={t.id}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab(t.id)}
+                style={{
+                  background: isSel ? '#FFFFFF' : 'rgba(255, 255, 255, 0.6)',
+                  border: isSel ? `1.5px solid ${t.content.accent}` : '1px solid rgba(23, 24, 39, 0.08)',
+                  borderRadius: '20px',
+                  padding: '16px 18px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  boxShadow: isSel ? `0 10px 30px ${t.content.accent}20` : 'none',
+                  transition: 'all 0.25s ease',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px'
+                }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '12px',
+                  background: isSel ? t.content.accent : '#F4F3EF',
+                  color: isSel ? '#FFFFFF' : '#727486',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {t.icon}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.92rem', color: isSel ? '#171827' : '#4B4D63' }}>
+                    {t.title}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#727486', marginTop: '2px', lineHeight: 1.3 }}>
+                    {t.subtitle}
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Tab Showcase Card */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35 }}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '28px',
+              border: '1px solid rgba(23, 24, 39, 0.08)',
+              padding: 'clamp(28px, 4vw, 44px)',
+              boxShadow: '0 20px 60px rgba(23, 24, 39, 0.05)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '36px',
+              alignItems: 'center'
+            }}
+          >
+            <div>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: current.content.accent,
+                background: `${current.content.accent}15`,
+                padding: '6px 14px',
+                borderRadius: '99px',
+                display: 'inline-block',
+                marginBottom: '16px'
+              }}>
+                ✦ PILLAR 0{activeTab + 1}
+              </span>
+              <h3 style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontWeight: 900,
+                fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+                color: '#171827',
+                letterSpacing: '-0.03em',
+                lineHeight: 1.2,
+                marginBottom: '16px'
+              }}>
+                {current.content.headline}
+              </h3>
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#727486',
+                fontSize: '0.98rem',
+                lineHeight: 1.7,
+                marginBottom: '24px'
+              }}>
+                {current.content.desc}
+              </p>
+
+              {/* Highlights Checkmark Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {current.content.highlights.map((h, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle2 size={16} color={current.content.accent} />
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#171827' }}>{h}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Visual Interactive Graphic */}
+            <div style={{
+              background: '#F4F3EF',
+              borderRadius: '24px',
+              padding: '30px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '280px',
+              border: '1px solid rgba(23, 24, 39, 0.06)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {activeTab === 0 && (
+                <div style={{ position: 'relative', width: '220px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* Orbit concentric circles */}
+                  <div style={{ position: 'absolute', width: '210px', height: '210px', borderRadius: '50%', border: '1.5px dashed rgba(91, 95, 239, 0.25)' }} />
+                  <div style={{ position: 'absolute', width: '130px', height: '130px', borderRadius: '50%', border: '1.5px solid rgba(91, 95, 239, 0.35)' }} />
+                  
+                  {/* Center Sun Avatar */}
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #5B5FEF, #8067E8)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, boxShadow: '0 0 20px rgba(91, 95, 239, 0.5)', zIndex: 5 }}>
+                    YOU
+                  </div>
+
+                  {/* Orbiting friends */}
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', width: '100%', height: '100%' }}
+                  >
+                    <div style={{ position: 'absolute', top: '5px', left: '50%', transform: 'translateX(-50%)', width: '32px', height: '32px', borderRadius: '50%', background: '#10B981', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, border: '2px solid #FFF' }}>
+                      AR
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', width: '130px', height: '130px' }}
+                  >
+                    <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', width: '30px', height: '30px', borderRadius: '50%', background: '#0284C7', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, border: '2px solid #FFF' }}>
+                      SC
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
+              {activeTab === 1 && (
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #8067E8, #5B5FEF)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                      HD
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#171827', fontSize: '0.9rem' }}>Spatial Audio Relay</div>
+                      <div style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 700 }}>● Active • 0.38ms Jitter Buffer</div>
+                    </div>
+                  </div>
+
+                  {/* Equalizer Spectrum */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '50px' }}>
+                    {[16, 28, 44, 32, 48, 20, 36, 42, 24, 46, 30, 18, 38, 50, 22].map((val, idx) => (
+                      <motion.div
+                        key={idx}
+                        animate={{ height: [8, val, 8] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: idx * 0.05 }}
+                        style={{ width: '4px', background: '#8067E8', borderRadius: '4px' }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 2 && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+                  <div style={{ width: 54, height: 54, borderRadius: '16px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Lock size={26} />
+                  </div>
+                  <div style={{ fontWeight: 900, color: '#171827', fontSize: '1.05rem' }}>View-Once Self Destruction</div>
+                  <div style={{ background: '#FFFFFF', padding: '8px 18px', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.78rem', color: '#10B981', fontWeight: 800 }}>
+                    ⏳ Auto Purging in 5 seconds
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 3 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '240px' }}>
+                  <div style={{ background: '#FFFFFF', padding: '12px 14px', borderRadius: '16px', border: '1px solid rgba(23, 24, 39, 0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#171827' }}>Warm Ivory Atmosphere</div>
+                    <div style={{ fontSize: '0.68rem', color: '#727486' }}>Reduced eye strain & soothing contrast</div>
+                  </div>
+                  <div style={{ background: 'linear-gradient(135deg, #5B5FEF, #8067E8)', padding: '12px 14px', borderRadius: '16px', color: '#FFFFFF', boxShadow: '0 8px 20px rgba(91, 95, 239, 0.25)' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>Living Soft Pearl Accent</div>
+                    <div style={{ fontSize: '0.68rem', opacity: 0.9 }}>Interactive fluid responses</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+// ── 6. Comparison Matrix: AURA vs Legacy Messengers ──
+function ComparisonMatrix() {
+  const features = [
+    { name: "Living Organic Atmosphere & Gravity UI", aura: true, others: false },
+    { name: "Sub-Millisecond Native Socket Sync (<1ms)", aura: true, others: false },
+    { name: "Zero-Knowledge Client-Side Cryptographic Isolation", aura: true, others: false },
+    { name: "Peer-to-Peer Spatial Audio & 4K Video Calling", aura: true, others: "Partial" },
+    { name: "Real-Time AI Voice Subtitles & Captions", aura: true, others: false },
+    { name: "No Ad Tracking, No Telemetry Reselling", aura: true, others: false },
+  ];
+
+  return (
+    <section style={{
+      padding: 'clamp(60px, 8vw, 110px) clamp(20px, 5vw, 60px)',
+      background: 'var(--aura-ivory, #FCFBF7)',
+      position: 'relative',
+      zIndex: 2
+    }}>
+      <div style={{ maxWidth: '980px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5B5FEF', display: 'block', marginBottom: '10px' }}>
+            ⚡ SIDE BY SIDE
+          </span>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.4rem)', color: '#171827', letterSpacing: '-0.04em', margin: 0 }}>
+            Why AURA Outperforms Legacy Apps
+          </h2>
+        </div>
+
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: '24px',
+          border: '1px solid rgba(23, 24, 39, 0.08)',
+          boxShadow: '0 20px 60px rgba(23, 24, 39, 0.04)',
+          overflow: 'hidden'
+        }}>
+          {/* Header Row */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr 1fr',
+            padding: '20px 24px',
+            background: '#F4F3EF',
+            borderBottom: '1px solid rgba(23, 24, 39, 0.08)',
+            fontWeight: 800,
+            fontSize: '0.88rem',
+            color: '#171827'
+          }}>
+            <div>Capability & Feature</div>
+            <div style={{ textAlign: 'center', color: '#5B5FEF' }}>✨ AURA Spaces</div>
+            <div style={{ textAlign: 'center', color: '#727486' }}>Legacy Apps (Slack / WA)</div>
+          </div>
+
+          {/* Rows */}
+          {features.map((f, i) => (
+            <div key={i} style={{
+              display: 'grid',
+              gridTemplateColumns: '2fr 1fr 1fr',
+              padding: '16px 24px',
+              borderBottom: i !== features.length - 1 ? '1px solid rgba(23, 24, 39, 0.05)' : 'none',
+              alignItems: 'center',
+              fontSize: '0.88rem'
+            }}>
+              <div style={{ fontWeight: 700, color: '#171827' }}>{f.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <span style={{
+                  background: 'rgba(91, 95, 239, 0.1)',
+                  color: '#5B5FEF',
+                  padding: '4px 10px',
+                  borderRadius: '99px',
+                  fontSize: '0.75rem',
+                  fontWeight: 900,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <Check size={14} /> YES
+                </span>
+              </div>
+              <div style={{ textAlign: 'center', color: '#A1A3B5', fontWeight: 700, fontSize: '0.8rem' }}>
+                {f.others === "Partial" ? "⚠️ Partial" : "❌ No"}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── 7. FAQ Accordion ──
+function FAQSection() {
+  const [openIdx, setOpenIdx] = useState(null);
+
+  const faqs = [
+    {
+      q: "What makes AURA different from conventional messaging apps?",
+      a: "AURA is engineered around the 'Living Conversations' philosophy. Instead of sterile flat message blocks, AURA uses fluid gravity-based relationship proximity, sub-millisecond WebSockets, peer-to-peer 4K spatial audio, and zero-knowledge encryption."
+    },
+    {
+      q: "Is AURA free to use?",
+      a: "Yes! AURA is completely free for individual messaging, group rooms, voice notes, and HD video calls. We never monetize personal data or run tracking ads."
+    },
+    {
+      q: "How does the Zero-Knowledge Vault work?",
+      a: "All conversations and view-once attachments are encrypted directly on your device before transmission. No intermediary servers, advertisers, or third parties can read your messages."
+    },
+    {
+      q: "Does AURA work seamlessly across mobile and desktop?",
+      a: "Yes! AURA is completely responsive with high-performance WebRTC hardware acceleration, instant QR code synchronization, and touch-optimized haptic reactions."
+    }
+  ];
+
+  return (
+    <section style={{
+      padding: 'clamp(60px, 8vw, 110px) clamp(20px, 5vw, 60px)',
+      background: '#FFFFFF',
+      position: 'relative',
+      zIndex: 2
+    }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5B5FEF', display: 'block', marginBottom: '10px' }}>
+            ⚡ GOT QUESTIONS?
+          </span>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.2rem)', color: '#171827', letterSpacing: '-0.04em', margin: 0 }}>
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {faqs.map((faq, i) => {
+            const isOpen = openIdx === i;
+            return (
+              <div
+                key={i}
+                style={{
+                  border: '1px solid rgba(23, 24, 39, 0.08)',
+                  borderRadius: '20px',
+                  background: isOpen ? '#FCFBF7' : '#FFFFFF',
+                  overflow: 'hidden',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIdx(isOpen ? null : i)}
+                  style={{
+                    width: '100%',
+                    padding: '20px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontWeight: 800,
+                    fontSize: '0.98rem',
+                    color: '#171827',
+                    cursor: 'pointer',
+                    gap: '14px'
+                  }}
+                >
+                  <span>{faq.q}</span>
+                  <motion.div
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} color="#5B5FEF" />
+                  </motion.div>
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <div style={{ padding: '0 24px 20px', fontSize: '0.9rem', color: '#727486', lineHeight: 1.65 }}>
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── 8. Main Aura Landing Page Component ──
 export default function AuraLandingPage() {
   const [scrollY, setScrollY] = useState(0);
-  const heroRef = useRef(null);
-  const featuresRef = useRef(null);
-  const { scrollYProgress } = useScroll();
-  const featherY = useTransform(scrollYProgress, [0, 0.3], [0, -60]);
-  const featherRotate = useTransform(scrollYProgress, [0, 0.3], [0, 15]);
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -550,93 +1162,20 @@ export default function AuraLandingPage() {
 
   return (
     <div style={{
-      backgroundColor: '#FAFAFC',
+      backgroundColor: '#FCFBF7',
       minHeight: '100vh',
-      fontFamily: "'Outfit', 'Plus Jakarta Sans', 'Inter', sans-serif",
-      color: '#0F172A',
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      color: '#171827',
       overflowX: 'hidden',
       position: 'relative',
     }}>
-      {/* Three.js Interactive VFX Canvas */}
+      {/* 3D Sacred Torus Knot Canvas */}
       <ThreeVFXBackground />
       
-      {/* Floating Ambient Aurora Glow Orbs VFX */}
+      {/* Ambient Aurora Glow Orbs */}
       <AuroraGlowOrbs />
 
-      {/* Global & Responsive Landing Styles */}
-      <style>{`
-        .aura-nav-container {
-          max-width: 1240px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px 28px;
-        }
-        .aura-nav-signin {
-          background: transparent;
-          border: none;
-          color: #334155;
-          font-family: 'Outfit', sans-serif;
-          font-weight: 700;
-          font-size: 0.9rem;
-          cursor: pointer;
-          padding: 10px 18px;
-          transition: all 0.2s;
-        }
-        .aura-nav-getstarted {
-          background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-          color: #FFFFFF;
-          border: 1px solid rgba(212, 175, 55, 0.4);
-          font-family: 'Outfit', sans-serif;
-          font-weight: 700;
-          font-size: 0.9rem;
-          padding: 10px 22px;
-          border-radius: 99px;
-          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          white-space: nowrap;
-        }
-        .aura-hero-cta-btn {
-          width: auto;
-        }
-        @media (max-width: 640px) {
-          .aura-nav-container {
-            padding: 12px 16px;
-          }
-          .aura-nav-signin {
-            padding: 8px 12px;
-            font-size: 0.82rem;
-          }
-          .aura-nav-getstarted {
-            padding: 8px 16px;
-            font-size: 0.82rem;
-          }
-          .aura-hero-cta-group {
-            flex-direction: column;
-            width: 100%;
-            max-width: 320px;
-            margin: 0 auto;
-          }
-          .aura-hero-cta-btn {
-            width: 100% !important;
-            justify-content: center !important;
-          }
-          .aura-badge-group {
-            gap: 8px !important;
-            margin-bottom: 24px !important;
-          }
-          .aura-badge-item {
-            padding: 8px 14px !important;
-            font-size: 0.72rem !important;
-          }
-        }
-      `}</style>
-
-      {/* ── STICKY GLASSMORPHIC NAVIGATION HEADER ── */}
+      {/* ── STICKY GLASSMORPHIC HEADER ── */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -646,61 +1185,89 @@ export default function AuraLandingPage() {
           top: 0,
           width: '100%',
           zIndex: 1100,
-          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.65)',
+          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.75)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderBottom: isScrolled ? '1px solid rgba(212, 175, 55, 0.25)' : '1px solid rgba(226, 232, 240, 0.6)',
-          boxShadow: isScrolled ? '0 10px 30px rgba(0, 0, 0, 0.04)' : 'none',
+          borderBottom: isScrolled ? '1px solid rgba(23, 24, 39, 0.08)' : '1px solid rgba(23, 24, 39, 0.03)',
+          boxShadow: isScrolled ? '0 10px 30px rgba(23, 24, 39, 0.03)' : 'none',
           transition: 'all 0.3s ease'
         }}
       >
-        <div className="aura-nav-container">
+        <div style={{
+          maxWidth: '1240px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 28px'
+        }}>
           {/* Brand Logo */}
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+              width: 40,
+              height: 40,
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
+              boxShadow: '0 8px 24px rgba(91, 95, 239, 0.32)',
               flexShrink: 0
             }}>
               <Feather size={20} color="#FFFFFF" strokeWidth={2} />
             </div>
             <div>
               <span style={{
-                fontFamily: "'Outfit', sans-serif",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 fontWeight: 900,
                 fontSize: '1.35rem',
                 letterSpacing: '-0.03em',
-                background: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: '#171827',
                 lineHeight: 1,
                 display: 'block',
               }}>
                 AURA
               </span>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#D4AF37', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                 MESSAGING
+              <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                LIVING SPACES
               </span>
             </div>
           </Link>
 
           {/* Action CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Link to="/login" style={{ textDecoration: 'none' }}>
-              <button className="aura-nav-signin">
+              <button style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#171827',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                padding: '10px 18px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif"
+              }}>
                 Sign In
               </button>
             </Link>
             <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
               <Link to="/signup" style={{ textDecoration: 'none' }}>
-                <button className="aura-nav-getstarted">
-                  Get Started <ArrowRight size={15} color="#D4AF37" />
+                <button style={{
+                  background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  padding: '10px 22px',
+                  borderRadius: '99px',
+                  boxShadow: '0 8px 24px rgba(91, 95, 239, 0.28)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  Launch Aura <ArrowRight size={15} color="#FFFFFF" />
                 </button>
               </Link>
             </motion.div>
@@ -708,553 +1275,243 @@ export default function AuraLandingPage() {
         </div>
       </motion.header>
 
-      {/* ════════════════════════════════════════
-          HERO SECTION — Pristine White & Gold
-          ════════════════════════════════════════ */}
-      <section
-        ref={heroRef}
-        style={{
-          minHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          padding: '120px 24px 60px',
-        }}
-      >
-        {/* Soft radial glow */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'radial-gradient(circle at 50% 30%, rgba(212, 175, 55, 0.12) 0%, rgba(248, 250, 252, 0) 65%)',
-          pointerEvents: 'none',
-        }} />
-
-
-
-        {/* Floating Premium Feature Badges Group */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="aura-badge-group"
-          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginBottom: '32px', flexWrap: 'wrap' }}
+      {/* ── HERO SECTION ── */}
+      <section style={{
+        minHeight: '85vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        padding: '130px 24px 40px',
+        textAlign: 'center'
+      }}>
+        {/* Status Beacon Tag */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(91, 95, 239, 0.08)',
+            border: '1px solid rgba(91, 95, 239, 0.25)',
+            padding: '8px 18px',
+            borderRadius: '99px',
+            marginBottom: '24px'
+          }}
         >
-          {/* Chat Icon Badge */}
-          <motion.div
-            animate={{
-              y: [0, -8, 0],
-            }}
-            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut', delay: 0 }}
-            whileHover={{ scale: 1.06 }}
-            className="aura-badge-item"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '99px',
-              background: 'rgba(255, 255, 255, 0.5)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              boxShadow: '0 8px 32px rgba(212, 175, 55, 0.1)',
-              cursor: 'default',
-            }}
-          >
-            <MessageCircle size={16} color="#D4AF37" strokeWidth={2} />
-            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>SECURE CHAT</span>
-          </motion.div>
-
-          {/* Video Icon Badge */}
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-            }}
-            transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut', delay: 0.3 }}
-            whileHover={{ scale: 1.06 }}
-            className="aura-badge-item"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '99px',
-              background: 'rgba(255, 255, 255, 0.5)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              boxShadow: '0 12px 40px rgba(212, 175, 55, 0.15)',
-              cursor: 'default',
-            }}
-          >
-            <Video size={16} color="#D4AF37" strokeWidth={2} />
-            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>HD CALLS</span>
-          </motion.div>
-
-          {/* Security Icon Badge */}
-          <motion.div
-            animate={{
-              y: [0, -6, 0],
-            }}
-            transition={{ repeat: Infinity, duration: 3.8, ease: 'easeInOut', delay: 0.6 }}
-            whileHover={{ scale: 1.06 }}
-            className="aura-badge-item"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '99px',
-              background: 'rgba(255, 255, 255, 0.5)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              boxShadow: '0 8px 32px rgba(212, 175, 55, 0.1)',
-              cursor: 'default',
-            }}
-          >
-            <ShieldCheck size={16} color="#D4AF37" strokeWidth={2} />
-            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>P2P PRIVACY</span>
-          </motion.div>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981' }} />
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            AURA v3.0 ONLINE • SUB-1MS WEBSOCKET SYNC
+          </span>
         </motion.div>
 
-        {/* Hero Headline */}
+        {/* Hero Title */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           style={{
-            fontFamily: "'Outfit', sans-serif",
             fontWeight: 900,
-            fontSize: 'clamp(2.3rem, 7.5vw, 5.5rem)',
-            lineHeight: 1.04,
+            fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
+            lineHeight: 1.05,
             letterSpacing: '-0.04em',
-            textAlign: 'center',
-            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #D4AF37 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            maxWidth: 900,
-            marginBottom: '18px',
-            padding: '0 8px'
+            color: '#171827',
+            maxWidth: 960,
+            margin: '0 auto 20px',
           }}
         >
-          Elegance at the Speed of Light
+          Where Conversations Feel{' '}
+          <span style={{
+            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 50%, #6D8CFF 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            Truly Alive.
+          </span>
         </motion.h1>
 
+        {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4 }}
           style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: 'clamp(0.95rem, 2vw, 1.2rem)',
-            color: '#64748B',
-            textAlign: 'center',
-            maxWidth: 580,
+            fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+            color: '#727486',
+            maxWidth: 620,
             lineHeight: 1.65,
-            marginBottom: '32px',
-            padding: '0 12px'
+            margin: '0 auto 32px'
           }}
         >
-          The next-generation messaging platform engineered with pristine white luxury, Three.js 3D VFX, and instant socket synchronization.
+          Experience warm ivory surfaces, relationship orbit gravity, peer-to-peer 4K calling, and zero-knowledge encryption.
         </motion.p>
 
-        {/* Hero CTA Buttons */}
+        {/* Action CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.6 }}
-          className="aura-hero-cta-group"
           style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center' }}
         >
-          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }} style={{ display: 'flex' }}>
-            <Link to="/signup" style={{ textDecoration: 'none', display: 'flex', width: '100%' }}>
-              <div className="aura-hero-cta-btn" style={{
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
+            <Link to="/signup" style={{ textDecoration: 'none' }}>
+              <button style={{
+                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                 color: '#FFFFFF',
-                fontFamily: "'Outfit', sans-serif",
                 fontWeight: 800,
-                fontSize: '0.98rem',
-                padding: '14px 32px',
+                fontSize: '1rem',
+                padding: '16px 36px',
                 borderRadius: '99px',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
-                boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18)',
-                display: 'flex', alignItems: 'center', gap: '8px',
+                border: 'none',
+                boxShadow: '0 12px 35px rgba(91, 95, 239, 0.32)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
               }}>
-                Start Messaging Free <ArrowRight size={17} color="#D4AF37" />
-              </div>
+                Start Messaging Free <ArrowRight size={18} color="#FFFFFF" />
+              </button>
             </Link>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }} style={{ display: 'flex' }}>
-            <Link to="/login" style={{ textDecoration: 'none', display: 'flex', width: '100%' }}>
-              <div className="aura-hero-cta-btn" style={{
-                background: 'rgba(255, 255, 255, 0.9)',
-                color: '#0F172A',
-                fontFamily: "'Outfit', sans-serif",
+          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
+            <Link to="/login" style={{ textDecoration: 'none' }}>
+              <button style={{
+                background: '#FFFFFF',
+                color: '#171827',
                 fontWeight: 700,
-                fontSize: '0.98rem',
-                padding: '14px 32px',
+                fontSize: '1rem',
+                padding: '16px 36px',
                 borderRadius: '99px',
-                border: '1.5px solid rgba(226, 232, 240, 0.9)',
-                backdropFilter: 'blur(16px)',
-                display: 'flex', alignItems: 'center', gap: '8px',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.04)',
+                border: '1.5px solid rgba(23, 24, 39, 0.08)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.03)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
               }}>
-                Live Demo
-              </div>
+                Live Demo Orbit
+              </button>
             </Link>
           </motion.div>
         </motion.div>
 
-        {/* Scroll-to-features indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, y: [0, 8, 0] }}
-          transition={{ opacity: { delay: 1.2 }, y: { repeat: Infinity, duration: 2, ease: 'easeInOut' } }}
-          onClick={() => featuresRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          style={{
-            marginTop: '48px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            color: '#94A3B8',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            fontFamily: "'Inter', sans-serif",
-          }}>Explore Features</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </motion.div>
+        {/* Live Interactive Hero Sandbox Playground */}
+        <InteractiveHeroPlayground />
+
+        {/* Live Telemetry Metrics */}
+        <LiveTelemetryBanner />
       </section>
 
-      {/* ════════════════════════════════════════
-          LIVE DASHBOARD PREVIEW MOCKUP
-          ════════════════════════════════════════ */}
-      <section style={{
-        position: 'relative',
-        padding: 'clamp(60px, 8vw, 120px) clamp(20px, 5vw, 60px)',
-        overflow: 'hidden',
-        background: 'linear-gradient(180deg, #FAFAFC 0%, #FFFFFF 100%)',
-      }}>
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          viewport={{ once: false, margin: '-60px' }}
-          style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}
-        >
-          <span style={{
-            fontFamily: "'Inter', sans-serif", fontSize: '0.8rem', fontWeight: 800,
-            letterSpacing: '0.18em', textTransform: 'uppercase', color: '#D4AF37',
-            display: 'block', marginBottom: '12px'
-          }}>✨ PREVIEW INTERFACE</span>
-          <h2 style={{
-            fontFamily: "'Outfit', sans-serif", fontWeight: 900,
-            fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', letterSpacing: '-0.04em',
-            color: '#0F172A', margin: 0,
-          }}>Pristine Command Center</h2>
-          <p style={{
-            fontFamily: "'Inter', sans-serif", color: '#64748B',
-            fontSize: '1.05rem', maxWidth: 480, margin: '14px auto 0', lineHeight: 1.65
-          }}>A luxury white UI designed for clarity, focus, and effortless communication.</p>
-        </motion.div>
+      {/* ── INTERACTIVE DEEP DIVE SHOWCASE ── */}
+      <InteractiveDeepDiveShowcase />
 
-        {/* 3D Dashboard Frame */}
-        <motion.div
-          initial={{ opacity: 0, y: 60, rotateX: 10 }}
-          whileInView={{ opacity: 1, y: 0, rotateX: 4 }}
-          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          viewport={{ once: false, margin: '-80px' }}
-          style={{
-            position: 'relative', zIndex: 2,
-            maxWidth: 1040, margin: '0 auto',
-            perspective: 1200,
-          }}
-        >
-          <style>{`
-            .aura-mockup-wrapper {
-              background: rgba(255, 255, 255, 0.95);
-              backdrop-filter: blur(30px);
-              border-radius: 28px;
-              border: 1px solid rgba(212, 175, 55, 0.3);
-              box-shadow: 0 30px 90px rgba(15, 23, 42, 0.08), 0 10px 30px rgba(212, 175, 55, 0.1);
-              overflow: hidden;
-            }
-            .aura-mockup-body {
-              display: flex;
-              min-height: 480px;
-            }
-            .aura-mockup-sidebar {
-              width: 270px;
-              min-width: 260px;
-              background: #F8FAFC;
-              border-right: 1px solid rgba(226, 232, 240, 0.8);
-              padding: 16px 0;
-              display: flex;
-              flex-direction: column;
-            }
-            .aura-mockup-chatview {
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              background: #FFFFFF;
-              min-width: 0;
-            }
-            @media (max-width: 720px) {
-              .aura-mockup-body {
-                flex-direction: column;
-                min-height: auto;
-              }
-              .aura-mockup-sidebar {
-                width: 100%;
-                min-width: 100%;
-                border-right: none;
-                border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-                padding: 12px 0;
-              }
-              .aura-mockup-chatview {
-                width: 100%;
-              }
-            }
-          `}</style>
-          <div className="aura-mockup-wrapper">
-            {/* Window title bar */}
-            <div style={{
-              background: 'linear-gradient(90deg, #0F172A 0%, #1E293B 100%)',
-              padding: '14px 20px',
-              display: 'flex', alignItems: 'center', gap: '8px',
-            }}>
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#EF4444' }} />
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#F59E0B' }} />
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#10B981' }} />
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <span style={{
-                  fontFamily: "'Outfit', sans-serif", fontSize: '0.78rem', fontWeight: 800,
-                  color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase'
-                }}>AURA LUXURY EDITION</span>
-              </div>
-            </div>
+      {/* ── COMPARISON MATRIX ── */}
+      <ComparisonMatrix />
 
-            {/* Dashboard body */}
-            <div className="aura-mockup-body">
-              {/* Sidebar */}
-              <div className="aura-mockup-sidebar">
-                <div style={{ padding: '0 18px 14px', borderBottom: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #D4AF37, #F59E0B)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(212, 175, 55, 0.25)'
-                    }}>
-                      <Feather size={18} color="#FFF" />
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '0.95rem', color: '#0F172A' }}>AURA</div>
-                      <div style={{ fontSize: '0.65rem', color: '#D4AF37', fontWeight: 700, letterSpacing: '0.05em' }}>WHITE LUXURY</div>
-                    </div>
-                  </div>
-                </div>
+      {/* ── FAQ SECTION ── */}
+      <FAQSection />
 
-                <div style={{ padding: '12px 18px', flex: 1 }}>
-                  {[
-                    { name: 'Alex Rivera', msg: 'The 3D canvas looks stunning!', time: '1m', active: true, color: '#D4AF37' },
-                    { name: 'Sarah Chen', msg: 'Socket latency is sub-1ms ⚡', time: '5m', active: false, color: '#0284C7' },
-                    { name: 'Design Team', msg: 'Updated white palette uploaded', time: '1h', active: false, color: '#10B981' },
-                    { name: 'Dev Ops', msg: 'Global edge node online ✓', time: '3h', active: false, color: '#6366F1' },
-                  ].map((chat, i) => (
-                    <div key={i} style={{
-                      padding: '10px 12px', borderRadius: '12px',
-                      marginBottom: '6px',
-                      background: chat.active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
-                      borderLeft: chat.active ? '3px solid #D4AF37' : '3px solid transparent',
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      transition: 'all 0.2s ease'
-                    }}>
-                      <div style={{
-                        width: 34, height: 34, borderRadius: '50%',
-                        background: `${chat.color}22`, color: chat.color,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 800, fontSize: '0.85rem', flexShrink: 0
-                      }}>{chat.name[0]}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F172A' }}>{chat.name}</span>
-                          <span style={{ fontSize: '0.65rem', color: '#94A3B8' }}>{chat.time}</span>
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chat.msg}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chat View */}
-              <div className="aura-mockup-chatview">
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(226, 232, 240, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#D4AF3722', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>A</div>
-                    <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A' }}>Alex Rivera</div>
-                      <div style={{ fontSize: '0.68rem', color: '#10B981', fontWeight: 700 }}>● Online &bull; Encrypted</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ alignSelf: 'flex-start', background: '#F1F5F9', padding: '10px 16px', borderRadius: '16px 16px 16px 4px', fontSize: '0.82rem', color: '#0F172A', maxWidth: '85%' }}>
-                    Hey! Have you seen the new white luxury theme with Three.js graphics? 🎨
-                  </div>
-                  <div style={{ alignSelf: 'flex-end', background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#FFFFFF', padding: '10px 16px', borderRadius: '16px 16px 4px 16px', fontSize: '0.82rem', maxWidth: '85%', boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)' }}>
-                    Yes! The golden light sparkles, smooth motion animations, and 3D knot VFX make it look incredibly prestigious. 👑
-                  </div>
-                </div>
-
-                <div style={{ padding: '12px 18px', borderTop: '1px solid rgba(226, 232, 240, 0.8)', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input placeholder="Type a secure message…" style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: '99px', padding: '8px 16px', outline: 'none', fontSize: '0.8rem', background: '#F8FAFC', minWidth: 0 }} readOnly />
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #F59E0B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <ArrowRight size={16} color="#FFF" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ════════════════════════════════════════
-          FEATURES GRID SECTION
-          ════════════════════════════════════════ */}
-      <section
-        ref={featuresRef}
-        style={{
-          position: 'relative',
-          padding: 'clamp(80px, 10vw, 140px) clamp(20px, 6vw, 80px)',
-          overflow: 'hidden',
-          background: '#FAFAFC',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 'clamp(48px, 6vw, 80px)' }}>
-          <span style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: '0.8rem',
-            fontWeight: 800,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: '#D4AF37',
-            display: 'block',
-            marginBottom: '12px',
-          }}>
-            ⚡ IGNITED PERFORMANCE
-          </span>
-          <h2 style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 900,
-            fontSize: 'clamp(2.2rem, 5vw, 4rem)',
-            letterSpacing: '-0.04em',
-            color: '#0F172A',
-            margin: 0,
-          }}>
-            Crafted for Unmatched Prestige
-          </h2>
-          <p style={{
-            fontFamily: "'Inter', sans-serif",
-            color: '#64748B', fontSize: '1.05rem',
-            maxWidth: 520, margin: '16px auto 0',
-            lineHeight: 1.65,
-          }}>
-            Every detail forged with obsession — from sub-millisecond sockets to 4K video feeds.
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-          gap: 'clamp(20px, 3vw, 32px)',
-          maxWidth: 1100,
-          margin: '0 auto',
-          position: 'relative', zIndex: 1,
-        }}>
-          {FEATURES.map((feature, index) => (
-            <FeatureCard key={index} feature={feature} index={index} />
-          ))}
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════
-          BOTTOM CTA
-          ════════════════════════════════════════ */}
+      {/* ── GRAND FINALE CALL TO ACTION ── */}
       <section style={{
         padding: 'clamp(80px, 10vw, 140px) clamp(20px, 6vw, 80px)',
-        textAlign: 'center', position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(180deg, #FAFAFC 0%, #FFFFFF 100%)',
+        textAlign: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(180deg, var(--aura-ivory, #FCFBF7) 0%, #FFFFFF 100%)',
+        zIndex: 2
       }}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: false }}
-          style={{ position: 'relative', zIndex: 1 }}
         >
           <motion.div
-            animate={{ y: [0, -14, 0], rotate: [-5, 5, -5] }}
+            animate={{ y: [0, -14, 0], rotate: [-4, 4, -4] }}
             transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
             style={{
-              display: 'inline-flex', marginBottom: '24px',
-              filter: 'drop-shadow(0 16px 32px rgba(212, 175, 55, 0.45))',
+              display: 'inline-flex',
+              marginBottom: '24px',
+              filter: 'drop-shadow(0 16px 32px rgba(91, 95, 239, 0.35))',
             }}
           >
-            <Feather size={72} color="#D4AF37" strokeWidth={1.3} />
+            <Feather size={72} color="#5B5FEF" strokeWidth={1.3} />
           </motion.div>
 
           <h2 style={{
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontWeight: 900,
             fontSize: 'clamp(2.2rem, 5vw, 3.8rem)',
             letterSpacing: '-0.04em',
-            color: '#0F172A',
+            color: '#171827',
             marginBottom: '16px',
           }}>
-            Ready to Elevate Your Experience?
+            Ready to Step Into Your Aura Space?
           </h2>
           <p style={{
-            fontFamily: "'Inter', sans-serif",
-            color: '#64748B', fontSize: '1.05rem',
-            maxWidth: 480, margin: '0 auto 36px',
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            color: '#727486',
+            fontSize: '1.05rem',
+            maxWidth: 480,
+            margin: '0 auto 36px',
             lineHeight: 1.65,
           }}>
-            Join thousands communicating on the world's most luxurious messaging platform.
+            Join thousands communicating on the world's most living messaging platform.
           </p>
 
           <motion.div whileHover={{ scale: 1.05, y: -3 }} whileTap={{ scale: 0.97 }}>
             <Link to="/signup" style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '10px',
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+              <button style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                 color: '#FFFFFF',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
-                fontFamily: "'Outfit', sans-serif",
-                fontWeight: 800, fontSize: '1.05rem',
-                padding: '16px 42px', borderRadius: '99px',
-                boxShadow: '0 12px 35px rgba(15, 23, 42, 0.2)',
-                letterSpacing: '0.02em',
+                border: 'none',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontWeight: 800,
+                fontSize: '1.05rem',
+                padding: '16px 42px',
+                borderRadius: '99px',
+                boxShadow: '0 12px 35px rgba(91, 95, 239, 0.32)',
+                cursor: 'pointer'
               }}>
-                Start Messaging Free <ArrowRight size={20} color="#D4AF37" />
-              </div>
+                Launch Your Space Free <ArrowRight size={20} color="#FFFFFF" />
+              </button>
             </Link>
           </motion.div>
         </motion.div>
       </section>
+
+      {/* ── FUTURISTIC GLASS FOOTER ── */}
+      <footer style={{
+        padding: '40px 28px',
+        borderTop: '1px solid rgba(23, 24, 39, 0.08)',
+        background: '#FFFFFF',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '16px',
+        maxWidth: '1240px',
+        margin: '0 auto',
+        position: 'relative',
+        zIndex: 2
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Feather size={18} color="#5B5FEF" />
+          <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#171827' }}>AURA</span>
+          <span style={{ fontSize: '0.8rem', color: '#727486' }}>— Living Conversations System © {new Date().getFullYear()}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '20px', fontSize: '0.85rem', fontWeight: 700, color: '#727486' }}>
+          <Link to="/login" style={{ color: 'inherit', textDecoration: 'none' }}>Sign In</Link>
+          <Link to="/signup" style={{ color: 'inherit', textDecoration: 'none' }}>Register</Link>
+          <span style={{ color: '#10B981', fontWeight: 800 }}>● Network Optimal</span>
+        </div>
+      </footer>
     </div>
   );
 }

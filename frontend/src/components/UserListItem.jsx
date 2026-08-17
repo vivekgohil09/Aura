@@ -72,25 +72,25 @@ const UserListItem = ({ user, handleFunction }) => {
         <Box
             onClick={handleAddClick}
             cursor="pointer"
-            bg={isMe ? "linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(245, 158, 11, 0.03) 100%)" : "#FFFFFF"}
+            bg={isMe ? "rgba(91, 95, 239, 0.08)" : "#FFFFFF"}
             _hover={{
-                background: isMe ? "rgba(212, 175, 55, 0.14)" : "#FFFDF8",
-                color: "#0F172A",
+                background: isMe ? "rgba(91, 95, 239, 0.14)" : "#FBFBF9",
+                color: "#171827",
                 transform: "translateY(-1px)",
-                borderColor: "#D4AF37",
-                boxShadow: "0 6px 20px rgba(212, 175, 55, 0.15)"
+                borderColor: "#5B5FEF",
+                boxShadow: "0 6px 20px rgba(91, 95, 239, 0.12)"
             }}
-            transition="all 0.22s cubic-bezier(0.16, 1, 0.3, 1)"
+            transition="all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
             w="100%"
             d="flex"
             alignItems="center"
-            color="#0F172A"
+            color="#171827"
             px={3.5}
             py={2.5}
             my={1.5}
             borderRadius="18px"
-            border={isMe ? "1.5px solid rgba(212, 175, 55, 0.4)" : "1px solid rgba(226, 232, 240, 0.8)"}
-            boxShadow="0 2px 10px rgba(15, 23, 42, 0.03)"
+            border={isMe ? "1.5px solid #5B5FEF" : "1px solid rgba(23, 24, 39, 0.06)"}
+            boxShadow="0 2px 8px rgba(23, 24, 39, 0.02)"
         >
             <Box
                 sx={{
@@ -100,9 +100,9 @@ const UserListItem = ({ user, handleFunction }) => {
                     minWidth: '44px',
                     borderRadius: '50%',
                     padding: '1.5px',
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                     mr: 3,
-                    boxShadow: '0 4px 14px rgba(212, 175, 55, 0.28)',
+                    boxShadow: '0 4px 14px rgba(91, 95, 239, 0.25)',
                     flexShrink: 0
                 }}
             >
@@ -110,7 +110,7 @@ const UserListItem = ({ user, handleFunction }) => {
                     size="full"
                     name={user?.name || "Aura User"}
                     src={user?.pic && typeof user.pic === 'string' && user.pic.length > 5 && !user.pic.includes("icon-library.com") && !user.pic.includes("flaticon.com") ? user.pic : undefined}
-                    fontWeight="900"
+                    fontWeight="800"
                     style={{
                         width: '100%',
                         height: '100%',
@@ -120,27 +120,23 @@ const UserListItem = ({ user, handleFunction }) => {
                 />
                 {/* Presence badge */}
                 <div
-                    className={isOnlineNow ? "aura-presence-online" : "aura-presence-offline"}
+                    className={isOnlineNow ? "aura-presence-pulse-active" : "aura-presence-pulse-offline"}
                     style={{
                         position: 'absolute',
                         right: 0,
                         bottom: 0,
-                        width: 11,
-                        height: 11,
-                        borderRadius: '50%',
-                        border: '2px solid #FFFFFF',
                         zIndex: 2
                     }}
                 />
             </Box>
             <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                 <Box style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                    <Text fontWeight="800" fontSize="sm" color="#0F172A" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Outfit', sans-serif" }}>
+                    <Text fontWeight="800" fontSize="sm" color="#171827" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         {user.name}
                     </Text>
                     {isMe && (
                         <span style={{
-                            background: 'linear-gradient(135deg, #D4AF37, #F59E0B)',
+                            background: 'linear-gradient(135deg, #5B5FEF, #8067E8)',
                             color: '#FFFFFF',
                             fontSize: '0.65rem',
                             fontWeight: 800,
@@ -149,13 +145,13 @@ const UserListItem = ({ user, handleFunction }) => {
                             letterSpacing: '0.03em',
                             whiteSpace: 'nowrap',
                             flexShrink: 0,
-                            boxShadow: '0 2px 6px rgba(212, 175, 55, 0.3)'
+                            boxShadow: '0 2px 6px rgba(91, 95, 239, 0.25)'
                         }}>
                             (Me)
                         </span>
                     )}
                 </Box>
-                <Text fontSize="xs" color="#D4AF37" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700 }}>
+                <Text fontSize="xs" color="#5B5FEF" isTruncated style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700 }}>
                     @{user.username || (user.email ? user.email.split('@')[0] : 'user')}
                 </Text>
             </Box>
@@ -166,20 +162,20 @@ const UserListItem = ({ user, handleFunction }) => {
                     style={{
                         background: isSent
                             ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                            : 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)',
+                            : 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                         color: '#FFFFFF',
                         border: 'none',
                         borderRadius: '99px',
                         padding: '6px 14px',
                         fontSize: '0.78rem',
                         fontWeight: 800,
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                         cursor: 'pointer',
                         flexShrink: 0,
                         marginLeft: '8px',
                         boxShadow: isSent
                             ? '0 3px 10px rgba(16, 185, 129, 0.25)'
-                            : '0 4px 14px rgba(212, 175, 55, 0.35)',
+                            : '0 4px 14px rgba(91, 95, 239, 0.28)',
                         transition: 'all 0.2s ease'
                     }}
                 >

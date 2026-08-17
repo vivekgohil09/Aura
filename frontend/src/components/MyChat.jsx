@@ -78,7 +78,7 @@ const DecryptedLatestMessage = ({ msg }) => {
   return <>{text}</>;
 };
 
-const MyChat = ({ fetchAgain, setFetchAgain }) => {
+const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
   const history = useHistory();
   const dispatch = useDispatch();
 
@@ -97,7 +97,9 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
   const [loading, setLoading] = useState(false);
   const [loadingTwo, setLoadingTwo] = useState(false);
 
-  const [chatFilter, setChatFilter] = useState('all'); // 'all' or 'friends'
+  const [navMode, setNavMode] = useState('chats'); // 'chats' | 'orbit' | 'memory'
+  const [chatFilter, setChatFilter] = useState('all'); // 'all', 'friends', 'groups', 'unread'
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [pinnedChatIds, setPinnedChatIds] = useState([]);
   const [mutedChatIds, setMutedChatIds] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
@@ -407,19 +409,19 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
     <>
       {/* Create Group Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
-        {loadingTwo && <Progress size='xs' isIndeterminate colorScheme="amber" bg="rgba(212, 175, 55, 0.2)" style={{ height: "3px" }} />}
-        <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(15, 23, 42, 0.35)" }} />
+        {loadingTwo && <Progress size='xs' isIndeterminate colorScheme="purple" bg="rgba(91, 95, 239, 0.15)" style={{ height: "3px" }} />}
+        <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(23, 24, 39, 0.35)" }} />
         <ModalContent style={{
           background: "#FFFFFF",
-          color: "#0F172A",
+          color: "#171827",
           borderRadius: "28px",
-          border: "1.5px solid rgba(212, 175, 55, 0.3)",
-          boxShadow: "0 25px 60px rgba(15, 23, 42, 0.18)"
+          border: "1px solid rgba(23, 24, 39, 0.08)",
+          boxShadow: "0 25px 60px rgba(23, 24, 39, 0.12)"
         }}>
-          <ModalHeader style={{ borderBottom: "1px solid #F1F5F9", padding: "20px 24px" }}>
-            <Text fontWeight="900" fontSize="1.35rem" color="#0F172A" margin={0} fontFamily="'Outfit', sans-serif">Create Group Chat</Text>
+          <ModalHeader style={{ borderBottom: "1px solid rgba(23, 24, 39, 0.06)", padding: "20px 24px" }}>
+            <Text fontWeight="900" fontSize="1.35rem" color="#171827" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">Create Group Chat</Text>
           </ModalHeader>
-          <ModalCloseButton style={{ borderRadius: "50%", border: "1px solid rgba(226, 232, 240, 0.8)", top: "18px", right: "20px" }} />
+          <ModalCloseButton style={{ borderRadius: "50%", border: "1px solid rgba(23, 24, 39, 0.08)", top: "18px", right: "20px" }} />
           <ModalBody d="flex" flexDir="column" py={4} px={5}>
             <FormControl>
               <Input
@@ -429,11 +431,11 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 onChange={(e) => setGroupChatName(e.target.value)}
                 borderRadius="16px"
                 bg="#FFFFFF"
-                border="1.5px solid rgba(226, 232, 240, 0.9)"
-                color="#0F172A"
+                border="1.5px solid rgba(23, 24, 39, 0.08)"
+                color="#171827"
                 fontWeight="600"
-                fontFamily="'Inter', sans-serif"
-                _focus={{ borderColor: "#D4AF37", boxShadow: "0 4px 14px rgba(212, 175, 55, 0.15)" }}
+                fontFamily="'Plus Jakarta Sans', sans-serif"
+                _focus={{ borderColor: "#5B5FEF", boxShadow: "0 4px 14px rgba(91, 95, 239, 0.15)" }}
               />
             </FormControl>
             <FormControl>
@@ -443,11 +445,11 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 onChange={(e) => handleSearch(e.target.value)}
                 borderRadius="16px"
                 bg="#FFFFFF"
-                border="1.5px solid rgba(226, 232, 240, 0.9)"
-                color="#0F172A"
+                border="1.5px solid rgba(23, 24, 39, 0.08)"
+                color="#171827"
                 fontWeight="600"
-                fontFamily="'Inter', sans-serif"
-                _focus={{ borderColor: "#D4AF37", boxShadow: "0 4px 14px rgba(212, 175, 55, 0.15)" }}
+                fontFamily="'Plus Jakarta Sans', sans-serif"
+                _focus={{ borderColor: "#5B5FEF", boxShadow: "0 4px 14px rgba(91, 95, 239, 0.15)" }}
               />
             </FormControl>
             <Box w="100%" d="flex" flexWrap="wrap" gap={1.5} mb={3}>
@@ -455,24 +457,24 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                 <UserBadgeItem key={u.id || u._id} user={u} handleFunction={() => handleDelete(u)} />
               ))}
             </Box>
-            {loadingGroupUsers ? <Spinner size="sm" color="#D4AF37" /> : (
+            {loadingGroupUsers ? <Spinner size="sm" color="#5B5FEF" /> : (
               searchResult?.slice(0, 4).map((u) => (
                 <UserListItem key={u.id || u._id} user={u} handleFunction={() => handleGroup(u)} />
               ))
             )}
           </ModalBody>
-          <ModalFooter style={{ borderTop: "1px solid #F1F5F9", padding: "16px 24px" }}>
+          <ModalFooter style={{ borderTop: "1px solid rgba(23, 24, 39, 0.06)", padding: "16px 24px" }}>
             <Button
               style={{
-                background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
                 color: "#FFFFFF",
-                border: "1px solid rgba(212, 175, 55, 0.5)",
+                border: "none",
                 borderRadius: "16px",
                 padding: "12px 24px",
                 fontWeight: 800,
                 fontSize: "0.95rem",
-                fontFamily: "'Outfit', sans-serif",
-                boxShadow: "0 8px 20px rgba(15, 23, 42, 0.2)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                boxShadow: "0 8px 20px rgba(91, 95, 239, 0.25)",
                 cursor: "pointer"
               }}
               onClick={handleSubmit}
@@ -494,20 +496,20 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
         h="100%"
         borderRadius={{ base: "0px", md: "24px" }}
         style={{
-          border: "1.5px solid rgba(212, 175, 55, 0.25)",
-          boxShadow: "0 10px 40px rgba(15, 23, 42, 0.05), 0 0 20px rgba(212, 175, 55, 0.08)",
+          border: "1px solid rgba(23, 24, 39, 0.08)",
+          boxShadow: "0 10px 40px rgba(23, 24, 39, 0.04), 0 0 20px rgba(91, 95, 239, 0.04)",
           backdropFilter: "blur(24px)"
         }}
         position="relative"
         overflow="hidden"
         zIndex={1}
       >
-        {/* 1. Conversations Label & Filter CTA (Fixed Top Header) */}
+        {/* 1. Conversations Header & In-List Search & Filter Tabs */}
         <Box
           className="aura-chat-list-header"
           px={{ base: 3, md: 4 }}
-          pt={{ base: 3, md: 4 }}
-          pb={3}
+          pt={{ base: 3, md: 3.5 }}
+          pb={2.5}
           d="flex"
           flexDir="column"
           gap={2.5}
@@ -519,65 +521,92 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
           style={{
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderBottom: "1.5px solid rgba(212, 175, 55, 0.2)"
+            borderBottom: "1px solid rgba(23, 24, 39, 0.06)"
           }}
         >
-          <Box d="flex" alignItems="center" justifyContent="space-between" flexWrap={{ base: "wrap", sm: "nowrap" }} gap={2}>
-            <Text fontWeight="900" fontSize={{ base: "1.15rem", sm: "1.25rem" }} color="#0F172A" margin={0} letterSpacing="-0.02em" fontFamily="'Outfit', sans-serif">
-              Conversations
-            </Text>
+          {/* Signature Living Tri-Modal Navigation */}
+          <Box d="flex" alignItems="center" bg="#F4F3EF" p="3px" borderRadius="14px" gap="4px">
+            {[
+              { id: 'chats', label: 'CHATS', icon: '💬' },
+              { id: 'orbit', label: 'ORBIT', icon: '🪐' },
+              { id: 'memory', label: 'MEMORY', icon: '🧠' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setNavMode(tab.id)}
+                style={{
+                  flex: 1,
+                  padding: '6px 0',
+                  borderRadius: '11px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  letterSpacing: '0.04em',
+                  border: 'none',
+                  background: navMode === tab.id ? '#FFFFFF' : 'transparent',
+                  color: navMode === tab.id ? '#5B5FEF' : '#727486',
+                  boxShadow: navMode === tab.id ? '0 2px 8px rgba(23, 24, 39, 0.06)' : 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  transition: 'all 0.18s ease'
+                }}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </Box>
+
+          {/* Top Row: Title, Total Count & Group Action */}
+          <Box d="flex" alignItems="center" justifyContent="space-between" gap={2}>
+            <Box d="flex" alignItems="center" gap={2}>
+              <Text fontWeight="900" fontSize={{ base: "1.12rem", sm: "1.2rem" }} color="#171827" margin={0} letterSpacing="-0.03em" fontFamily="'Plus Jakarta Sans', sans-serif">
+                {navMode === 'orbit' ? 'Living Orbit' : navMode === 'memory' ? 'Memory Vault' : 'Conversations'}
+              </Text>
+              {chats && chats.length > 0 && navMode === 'chats' && (
+                <Badge
+                  bg="rgba(91, 95, 239, 0.12)"
+                  color="#5B5FEF"
+                  borderRadius="99px"
+                  px={2}
+                  py={0.5}
+                  fontSize="0.7rem"
+                  fontWeight="800"
+                  fontFamily="'Plus Jakarta Sans', sans-serif"
+                >
+                  {chats.length}
+                </Badge>
+              )}
+            </Box>
+            
             <Box d="flex" alignItems="center" gap={1.5}>
-              <Tooltip label={chatFilter === 'friends' ? "Show All Chats" : "Filter 1-on-1 Friends"} hasArrow placement="top">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    onClick={() => setChatFilter(chatFilter === 'friends' ? 'all' : 'friends')}
-                    size="sm"
-                    style={{
-                      background: chatFilter === 'friends' ? 'linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)' : 'rgba(212, 175, 55, 0.08)',
-                      color: chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37',
-                      borderRadius: '99px',
-                      padding: '0 10px',
-                      fontWeight: 800,
-                      fontSize: '0.78rem',
-                      fontFamily: "'Outfit', sans-serif",
-                      border: chatFilter === 'friends' ? 'none' : '1px solid rgba(212, 175, 55, 0.3)',
-                      height: '32px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      boxShadow: chatFilter === 'friends' ? '0 4px 14px rgba(212, 175, 55, 0.35)' : 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <Users size={14} color={chatFilter === 'friends' ? '#FFFFFF' : '#D4AF37'} />
-                    <span>Friends</span>
-                  </Button>
-                </motion.div>
-              </Tooltip>
               <motion.div whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   onClick={onOpen}
                   size="sm"
-                  leftIcon={<AddIcon style={{ fontSize: "14px", color: "#D4AF37" }} />}
+                  leftIcon={<AddIcon style={{ fontSize: "13px", color: "#5B5FEF" }} />}
                   style={{
-                    background: "rgba(212, 175, 55, 0.08)",
-                    color: "#D4AF37",
+                    background: "rgba(91, 95, 239, 0.08)",
+                    color: "#5B5FEF",
                     borderRadius: "99px",
-                    padding: "0 12px",
-                    height: "32px",
+                    padding: "0 11px",
+                    height: "30px",
                     fontWeight: 800,
-                    fontSize: "0.78rem",
-                    fontFamily: "'Outfit', sans-serif",
-                    letterSpacing: "0.02em",
-                    border: "1px solid rgba(212, 175, 55, 0.3)",
-                    boxShadow: "0 4px 12px rgba(212, 175, 55, 0.1)",
+                    fontSize: "0.75rem",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    letterSpacing: "0.01em",
+                    border: "1px solid rgba(91, 95, 239, 0.25)",
+                    boxShadow: "0 2px 8px rgba(91, 95, 239, 0.08)",
                     WebkitTapHighlightColor: "transparent",
                     transition: "all 0.2s ease"
                   }}
                   _hover={{
-                    background: "rgba(212, 175, 55, 0.15)",
-                    borderColor: "#D4AF37"
+                    background: "rgba(91, 95, 239, 0.16)",
+                    borderColor: "#5B5FEF"
                   }}
                 >
                   Group
@@ -585,10 +614,357 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
               </motion.div>
             </Box>
           </Box>
+
+          {/* Search inside Conversations (Only in chats mode) */}
+          {navMode === 'chats' && (
+            <>
+              <Box position="relative" w="100%">
+                <Search
+                  size={15}
+                  color="#94A3B8"
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    zIndex: 2
+                  }}
+                />
+                <Input
+                  placeholder="Filter chats or messages..."
+                  value={chatSearchQuery}
+                  onChange={(e) => setChatSearchQuery(e.target.value)}
+                  bg="#F4F3EF"
+                  color="#171827"
+                  pl="34px"
+                  pr={chatSearchQuery ? "30px" : "12px"}
+                  h="36px"
+                  fontWeight="600"
+                  fontSize="0.82rem"
+                  fontFamily="'Plus Jakarta Sans', sans-serif"
+                  borderRadius="12px"
+                  border="1px solid rgba(23, 24, 39, 0.06)"
+                  _focus={{
+                    borderColor: "#5B5FEF",
+                    bg: "#FFFFFF",
+                    boxShadow: "0 0 0 2.5px rgba(91, 95, 239, 0.15)"
+                  }}
+                />
+                {chatSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setChatSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      border: 'none',
+                      background: 'rgba(114, 116, 134, 0.15)',
+                      color: '#727486',
+                      borderRadius: '50%',
+                      width: '18px',
+                      height: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      padding: 0
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </Box>
+
+              {/* Segmented Filter Pills */}
+              <Box d="flex" alignItems="center" gap={1.5} overflowX="auto" pb={0.5} sx={{ '::-webkit-scrollbar': { display: 'none' } }}>
+                {[
+                  { id: 'all', label: '✦ All' },
+                  { id: 'friends', label: '⭐ Friends' },
+                  { id: 'groups', label: '👥 Groups' },
+                  { id: 'unread', label: '⚡ Unread' }
+                ].map(tab => {
+                  const isActive = chatFilter === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setChatFilter(tab.id)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '99px',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        border: isActive ? 'none' : '1px solid rgba(23, 24, 39, 0.06)',
+                        background: isActive ? 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)' : '#FFFFFF',
+                        color: isActive ? '#FFFFFF' : '#727486',
+                        cursor: 'pointer',
+                        boxShadow: isActive ? '0 3px 10px rgba(91, 95, 239, 0.3)' : 'none',
+                        transition: 'all 0.18s ease',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </Box>
+            </>
+          )}
         </Box>
 
-        {/* 2. Conversations List */}
-        <Box flex="1" overflowY="auto" px={3} py={1}>
+        {/* 2. Mode Views: ORBIT, MEMORY, or CHATS */}
+        {navMode === 'orbit' ? (
+          <Box className="aura-orbit-viewport" p={3} position="relative" flex="1" minH={{ base: "440px", md: "500px" }}>
+            {/* Top Orbit Telemetry Pill */}
+            <Box
+              position="absolute"
+              top="14px"
+              left="16px"
+              zIndex={15}
+              display="flex"
+              alignItems="center"
+              gap="6px"
+              bg="rgba(255, 255, 255, 0.88)"
+              backdropFilter="blur(12px)"
+              px={3}
+              py={1}
+              borderRadius="99px"
+              border="1px solid rgba(91, 95, 239, 0.2)"
+              boxShadow="0 2px 10px rgba(91, 95, 239, 0.08)"
+            >
+              <motion.span
+                animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981", display: "inline-block" }}
+              />
+              <Text fontSize="0.7rem" fontWeight="800" color="#5B5FEF" letterSpacing="0.04em" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                LIVE ORBIT MESH • {(chats || []).length} NODES
+              </Text>
+            </Box>
+
+            {/* Rotating Radar Sweep Scanner Beam */}
+            <div className="aura-radar-beam" />
+
+            {/* Concentric Orbital Rings */}
+            <div className="aura-orbit-ring-solid" style={{ width: 140, height: 140 }} />
+            <div className="aura-orbit-ring-cosmic" style={{ width: 230, height: 230 }} />
+            <div className="aura-orbit-ring-solid" style={{ width: 330, height: 330 }} />
+            <div className="aura-orbit-ring-cosmic" style={{ width: 420, height: 420 }} />
+
+            {/* Cardinal Radar Markers */}
+            <span style={{ position: 'absolute', top: '16px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>N • 0°</span>
+            <span style={{ position: 'absolute', bottom: '38px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>S • 180°</span>
+            <span style={{ position: 'absolute', right: '16px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>E • 90°</span>
+            <span style={{ position: 'absolute', left: '16px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>W • 270°</span>
+
+            {/* ── CENTER CORE NODE: YOU (The Sun of the Orbit) ── */}
+            <div className="aura-orbit-center-core">
+              {/* Outer pulsing energy halo */}
+              <motion.div
+                animate={{ scale: [1, 1.45, 1], opacity: [0.4, 0.08, 0.4] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  position: 'absolute',
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(91, 95, 239, 0.35) 0%, transparent 70%)',
+                  pointerEvents: 'none'
+                }}
+              />
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                style={{
+                  position: 'relative',
+                  zIndex: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}
+              >
+                <Avatar
+                  size="md"
+                  name={user?.name || "You"}
+                  src={user?.pic || user?.picture || ""}
+                  style={{
+                    width: "56px",
+                    height: "56px",
+                    border: "3px solid #FFFFFF",
+                    boxShadow: "0 8px 25px rgba(91, 95, 239, 0.4), 0 0 0 2px #5B5FEF"
+                  }}
+                />
+                <span style={{
+                  marginTop: "6px",
+                  fontSize: "0.68rem",
+                  fontWeight: 900,
+                  color: "#FFFFFF",
+                  background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
+                  padding: "1px 8px",
+                  borderRadius: "99px",
+                  boxShadow: "0 2px 8px rgba(91, 95, 239, 0.3)",
+                  letterSpacing: "0.04em"
+                }}>
+                  YOU
+                </span>
+              </motion.div>
+            </div>
+
+            {/* ── ORBITING CONTACT SATELLITES (Planets in Motion) ── */}
+            {(!chats || chats.length === 0) ? (
+              <Box position="absolute" bottom="18px" zIndex={15} textAlign="center">
+                <Text fontSize="0.78rem" fontWeight="700" color="#64748B" margin={0}>
+                  🌌 Your orbit is quiet. Start conversations to populate nodes!
+                </Text>
+              </Box>
+            ) : (
+              chats.slice(0, 10).map((c, i) => {
+                const total = Math.min(chats.length, 10);
+                const angle = (i / total) * Math.PI * 2;
+                const radius = i % 3 === 0 ? 115 : (i % 3 === 1 ? 165 : 205);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const cName = !c.isGroupChat ? getSender(user, c.users) : c.chatName;
+                const cPic = !c.isGroupChat ? getPicture(user, c.users) : "";
+                const isSelected = selectedChat && (selectedChat.id === c.id || selectedChat._id === c._id);
+
+                return (
+                  <motion.div
+                    key={c.id || c._id}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.08, type: "spring", stiffness: 260, damping: 20 }}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                      zIndex: 12,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      cursor: 'pointer'
+                    }}
+                    whileHover={{ scale: 1.25, zIndex: 30 }}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => {
+                      dispatch(setSelectedChat(c));
+                    }}
+                  >
+                    <Tooltip label={`Chat with ${cName}`} hasArrow placement="top">
+                      <Box position="relative">
+                        <Avatar
+                          size="md"
+                          name={cName}
+                          src={cPic}
+                          style={{
+                            width: i % 3 === 0 ? "46px" : (i % 3 === 1 ? "42px" : "38px"),
+                            height: i % 3 === 0 ? "46px" : (i % 3 === 1 ? "42px" : "38px"),
+                            border: isSelected ? "3px solid #10B981" : "2.5px solid #FFFFFF",
+                            boxShadow: isSelected
+                              ? "0 0 20px rgba(16, 185, 129, 0.6), 0 4px 15px rgba(0, 0, 0, 0.15)"
+                              : "0 6px 18px rgba(0, 0, 0, 0.1), 0 0 0 1.5px rgba(91, 95, 239, 0.3)"
+                          }}
+                        />
+                        {/* Live Presence Beacon */}
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0px',
+                          right: '0px',
+                          width: '11px',
+                          height: '11px',
+                          borderRadius: '50%',
+                          background: '#10B981',
+                          border: '2px solid #FFFFFF',
+                          boxShadow: '0 0 6px #10B981'
+                        }} />
+                      </Box>
+                    </Tooltip>
+
+                    {/* Luxury Frosted Name Tag */}
+                    <Box
+                      mt={1}
+                      px={2}
+                      py={0.5}
+                      bg="rgba(255, 255, 255, 0.92)"
+                      backdropFilter="blur(8px)"
+                      borderRadius="8px"
+                      border="1px solid rgba(226, 232, 240, 0.8)"
+                      boxShadow="0 2px 6px rgba(0, 0, 0, 0.04)"
+                      maxW="85px"
+                      textAlign="center"
+                    >
+                      <Text
+                        fontSize="0.66rem"
+                        fontWeight="800"
+                        color="#0F172A"
+                        isTruncated
+                        margin={0}
+                        fontFamily="'Plus Jakarta Sans', sans-serif"
+                      >
+                        {cName}
+                      </Text>
+                    </Box>
+                  </motion.div>
+                );
+              })
+            )}
+
+            {/* Bottom Interaction Guide Pill */}
+            <Box
+              position="absolute"
+              bottom="12px"
+              zIndex={15}
+              bg="rgba(255, 255, 255, 0.88)"
+              backdropFilter="blur(12px)"
+              px={3.5}
+              py={1}
+              borderRadius="99px"
+              border="1px solid rgba(226, 232, 240, 0.9)"
+              boxShadow="0 4px 15px rgba(0, 0, 0, 0.04)"
+            >
+              <Text fontSize="0.72rem" fontWeight="700" color="#64748B" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                ✦ Tap any planet node to engage in direct stream
+              </Text>
+            </Box>
+          </Box>
+        ) : navMode === 'memory' ? (
+          <Box p={3.5} overflowY="auto" h="100%">
+            <Box bg="#FFFFFF" p={4} borderRadius="20px" border="1px solid rgba(23, 24, 39, 0.06)" mb={3} boxShadow="0 4px 16px rgba(23, 24, 39, 0.02)">
+              <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={1}>
+                CONVERSATION MEMORY
+              </Text>
+              <Text fontSize="0.82rem" color="#727486" mb={3}>
+                Context, shared media & important moments surfaced across your circle.
+              </Text>
+              <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2.5}>
+                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
+                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">14</Text>
+                  <Text fontSize="0.72rem" fontWeight="700" color="#727486">Shared Images</Text>
+                </Box>
+                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
+                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">6</Text>
+                  <Text fontSize="0.72rem" fontWeight="700" color="#727486">Vault Files</Text>
+                </Box>
+                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
+                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">8</Text>
+                  <Text fontSize="0.72rem" fontWeight="700" color="#727486">Audio Notes</Text>
+                </Box>
+                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
+                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">12ms</Text>
+                  <Text fontSize="0.72rem" fontWeight="700" color="#36C98F">P2P Ping</Text>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        ) : (
+          <Box flex="1" overflowY="auto" px={3} py={1}>
           {loading && (!chats || chats.length === 0) ? (
             <ChatLoading />
           ) : chats && chats.length > 0 ? (
@@ -611,12 +987,19 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                   }
                 }
 
-                // Sort chats so pinned ones stay at top and filter by chatFilter ('friends' vs 'all')
+                // Filter by chatFilter and chatSearchQuery
                 const filteredList = uniqueChats.filter(c => {
-                  if (chatFilter === 'friends') return !c.isGroupChat;
+                  if (chatFilter === 'friends' && c.isGroupChat) return false;
+                  if (chatFilter === 'groups' && !c.isGroupChat) return false;
                   
                   const cId = String(c.id || c._id);
                   const isDeletedLocally = deletedChatIds.includes(cId);
+
+                  if (chatFilter === 'unread') {
+                    const dbCount = unreadCounts[cId] || 0;
+                    const unreadN = notification.filter(n => String(n.chat?.id || n.chat?._id || n.chatId) === cId).length;
+                    if (dbCount <= 0 && unreadN <= 0) return false;
+                  }
                   
                   // For 'all' filter, hide locally deleted chats UNLESS there's a new message
                   if (isDeletedLocally) {
@@ -625,9 +1008,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                       const clearedAt = clearedChats[cId] || 0;
                       const latestMsgTime = c.latestMessage ? new Date(c.latestMessage.createdAt || c.latestMessage.timestamp).getTime() : 0;
                       
-                      // If a new message arrived AFTER it was cleared, it shouldn't be hidden
                       if (latestMsgTime > clearedAt) {
-                         // Auto-restore it locally from deletedChatIds!
                          setTimeout(() => {
                            const newDeleted = deletedChatIds.filter(id => id !== cId);
                            localStorage.setItem("aura_deleted_chats", JSON.stringify(newDeleted));
@@ -638,9 +1019,53 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                     } catch (e) {}
                     return false;
                   }
+
+                  // Search filter
+                  if (chatSearchQuery && chatSearchQuery.trim()) {
+                    const qLower = chatSearchQuery.trim().toLowerCase();
+                    const name = (!c.isGroupChat ? getSender(user, c.users) : c.chatName) || '';
+                    const senderU = !c.isGroupChat ? getSenderUser(user, c.users) : null;
+                    const username = (senderU?.username || senderU?.email || '').toLowerCase();
+                    const latestContent = (c.latestMessage?.content || '').toLowerCase();
+                    if (!name.toLowerCase().includes(qLower) && !username.includes(qLower) && !latestContent.includes(qLower)) {
+                      return false;
+                    }
+                  }
                   
                   return true;
                 });
+
+                if (filteredList.length === 0) {
+                  return (
+                    <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" py={10} px={3} textAlign="center">
+                      <Search size={28} color="#5B5FEF" style={{ marginBottom: "10px", opacity: 0.8 }} />
+                      <Text fontWeight="800" fontSize="0.95rem" color="#171827" mb={1} fontFamily="'Plus Jakarta Sans', sans-serif">
+                        {chatSearchQuery ? "No matches found" : "No chats in this tab"}
+                      </Text>
+                      <Text fontSize="0.78rem" color="#727486" maxW="200px" fontFamily="'Plus Jakarta Sans', sans-serif" mb={3}>
+                        {chatSearchQuery ? `No chat matches "${chatSearchQuery}"` : "Discover people to start chatting!"}
+                      </Text>
+                      {onOpenDrawer && (
+                        <Button
+                          size="xs"
+                          onClick={onOpenDrawer}
+                          style={{
+                            background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                            color: '#FFFFFF',
+                            borderRadius: '99px',
+                            fontWeight: 800,
+                            padding: '0 14px',
+                            height: '28px',
+                            border: 'none',
+                            boxShadow: '0 2px 8px rgba(91, 95, 239, 0.3)'
+                          }}
+                        >
+                          + Find Friends
+                        </Button>
+                      )}
+                    </Box>
+                  );
+                }
 
                 const sortedChats = filteredList.sort((a, b) => {
                   const aId = String(a.id || a._id);
@@ -722,28 +1147,28 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                           } catch (e) { }
                         }}
                         cursor="pointer"
-                        bg={isSelected ? "rgba(212, 175, 55, 0.08)" : unreadCount > 0 ? "rgba(245, 158, 11, 0.04)" : "#FFFFFF"}
-                        px={{ base: 3, md: 4 }}
-                        py={3}
-                        borderRadius="20px"
+                        bg={isSelected ? "rgba(91, 95, 239, 0.08)" : unreadCount > 0 ? "rgba(91, 95, 239, 0.03)" : "#FFFFFF"}
+                        px={{ base: 3, md: 3.5 }}
+                        py={2.5}
+                        borderRadius="18px"
                         position="relative"
                         style={{
-                          border: isSelected ? "1.5px solid rgba(212, 175, 55, 0.55)" : unreadCount > 0 ? "1.5px solid rgba(245, 158, 11, 0.35)" : "1px solid rgba(226, 232, 240, 0.7)",
-                          boxShadow: isSelected ? "0 10px 28px rgba(212, 175, 55, 0.16)" : "0 2px 10px rgba(15, 23, 42, 0.02)",
-                          transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)"
+                          border: isSelected ? "1.5px solid #5B5FEF" : unreadCount > 0 ? "1px solid rgba(91, 95, 239, 0.25)" : "1px solid rgba(23, 24, 39, 0.06)",
+                          boxShadow: isSelected ? "0 8px 24px rgba(91, 95, 239, 0.12)" : "0 2px 8px rgba(23, 24, 39, 0.02)",
+                          transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
                         }}
                         _hover={{
-                          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
+                          boxShadow: "0 8px 24px rgba(23, 24, 39, 0.05)",
                           transform: "translateY(-1px)",
-                          bg: isSelected ? "rgba(212, 175, 55, 0.1)" : "#F8FAFC"
+                          bg: isSelected ? "rgba(91, 95, 239, 0.1)" : "#FBFBF9"
                         }}
                         d="flex"
                         alignItems="center"
-                        gap="14px"
+                        gap="12px"
                       >
-                        {/* Pinned indicator on the left side instead of border */}
+                        {/* Pinned indicator on the left side */}
                         {isPinned && (
-                          <div style={{ position: "absolute", left: "0", top: "50%", transform: "translateY(-50%)", width: "4px", height: "46%", background: "linear-gradient(180deg, #D4AF37 0%, #F59E0B 100%)", borderTopRightRadius: "4px", borderBottomRightRadius: "4px", boxShadow: "0 0 10px rgba(212, 175, 55, 0.6)" }} />
+                          <div style={{ position: "absolute", left: "0", top: "50%", transform: "translateY(-50%)", width: "3.5px", height: "46%", background: "linear-gradient(180deg, #5B5FEF 0%, #8067E8 100%)", borderTopRightRadius: "4px", borderBottomRightRadius: "4px", boxShadow: "0 0 8px rgba(91, 95, 239, 0.5)" }} />
                         )}
 
                         <div style={{ position: "relative", flexShrink: 0 }}>
@@ -753,21 +1178,17 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                             src={senderPic}
                             fontWeight="800"
                             style={{ 
-                              border: isSelected ? "2px solid #D4AF37" : "1.5px solid rgba(226, 232, 240, 0.9)",
-                              boxShadow: isSelected ? "0 4px 16px rgba(212, 175, 55, 0.35)" : "0 4px 12px rgba(15, 23, 42, 0.08)"
+                              border: isSelected ? "2px solid #5B5FEF" : "1.5px solid rgba(23, 24, 39, 0.08)",
+                              boxShadow: isSelected ? "0 4px 14px rgba(91, 95, 239, 0.25)" : "0 2px 8px rgba(23, 24, 39, 0.04)"
                             }}
                           />
                           {!chat.isGroupChat && (
                             <span
-                              className={isTargetOnline ? "aura-presence-online" : "aura-presence-offline"}
+                              className={isTargetOnline ? "aura-presence-pulse-active" : "aura-presence-pulse-offline"}
                               style={{
                                 position: "absolute",
-                                bottom: "1px",
-                                right: "1px",
-                                width: "11px",
-                                height: "11px",
-                                borderRadius: "50%",
-                                border: "2px solid #FFFFFF",
+                                bottom: "0px",
+                                right: "0px",
                                 zIndex: 2
                               }}
                             />
@@ -777,12 +1198,12 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                         <Box flex="1" minWidth="0" overflow="hidden">
                           <Box d="flex" justifyContent="space-between" alignItems="center" width="100%">
                             <Box d="flex" alignItems="center" gap={1.5} flex="1" minWidth="0" overflow="hidden">
-                              <Text fontWeight={unreadCount > 0 ? "900" : "700"} fontSize="0.95rem" color="#0F172A" isTruncated style={{ letterSpacing: "-0.01em", fontFamily: "'Outfit', sans-serif" }}>
+                              <Text fontWeight={unreadCount > 0 ? "800" : "600"} fontSize="0.92rem" color="#171827" isTruncated style={{ letterSpacing: "-0.01em", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                                 {senderName}
                               </Text>
                               {isPinned && (
                                 <Tooltip label="Pinned Chat" hasArrow placement="top">
-                                  <Badge bg="rgba(212, 175, 55, 0.15)" color="#D4AF37" borderRadius="6px" px={1.5} fontSize="0.65rem">📌</Badge>
+                                  <Badge bg="rgba(91, 95, 239, 0.1)" color="#5B5FEF" borderRadius="6px" px={1.5} fontSize="0.65rem">📌</Badge>
                                 </Tooltip>
                               )}
                               {isMuted && (
@@ -793,7 +1214,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                             </Box>
 
                             <Box d="flex" alignItems="center" gap={1} flexShrink={0} ml={2}>
-                              <Text fontSize="0.72rem" fontWeight="600" color={unreadCount > 0 ? "#D4AF37" : "#94A3B8"} whiteSpace="nowrap">
+                              <Text fontSize="0.72rem" fontWeight="600" color={unreadCount > 0 ? "#5B5FEF" : "#727486"} whiteSpace="nowrap">
                                 {isLatestMsgVisible ? formatDateTime(chat.updatedAt || chat.latestMessage?.createdAt) : ""}
                               </Text>
 
@@ -928,7 +1349,7 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                 exit={{ scale: 0, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
                                 style={{
-                                  background: "linear-gradient(135deg, #D4AF37 0%, #F59E0B 100%)",
+                                  background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
                                   color: "#FFFFFF",
                                   borderRadius: unreadCount > 9 ? "11px" : "50%",
                                   minWidth: "22px",
@@ -938,9 +1359,9 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
                                   justifyContent: "center",
                                   fontSize: "0.7rem",
                                   fontWeight: 800,
-                                  fontFamily: "'Outfit', sans-serif",
+                                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                                   padding: unreadCount > 9 ? "0 6px" : "0",
-                                  boxShadow: "0 2px 8px rgba(212, 175, 55, 0.45)",
+                                  boxShadow: "0 2px 8px rgba(91, 95, 239, 0.35)",
                                   flexShrink: 0
                                 }}
                               >
@@ -957,24 +1378,25 @@ const MyChat = ({ fetchAgain, setFetchAgain }) => {
 
                 {/* Subtle Security Encryption Badge */}
                 <Box d="flex" alignItems="center" justifyContent="center" gap={1.5} py={6} opacity={0.75}>
-                  <Lock size={12} color="#94A3B8" />
-                  <Text fontSize="0.72rem" fontWeight="600" color="#94A3B8" letterSpacing="0.02em" fontFamily="'Inter', sans-serif">
+                  <Lock size={12} color="#A1A3B5" />
+                  <Text fontSize="0.72rem" fontWeight="600" color="#A1A3B5" letterSpacing="0.02em" fontFamily="'Plus Jakarta Sans', sans-serif">
                     End-to-end encrypted chats
                   </Text>
                 </Box>
               </Stack>
             ) : (
               <Box d="flex" flexDir="column" alignItems="center" justifyContent="center" py={12} px={4} textAlign="center">
-                <Sparkles size={32} color="#D4AF37" style={{ marginBottom: "12px", opacity: 0.8 }} />
-                <Text fontWeight="800" fontSize="1.05rem" color="#0F172A" mb={1} fontFamily="'Outfit', sans-serif">
+                <Sparkles size={32} color="#5B5FEF" style={{ marginBottom: "12px", opacity: 0.8 }} />
+                <Text fontWeight="800" fontSize="1.05rem" color="#171827" mb={1} fontFamily="'Plus Jakarta Sans', sans-serif">
                   No active conversations yet
                 </Text>
-                <Text fontSize="0.82rem" color="#64748B" maxW="240px" fontFamily="'Inter', sans-serif">
+                <Text fontSize="0.82rem" color="#727486" maxW="240px" fontFamily="'Plus Jakarta Sans', sans-serif">
                   Search a user or create a group to start messaging!
                 </Text>
               </Box>
             )}
         </Box>
+        )}
       </Box>
     </>
   );
