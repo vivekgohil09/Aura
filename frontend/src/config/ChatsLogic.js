@@ -102,7 +102,7 @@ export const getPicture = (loggedUser, users) => {
         targetUser = users[0];
     }
     
-    let rawPic = targetUser?.pic;
+    let rawPic = targetUser?.pic || targetUser?.avatar || targetUser?.picture || targetUser?.profilePic || targetUser?.photo || targetUser?.image;
     if (!rawPic || rawPic.trim() === "" || rawPic.includes("icon-library.com") || rawPic.includes("flaticon.com")) {
         return "";
     }

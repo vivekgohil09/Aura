@@ -2614,17 +2614,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             />
 
-                                            {/* 3D Luminous Pure-White Avatar with Specular Rim */}
+                                            {/* 3D Luminous Avatar with Real Profile Picture Display & Fallback */}
                                             {(() => {
-                                                const avatarSrc = !selectedChat.isGroupChat ? getPicture(user, selectedChat.users) : '';
+                                                const senderObj = !selectedChat.isGroupChat ? getSenderUser(user, selectedChat.users) : null;
+                                                const rawPic = !selectedChat.isGroupChat
+                                                    ? (senderObj?.pic || senderObj?.avatar || senderObj?.picture || senderObj?.profilePic || senderObj?.photo || senderObj?.image || getPicture(user, selectedChat.users) || '')
+                                                    : (selectedChat.groupPic || selectedChat.pic || selectedChat.avatar || '');
                                                 const displayName = selectedChat.isGroupChat ? selectedChat.chatName : getSender(user, selectedChat.users);
                                                 const initial = (displayName || 'A').trim().charAt(0).toUpperCase();
+                                                const hasValidPic = Boolean(rawPic && typeof rawPic === 'string' && rawPic.trim() !== '' && !rawPic.includes('icon-library.com'));
 
                                                 return (
                                                     <div
                                                         style={{
-                                                            width: "155px",
-                                                            height: "155px",
+                                                            width: "160px",
+                                                            height: "160px",
                                                             borderRadius: "50%",
                                                             background: "linear-gradient(135deg, #5B5FEF 0%, #8B5CF6 50%, #EC4899 100%)",
                                                             border: "5px solid #FFFFFF",
@@ -2637,20 +2641,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                             overflow: "hidden"
                                                         }}
                                                     >
-                                                        {avatarSrc ? (
-                                                            <img
-                                                                src={avatarSrc}
-                                                                alt={displayName}
-                                                                style={{
-                                                                    width: "100%",
-                                                                    height: "100%",
-                                                                    objectFit: "cover"
-                                                                }}
-                                                                onError={(e) => {
-                                                                    e.target.style.display = 'none';
-                                                                }}
-                                                            />
-                                                        ) : null}
+                                                        {/* Luminous Pure White Fallback Letter */}
                                                         <span
                                                             style={{
                                                                 color: "#FFFFFF",
@@ -2661,12 +2652,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                                 textShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
                                                                 letterSpacing: "-0.02em",
                                                                 userSelect: "none",
-                                                                position: avatarSrc ? "absolute" : "static",
+                                                                position: "absolute",
+                                                                inset: 0,
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
                                                                 zIndex: 1
                                                             }}
                                                         >
                                                             {initial}
                                                         </span>
+
+                                                        {/* Real Profile Photo Overlay */}
+                                                        {hasValidPic && (
+                                                            <img
+                                                                src={rawPic}
+                                                                alt={displayName}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    height: "100%",
+                                                                    objectFit: "cover",
+                                                                    position: "absolute",
+                                                                    inset: 0,
+                                                                    zIndex: 2,
+                                                                    borderRadius: "50%"
+                                                                }}
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        )}
                                                     </div>
                                                 );
                                             })()}
