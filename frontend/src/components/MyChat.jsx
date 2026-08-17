@@ -721,31 +721,157 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
         {/* 2. Mode Views: ORBIT, MEMORY, or CHATS */}
         {navMode === 'orbit' ? (
-          <Box className="aura-orbit-card-container">
-            <Box className="aura-orbit-card">
-              {/* Inner Solid Orbital Ring */}
-              <div className="aura-orbit-ring-inner" />
+          <Box
+            style={{
+              width: '100%',
+              height: '100%',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              padding: '12px 14px',
+              overflowY: 'auto',
+              boxSizing: 'border-box'
+            }}
+          >
+            {/* Top Minimal Orbit HUD Header */}
+            <Box
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+                padding: '0 4px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981', display: 'inline-block' }} />
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Active Gravity Circle
+                </span>
+              </div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {(chats || []).length} Orbit Nodes
+              </span>
+            </Box>
 
-              {/* Outer Dashed Orbital Ring */}
-              <div className="aura-orbit-ring-outer" />
+            {/* ── 🪐 CONCENTRIC LIVING ORBIT CARD (EXACT IMAGE 1 SPEC) ── */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '300px',
+                height: '300px',
+                minHeight: '300px',
+                background: 'linear-gradient(180deg, #F5F5F1 0%, #EFEFEA 100%)',
+                borderRadius: '32px',
+                border: '1.5px solid rgba(23, 24, 39, 0.05)',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.03), inset 0 2px 6px rgba(255, 255, 255, 0.9)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flexShrink: 0
+              }}
+            >
+              {/* Outer Dashed Orbit Ring (240px Diameter) - Mathematically Centered */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '240px',
+                  height: '240px',
+                  borderRadius: '50%',
+                  border: '1.5px dashed rgba(91, 95, 239, 0.4)',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                  boxSizing: 'border-box'
+                }}
+              />
 
-              {/* Center Node: YOU with soft breathing glow */}
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-                className="aura-orbit-you-node"
+              {/* Inner Solid Orbit Ring (150px Diameter) - Mathematically Centered */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '150px',
+                  height: '150px',
+                  borderRadius: '50%',
+                  border: '1.5px solid rgba(91, 95, 239, 0.45)',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                  boxSizing: 'border-box'
+                }}
+              />
+
+              {/* Center "YOU" Node with Radial Ambient Aura - Mathematically Centered */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none'
+                }}
               >
-                YOU
-              </motion.div>
+                {/* Ambient Breathing Aura */}
+                <motion.div
+                  animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0.2, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
+                  style={{
+                    position: 'absolute',
+                    width: '88px',
+                    height: '88px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(91, 95, 239, 0.4) 0%, rgba(128, 103, 232, 0.15) 50%, transparent 70%)',
+                    pointerEvents: 'none'
+                  }}
+                />
 
-              {/* Orbiting Satellites Placed Exactly on the Rings */}
+                {/* Solid YOU Sphere */}
+                <motion.div
+                  animate={{ scale: [1, 1.04, 1] }}
+                  transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #5B5FEF 0%, #6E5BE8 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFFFFF',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontWeight: 900,
+                    fontSize: '0.98rem',
+                    letterSpacing: '0.04em',
+                    boxShadow: '0 8px 24px rgba(91, 95, 239, 0.42)',
+                    userSelect: 'none',
+                    position: 'relative',
+                    zIndex: 2
+                  }}
+                >
+                  YOU
+                </motion.div>
+              </div>
+
+              {/* Orbiting Satellites (Plotted Directly ON 150px and 240px Ring Perimeters) */}
               {chats && chats.slice(0, 8).map((c, i) => {
                 const total = Math.min(chats.length, 8);
-                // Distribute angles evenly with an initial offset
                 const angle = ((i / total) * Math.PI * 2) - (Math.PI / 3);
-                // Alternate between Inner Ring (radius = 85px) and Outer Ring (radius = 135px)
+                // Inner ring radius = 75px (half of 150px), Outer ring radius = 120px (half of 240px)
                 const isInner = i % 2 === 0;
-                const radius = isInner ? 85 : 135;
+                const radius = isInner ? 75 : 120;
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
 
@@ -755,8 +881,8 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 // Color palette matching Image 1
                 const nodeColors = [
                   '#0284C7', // Blue (SC)
-                  '#10B981', // Teal / Green (AR)
-                  '#EF4444', // Coral / Red
+                  '#10B981', // Emerald (AR)
+                  '#EF4444', // Crimson / Coral (S)
                   '#8B5CF6', // Purple
                   '#F59E0B', // Amber
                   '#EC4899', // Pink
@@ -766,9 +892,16 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                 return (
                   <motion.div
                     key={c.id || c._id}
-                    className="aura-orbit-satellite-node"
                     style={{
-                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                      zIndex: 15,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
                     }}
                     whileHover={{ scale: 1.25, zIndex: 30 }}
                     whileTap={{ scale: 0.92 }}
@@ -783,12 +916,12 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                           name={cName}
                           src={cPic}
                           style={{
-                            width: "36px",
-                            height: "36px",
+                            width: "34px",
+                            height: "34px",
                             background: nodeBg,
                             color: "#FFFFFF",
                             fontWeight: 800,
-                            fontSize: "0.82rem",
+                            fontSize: "0.8rem",
                             fontFamily: "'Plus Jakarta Sans', sans-serif",
                             border: "2.5px solid #FFFFFF",
                             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)"
@@ -799,7 +932,76 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                   </motion.div>
                 );
               })}
-            </Box>
+            </div>
+
+            {/* ── 🌟 RECENT ORBIT QUICK CONNECT TRAY (Eliminates Bottom Whitespace) ── */}
+            <div
+              style={{
+                width: '100%',
+                marginTop: '16px',
+                background: '#FFFFFF',
+                borderRadius: '20px',
+                border: '1px solid rgba(23, 24, 39, 0.06)',
+                padding: '14px 16px',
+                boxShadow: '0 4px 16px rgba(23, 24, 39, 0.02)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#171827', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Quick Orbit Connect
+                </span>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#5B5FEF', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Tap to Chat ➔
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                {chats && chats.slice(0, 6).map((c) => {
+                  const cName = !c.isGroupChat ? getSender(user, c.users) : c.chatName;
+                  const cPic = !c.isGroupChat ? getPicture(user, c.users) : "";
+                  return (
+                    <motion.div
+                      key={c.id || c._id}
+                      whileHover={{ scale: 1.08, y: -2 }}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => dispatch(setSelectedChat(c))}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px',
+                        cursor: 'pointer',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Avatar
+                        size="sm"
+                        name={cName}
+                        src={cPic}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          border: '2px solid rgba(91, 95, 239, 0.3)',
+                          boxShadow: '0 2px 8px rgba(91, 95, 239, 0.12)'
+                        }}
+                      />
+                      <span style={{
+                        fontSize: '0.64rem',
+                        fontWeight: 700,
+                        color: '#64748B',
+                        maxWidth: '48px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif"
+                      }}>
+                        {cName}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
           </Box>
         ) : navMode === 'memory' ? (
           <Box p={3.5} overflowY="auto" h="100%">
