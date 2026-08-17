@@ -3,19 +3,32 @@ import {
   Modal,
   ModalOverlay,
   ModalContent,
-  ModalHeader,
   ModalBody,
-  ModalFooter,
-  ModalCloseButton,
   Button,
   Input,
   Box,
   Text,
   Avatar,
-  Spinner
+  Spinner,
+  Badge
 } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Check, X, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  Users,
+  Search,
+  Plus,
+  Check,
+  X,
+  Sparkles,
+  ShieldCheck,
+  Crown,
+  Flame,
+  Zap,
+  Rocket,
+  Layers,
+  CheckCircle2,
+  Lock
+} from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,22 +37,36 @@ import { getSenderUser } from '../config/ChatsLogic';
 import { getJwtToken } from '../config/getJwt';
 import { stompService } from '../config/stompService';
 
-const GROUP_ICON_PRESETS = ['🪐', '⚡', '🚀', '💎', '🔥', '✨', '☕', '🎮', '🌴', '👑', '🌌', '🦄'];
+const EMBLEM_PRESETS = [
+  { icon: '🪐', name: 'Orbit', bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)' },
+  { icon: '⚡', name: 'Spark', bg: 'linear-gradient(135deg, #F59E0B, #EF4444)' },
+  { icon: '🚀', name: 'Vanguard', bg: 'linear-gradient(135deg, #3B82F6, #6366F1)' },
+  { icon: '💎', name: 'Diamond', bg: 'linear-gradient(135deg, #06B6D4, #3B82F6)' },
+  { icon: '🔥', name: 'Phoenix', bg: 'linear-gradient(135deg, #EF4444, #F97316)' },
+  { icon: '👑', name: 'Royal', bg: 'linear-gradient(135deg, #F59E0B, #D97706)' },
+  { icon: '✨', name: 'Aura', bg: 'linear-gradient(135deg, #EC4899, #8B5CF6)' },
+  { icon: '🎮', name: 'Arcade', bg: 'linear-gradient(135deg, #8B5CF6, #EC4899)' },
+  { icon: '☕', name: 'Lounge', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+  { icon: '🌴', name: 'Oasis', bg: 'linear-gradient(135deg, #14B8A6, #0D9488)' }
+];
+
+const SUGGESTED_TITLES = ['⚡ Core Vanguard', '🎨 Design Guild', '🚀 Growth Matrix', '☕ Chill Orbit'];
 
 export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFetchAgain }) {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user) || JSON.parse(localStorage.getItem('userInfo') || '{}');
   const chats = useSelector((state) => state.chats) || [];
+  const userStatuses = useSelector((state) => state.userStatuses) || {};
 
   const [groupName, setGroupName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('🪐');
+  const [selectedEmblem, setSelectedEmblem] = useState(EMBLEM_PRESETS[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Extract all active 1-on-1 friends from active chat list
+  // Extract all active 1-on-1 friends
   const friendsList = useMemo(() => {
     const friendsMap = new Map();
 
@@ -66,7 +93,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
     return Array.from(friendsMap.values());
   }, [chats, user]);
 
-  // Live search across backend database if user searches
+  // Live query
   useEffect(() => {
     if (!searchQuery || !searchQuery.trim()) {
       setSearchResults([]);
@@ -77,15 +104,12 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        const config = {
-          headers: { Authorization: 'Bearer ' + getJwtToken() }
-        };
+        const config = { headers: { Authorization: 'Bearer ' + getJwtToken() } };
         const { data } = await axios.get(`/api/user?search=${encodeURIComponent(searchQuery.trim())}`, config);
         const myId = String(user._id || user.id);
         const filtered = (data || []).filter((u) => String(u._id || u.id) !== myId);
         setSearchResults(filtered);
       } catch (err) {
-        // fallback to local filtering
         const q = searchQuery.toLowerCase().trim();
         const localMatches = friendsList.filter(
           (f) =>
@@ -97,12 +121,11 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
       } finally {
         setSearching(false);
       }
-    }, 250);
+    }, 200);
 
     return () => clearTimeout(timer);
   }, [searchQuery, friendsList, user]);
 
-  // Display list: search results when typing, else active friends list
   const displayUsers = searchQuery.trim() ? searchResults : friendsList;
 
   const handleToggleUser = (u) => {
@@ -134,7 +157,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
         }
       };
 
-      const finalName = `${selectedIcon} ${groupName.trim()}`;
+      const finalName = `${selectedEmblem.icon} ${groupName.trim()}`;
       const userIds = selectedUsers.map((u) => u._id || u.id);
 
       const { data } = await axios.post(
@@ -146,7 +169,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
         config
       );
 
-      // Real-time broadcast creation over STOMP/Socket
+      // Real-time broadcast
       try {
         if (stompService && stompService.connected) {
           stompService.sendMessage(
@@ -167,7 +190,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
       dispatch(setSelectedChat(data));
       if (setFetchAgain) setFetchAgain((prev) => !prev);
 
-      toast.success(`🎉 Group "${finalName}" created successfully!`, {
+      toast.success(`🎉 Group "${finalName}" launched!`, {
         autoClose: 2000,
         hideProgressBar: true
       });
@@ -183,131 +206,294 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
     }
   };
 
+  const isReady = groupName.trim().length > 0 && selectedUsers.length >= 2;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
-      <ModalOverlay bg="rgba(10, 11, 20, 0.78)" backdropFilter="blur(20px)" />
+    <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
+      <ModalOverlay bg="rgba(11, 15, 25, 0.72)" backdropFilter="blur(24px)" />
       <ModalContent
-        bg="#FFFFFF"
-        borderRadius="30px"
+        bg="linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)"
+        borderRadius="36px"
         overflow="hidden"
-        border="1.5px solid rgba(23, 24, 39, 0.08)"
-        boxShadow="0 30px 90px rgba(0, 0, 0, 0.28)"
+        border="1px solid rgba(255, 255, 255, 0.8)"
+        boxShadow="0 40px 100px -20px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(91, 95, 239, 0.1)"
         fontFamily="'Plus Jakarta Sans', sans-serif"
+        maxW="480px"
+        p={0}
       >
-        <ModalHeader
-          p={5}
-          pb={3}
-          borderBottom="1px solid #F1F5F9"
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
+        {/* Animated Specular Ambient Aura Bar */}
+        <div
+          style={{
+            height: '6px',
+            width: '100%',
+            background: 'linear-gradient(90deg, #5B5FEF 0%, #EC4899 35%, #8B5CF6 70%, #3B82F6 100%)',
+            backgroundSize: '200% 100%',
+            animation: 'auraGradient 4s ease infinite'
+          }}
+        />
+
+        <ModalBody p={{ base: 5, sm: 6 }}>
+          {/* Header Bar with Glass Pill & Close */}
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={4}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <motion.div
+                whileHover={{ rotate: 15, scale: 1.08 }}
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #5B5FEF 0%, #8B5CF6 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  boxShadow: '0 8px 20px rgba(91, 95, 239, 0.35)'
+                }}
+              >
+                <Users size={24} strokeWidth={2.2} />
+              </motion.div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Text fontWeight="900" fontSize="1.2rem" color="#0F172A" m={0} letterSpacing="-0.025em">
+                    Create Group Orbit
+                  </Text>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, background: 'rgba(91, 95, 239, 0.1)', color: '#5B5FEF', padding: '2px 8px', borderRadius: '99px' }}>
+                    PRO
+                  </span>
+                </div>
+                <Text fontSize="0.75rem" color="#64748B" fontWeight="600" m={0}>
+                  Encrypted multi-peer collaborative space
+                </Text>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
               style={{
-                width: 42,
-                height: 42,
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                border: '1px solid rgba(226, 232, 240, 0.8)',
+                background: '#FFFFFF',
+                color: '#64748B',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#FFFFFF',
-                boxShadow: '0 6px 18px rgba(91, 95, 239, 0.35)'
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
               }}
             >
-              <Users size={22} />
-            </div>
-            <div>
-              <Text fontWeight="900" fontSize="1.1rem" color="#0F172A" m={0} letterSpacing="-0.02em">
-                Create Group Space
-              </Text>
-              <Text fontSize="0.72rem" color="#64748B" fontWeight="600" m={0}>
-                Direct add friends with instant live sync
-              </Text>
-            </div>
-          </div>
-          <ModalCloseButton position="static" borderRadius="50%" _hover={{ bg: '#F1F5F9' }} />
-        </ModalHeader>
+              <X size={16} strokeWidth={2.5} />
+            </button>
+          </Box>
 
-        <ModalBody p={5}>
-          {/* Preset Icon Selector */}
-          <Box mb={3.5}>
-            <Text fontSize="0.74rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={2}>
-              ✦ Group Emblem
-            </Text>
-            <Box display="flex" gap={1.5} overflowX="auto" pb={1} sx={{ '::-webkit-scrollbar': { display: 'none' } }}>
-              {GROUP_ICON_PRESETS.map((icon) => (
-                <motion.button
-                  key={icon}
+          {/* 🌟 1. Interactive Live Group Preview Card */}
+          <Box
+            mb={4}
+            p={4}
+            borderRadius="24px"
+            bg="linear-gradient(135deg, rgba(91, 95, 239, 0.06) 0%, rgba(139, 92, 246, 0.08) 100%)"
+            border="1.5px solid rgba(91, 95, 239, 0.18)"
+            boxShadow="inset 0 2px 10px rgba(91, 95, 239, 0.05)"
+            position="relative"
+            overflow="hidden"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <motion.div
+                key={selectedEmblem.icon}
+                initial={{ scale: 0.7, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+                style={{
+                  width: 58,
+                  height: 58,
+                  borderRadius: '20px',
+                  background: selectedEmblem.bg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '28px',
+                  boxShadow: '0 8px 24px rgba(91, 95, 239, 0.35)',
+                  flexShrink: 0
+                }}
+              >
+                {selectedEmblem.icon}
+              </motion.div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  fontWeight="900"
+                  fontSize="1.05rem"
+                  color="#0F172A"
+                  m={0}
+                  letterSpacing="-0.02em"
+                  isTruncated
+                >
+                  {groupName.trim() ? `${selectedEmblem.icon} ${groupName.trim()}` : 'Untitled Group Space'}
+                </Text>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#5B5FEF' }}>
+                    👥 {selectedUsers.length + 1} Orbiters
+                  </span>
+                  <span style={{ color: '#CBD5E1', fontSize: '0.7rem' }}>•</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#10B981', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <Lock size={10} /> End-to-End Encrypted
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Emblem Selector Carousel */}
+            <Box mt={3.5}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#5B5FEF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Choose Emblem
+                </span>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748B' }}>
+                  {selectedEmblem.name}
+                </span>
+              </div>
+              <Box display="flex" gap={2} overflowX="auto" pb={1} sx={{ '::-webkit-scrollbar': { display: 'none' } }}>
+                {EMBLEM_PRESETS.map((emb) => {
+                  const isActive = selectedEmblem.icon === emb.icon;
+                  return (
+                    <motion.button
+                      key={emb.icon}
+                      type="button"
+                      whileHover={{ scale: 1.15, y: -2 }}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => setSelectedEmblem(emb)}
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        minWidth: '38px',
+                        borderRadius: '13px',
+                        border: isActive ? '2px solid #5B5FEF' : '1px solid rgba(226, 232, 240, 0.9)',
+                        background: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: isActive ? '0 4px 14px rgba(91, 95, 239, 0.3)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {emb.icon}
+                    </motion.button>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+
+          {/* 🌟 2. Group Title Input & Quick Suggestions */}
+          <Box mb={4}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Group Space Title
+              </span>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: groupName.length > 0 ? '#5B5FEF' : '#94A3B8' }}>
+                {groupName.length}/35
+              </span>
+            </div>
+
+            <Input
+              placeholder="e.g. Design Vanguard, Aura Core Circle"
+              value={groupName}
+              maxLength={35}
+              onChange={(e) => setGroupName(e.target.value)}
+              h="46px"
+              borderRadius="16px"
+              bg="#FFFFFF"
+              border="1.5px solid #E2E8F0"
+              fontSize="0.92rem"
+              fontWeight="700"
+              color="#0F172A"
+              _focus={{
+                borderColor: '#5B5FEF',
+                boxShadow: '0 0 0 3.5px rgba(91, 95, 239, 0.18)'
+              }}
+            />
+
+            {/* Quick Suggestions Chips */}
+            <Box display="flex" gap={1.5} mt={2} flexWrap="wrap">
+              {SUGGESTED_TITLES.map((title) => (
+                <button
+                  key={title}
                   type="button"
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.92 }}
-                  onClick={() => setSelectedIcon(icon)}
+                  onClick={() => {
+                    const clean = title.replace(/^[^s]+s/, '');
+                    setGroupName(clean);
+                  }}
                   style={{
-                    width: '38px',
-                    height: '38px',
-                    minWidth: '38px',
-                    borderRadius: '12px',
-                    border: selectedIcon === icon ? '2px solid #5B5FEF' : '1px solid #E2E8F0',
-                    background: selectedIcon === icon ? 'rgba(91, 95, 239, 0.12)' : '#F8FAFC',
-                    fontSize: '18px',
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                    borderRadius: '99px',
+                    padding: '3px 10px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    color: '#64748B',
                     cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  {icon}
-                </motion.button>
+                  {title}
+                </button>
               ))}
             </Box>
           </Box>
 
-          {/* Group Title Input */}
-          <Box mb={3.5}>
-            <Text fontSize="0.74rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={1.5}>
-              ✦ Group Title
-            </Text>
-            <Input
-              placeholder="e.g. Design Vanguard, Engineering Core"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              h="44px"
-              borderRadius="14px"
-              bg="#F8FAFC"
-              border="1.5px solid #E2E8F0"
-              fontSize="0.9rem"
-              fontWeight="700"
-              color="#0F172A"
-              _focus={{ borderColor: '#5B5FEF', bg: '#FFFFFF', boxShadow: '0 0 0 3px rgba(91, 95, 239, 0.15)' }}
-            />
-          </Box>
-
-          {/* Selected Member Chips with Count */}
-          {selectedUsers.length > 0 && (
-            <Box mb={3.5}>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                <Text fontSize="0.74rem" fontWeight="800" color="#0F172A" m={0}>
-                  Selected Members ({selectedUsers.length})
-                </Text>
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: selectedUsers.length >= 2 ? '#10B981' : '#F59E0B' }}>
-                  {selectedUsers.length >= 2 ? '✓ Ready to create' : 'Add at least 2 friends'}
+          {/* 🌟 3. Selected Members Animated Orbit Dock */}
+          <Box mb={4}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Orbit Members
                 </span>
-              </Box>
-              <Box display="flex" flexWrap="wrap" gap={1.5} maxH="85px" overflowY="auto">
+                <Badge
+                  borderRadius="99px"
+                  px={2}
+                  py={0.5}
+                  fontSize="0.68rem"
+                  fontWeight="800"
+                  bg={selectedUsers.length >= 2 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)'}
+                  color={selectedUsers.length >= 2 ? '#059669' : '#D97706'}
+                >
+                  {selectedUsers.length >= 2 ? `✓ ${selectedUsers.length} Selected` : `${selectedUsers.length}/2 Required`}
+                </Badge>
+              </div>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748B' }}>
+                1-Tap to Toggle
+              </span>
+            </div>
+
+            {selectedUsers.length > 0 ? (
+              <Box
+                p={2}
+                borderRadius="18px"
+                bg="#FFFFFF"
+                border="1px solid rgba(226, 232, 240, 0.9)"
+                display="flex"
+                flexWrap="wrap"
+                gap={2}
+                maxH="88px"
+                overflowY="auto"
+              >
                 <AnimatePresence>
                   {selectedUsers.map((u) => (
                     <motion.div
                       key={u._id || u.id}
-                      initial={{ scale: 0.8, opacity: 0 }}
+                      initial={{ scale: 0.7, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.8, opacity: 0 }}
+                      exit={{ scale: 0.7, opacity: 0 }}
+                      whileHover={{ scale: 1.04 }}
                     >
                       <Box
-                        bg="linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.08) 100%)"
-                        border="1px solid rgba(91, 95, 239, 0.3)"
+                        bg="linear-gradient(135deg, rgba(91, 95, 239, 0.1) 0%, rgba(139, 92, 246, 0.06) 100%)"
+                        border="1.5px solid rgba(91, 95, 239, 0.3)"
                         borderRadius="99px"
                         pl={1.5}
                         pr={2.5}
@@ -315,8 +501,9 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                         display="flex"
                         alignItems="center"
                         gap={1.5}
+                        boxShadow="0 2px 8px rgba(91, 95, 239, 0.12)"
                       >
-                        <Avatar size="2xs" name={u.name} src={u.pic} />
+                        <Avatar size="2xs" name={u.name} src={u.pic} style={{ border: '1px solid #5B5FEF' }} />
                         <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" m={0}>
                           {u.name}
                         </Text>
@@ -333,157 +520,222 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                             padding: 0
                           }}
                         >
-                          <X size={12} />
+                          <X size={12} strokeWidth={3} />
                         </button>
                       </Box>
                     </motion.div>
                   ))}
                 </AnimatePresence>
               </Box>
-            </Box>
-          )}
+            ) : (
+              <Box
+                p={3}
+                borderRadius="18px"
+                bg="#FFFFFF"
+                border="1px dashed #CBD5E1"
+                textAlign="center"
+              >
+                <Text fontSize="0.74rem" color="#94A3B8" fontWeight="600" m={0}>
+                  ✨ Tap friends below to direct add them to this orbit space
+                </Text>
+              </Box>
+            )}
+          </Box>
 
-          {/* Search Input for Direct Add */}
+          {/* 🌟 4. Direct 1-Tap Add User Discovery List */}
           <Box>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
-              <Text fontSize="0.74rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" m={0}>
-                ✦ Direct Add Members ({displayUsers.length})
-              </Text>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Direct Add Orbiters ({displayUsers.length})
+              </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <ShieldCheck size={13} color="#10B981" />
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981' }}>Direct 1-Tap Add</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981' }}>Instant 1-Tap Sync</span>
               </div>
-            </Box>
+            </div>
 
+            {/* Glowing Search Bar */}
             <Box position="relative" mb={2.5}>
-              <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search
+                size={16}
+                color="#94A3B8"
+                style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
+              />
               <Input
-                placeholder="Search by name or @username to direct add..."
+                placeholder="Search friends or type @username..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                pl="36px"
-                h="38px"
-                borderRadius="12px"
-                bg="#F8FAFC"
+                pl="38px"
+                h="42px"
+                borderRadius="14px"
+                bg="#FFFFFF"
                 border="1px solid #E2E8F0"
-                fontSize="0.82rem"
+                fontSize="0.84rem"
                 fontWeight="600"
+                _focus={{
+                  borderColor: '#5B5FEF',
+                  boxShadow: '0 0 0 3px rgba(91, 95, 239, 0.15)'
+                }}
               />
               {searching && (
-                <Spinner size="xs" color="#5B5FEF" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Spinner size="xs" color="#5B5FEF" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }} />
               )}
             </Box>
 
-            {/* Direct Member Selection Cards (NO 'Requested' Button!) */}
-            <Box maxH="190px" overflowY="auto" display="flex" flexDirection="column" gap={1.5} pr={1}>
+            {/* User Cards */}
+            <Box maxH="175px" overflowY="auto" display="flex" flexDirection="column" gap={2} pr={1}>
               {displayUsers.length > 0 ? (
                 displayUsers.map((itemUser) => {
-                  const isSelected = selectedUsers.some((u) => String(u._id || u.id) === String(itemUser._id || itemUser.id));
+                  const uId = String(itemUser._id || itemUser.id);
+                  const isSelected = selectedUsers.some((u) => String(u._id || u.id) === uId);
+                  const isOnline = userStatuses[uId]?.isOnline || itemUser?.isOnline;
+
                   return (
                     <motion.div
-                      key={itemUser._id || itemUser.id}
-                      whileHover={{ scale: 1.01, x: 2 }}
-                      whileTap={{ scale: 0.98 }}
+                      key={uId}
+                      whileHover={{ scale: 1.015, x: 2 }}
+                      whileTap={{ scale: 0.985 }}
                       onClick={() => handleToggleUser(itemUser)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 14px',
-                        borderRadius: '16px',
-                        background: isSelected ? 'rgba(91, 95, 239, 0.08)' : '#F8FAFC',
-                        border: isSelected ? '1.5px solid #5B5FEF' : '1px solid rgba(226, 232, 240, 0.8)',
+                        padding: '10px 14px',
+                        borderRadius: '18px',
+                        background: isSelected
+                          ? 'linear-gradient(135deg, rgba(91, 95, 239, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)'
+                          : '#FFFFFF',
+                        border: isSelected ? '1.5px solid #5B5FEF' : '1px solid rgba(226, 232, 240, 0.9)',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        boxShadow: isSelected ? '0 4px 16px rgba(91, 95, 239, 0.12)' : '0 2px 6px rgba(0,0,0,0.02)',
+                        transition: 'all 0.18s ease'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Avatar size="sm" name={itemUser.name} src={itemUser.pic} style={{ border: '1.5px solid #FFFFFF' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ position: 'relative' }}>
+                          <Avatar
+                            size="sm"
+                            name={itemUser.name}
+                            src={itemUser.pic}
+                            style={{ border: isSelected ? '2px solid #5B5FEF' : '1.5px solid #FFFFFF' }}
+                          />
+                          {isOnline && (
+                            <span
+                              style={{
+                                position: 'absolute',
+                                right: 0,
+                                bottom: 0,
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                background: '#10B981',
+                                border: '2px solid #FFFFFF'
+                              }}
+                            />
+                          )}
+                        </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A' }}>
+                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>
                             {itemUser.name}
                           </span>
-                          <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
                             @{itemUser.username || (itemUser.email ? itemUser.email.split('@')[0] : 'user')}
                           </span>
                         </div>
                       </div>
 
-                      {/* Direct Add Toggle Badge */}
-                      <div
+                      {/* Dynamic Switch Badge */}
+                      <motion.div
+                        animate={{ scale: isSelected ? [1, 1.08, 1] : 1 }}
                         style={{
-                          padding: isSelected ? '4px 10px' : '4px 10px',
+                          padding: isSelected ? '5px 12px' : '5px 12px',
                           borderRadius: '99px',
-                          background: isSelected ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : '#FFFFFF',
-                          border: isSelected ? 'none' : '1.5px solid #CBD5E1',
+                          background: isSelected
+                            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                            : '#F8FAFC',
+                          border: isSelected ? 'none' : '1.5px solid #E2E8F0',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px',
-                          color: isSelected ? '#FFFFFF' : '#64748B',
-                          fontSize: '0.72rem',
+                          gap: '5px',
+                          color: isSelected ? '#FFFFFF' : '#5B5FEF',
+                          fontSize: '0.74rem',
                           fontWeight: 800,
-                          boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.35)' : 'none'
+                          boxShadow: isSelected ? '0 4px 12px rgba(16, 185, 129, 0.35)' : 'none'
                         }}
                       >
                         {isSelected ? (
                           <>
-                            <Check size={12} strokeWidth={3} />
+                            <CheckCircle2 size={13} strokeWidth={2.8} />
                             <span>Added</span>
                           </>
                         ) : (
                           <>
-                            <Plus size={12} strokeWidth={2.5} color="#5B5FEF" />
-                            <span style={{ color: '#5B5FEF' }}>Direct Add</span>
+                            <Plus size={13} strokeWidth={2.5} color="#5B5FEF" />
+                            <span>Direct Add</span>
                           </>
                         )}
-                      </div>
+                      </motion.div>
                     </motion.div>
                   );
                 })
               ) : (
                 <Box py={4} textAlign="center">
                   <Text fontSize="0.82rem" color="#94A3B8" fontWeight="600" m={0}>
-                    {searchQuery.trim() ? 'No users matching search' : 'No friends found. Type to search any user!'}
+                    {searchQuery.trim() ? 'No users found matching search' : 'No friends found. Type to search any user!'}
                   </Text>
                 </Box>
               )}
             </Box>
           </Box>
-        </ModalBody>
 
-        <ModalFooter p={4} bg="#F8FAFC" borderTop="1px solid #F1F5F9" display="flex" gap={2}>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            borderRadius="99px"
-            fontWeight="700"
-            fontSize="0.85rem"
-            color="#64748B"
-          >
-            Cancel
-          </Button>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} style={{ flex: 1 }}>
+          {/* 🌟 5. Ultra-Luxury Action Launch Dock */}
+          <Box mt={5} pt={3} borderTop="1px solid rgba(226, 232, 240, 0.8)" display="flex" alignItems="center" gap={3}>
             <Button
-              w="100%"
-              onClick={handleCreateGroup}
-              isLoading={loading}
-              disabled={!groupName.trim() || selectedUsers.length < 2}
-              style={{
-                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
-                color: '#FFFFFF',
-                borderRadius: '99px',
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                height: '42px',
-                boxShadow: '0 8px 24px rgba(91, 95, 239, 0.35)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
+              variant="ghost"
+              onClick={onClose}
+              borderRadius="99px"
+              fontWeight="700"
+              fontSize="0.88rem"
+              color="#64748B"
+              _hover={{ bg: '#F1F5F9', color: '#0F172A' }}
+              px={5}
             >
-              🚀 Launch Group Space ({selectedUsers.length + 1} Members)
+              Cancel
             </Button>
-          </motion.div>
-        </ModalFooter>
+
+            <motion.div
+              whileHover={{ scale: isReady ? 1.02 : 1 }}
+              whileTap={{ scale: isReady ? 0.98 : 1 }}
+              style={{ flex: 1 }}
+            >
+              <Button
+                w="100%"
+                onClick={handleCreateGroup}
+                isLoading={loading}
+                disabled={!isReady}
+                style={{
+                  background: isReady
+                    ? 'linear-gradient(135deg, #5B5FEF 0%, #8B5CF6 50%, #EC4899 100%)'
+                    : 'linear-gradient(135deg, #CBD5E1 0%, #E2E8F0 100%)',
+                  color: '#FFFFFF',
+                  borderRadius: '99px',
+                  fontWeight: 900,
+                  fontSize: '0.92rem',
+                  height: '46px',
+                  boxShadow: isReady ? '0 10px 30px rgba(91, 95, 239, 0.4)' : 'none',
+                  border: 'none',
+                  cursor: isReady ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <Rocket size={17} strokeWidth={2.4} />
+                  <span>🚀 Launch Orbit Space ({selectedUsers.length + 1} Members)</span>
+                </div>
+              </Button>
+            </motion.div>
+          </Box>
+        </ModalBody>
       </ModalContent>
     </Modal>
   );
