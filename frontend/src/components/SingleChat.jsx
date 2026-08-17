@@ -229,16 +229,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
         setIsSendingAttachment(true);
         try {
             let rawContent = pendingAttachment.dataUrl;
-            // Pack metadata into JSON structure for rich file preview with original name & size
-            const filePayload = JSON.stringify({
-                _isDoc: true,
-                name: pendingAttachment.name,
-                size: pendingAttachment.size,
-                type: pendingAttachment.type,
-                data: pendingAttachment.dataUrl,
-                isPdf: pendingAttachment.isPdf
-            });
-            rawContent = '[doc] ' + filePayload;
+            if (pendingAttachment.isImage) {
+                // If it is a photo, send directly as visible image data URL
+                rawContent = pendingAttachment.dataUrl;
+            } else {
+                // Pack non-image documents into rich file metadata
+                const filePayload = JSON.stringify({
+                    _isDoc: true,
+                    name: pendingAttachment.name,
+                    size: pendingAttachment.size,
+                    type: pendingAttachment.type,
+                    data: pendingAttachment.dataUrl,
+                    isPdf: pendingAttachment.isPdf
+                });
+                rawContent = '[doc] ' + filePayload;
+            }
 
             if (viewOnceMode) {
                 rawContent = '[view-once] ' + rawContent;

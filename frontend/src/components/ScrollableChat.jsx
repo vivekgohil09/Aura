@@ -451,39 +451,52 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
     }
 
     return (
-      <button
+      <motion.button
         type="button"
+        whileHover={{ scale: 1.04, y: -1 }}
+        whileTap={{ scale: 0.96 }}
         onClick={() => revealViewOnce && revealViewOnce(msgId)}
         style={{
           background: isMe
-            ? 'rgba(255, 255, 255, 0.2)'
-            : 'linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.08) 100%)',
-          border: isMe ? '1px solid rgba(255, 255, 255, 0.35)' : '1px solid rgba(91, 95, 239, 0.28)',
-          borderRadius: '16px',
-          padding: '10px 16px',
+            ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.12) 100%)'
+            : 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)',
+          border: isMe ? '1.5px solid rgba(255, 255, 255, 0.4)' : '1.5px solid #C084FC',
+          borderRadius: '99px',
+          padding: '8px 18px',
           cursor: 'pointer',
-          color: isMe ? '#FFFFFF' : '#5B5FEF',
+          color: isMe ? '#FFFFFF' : '#7E22CE',
           display: 'inline-flex',
           alignItems: 'center',
           gap: '10px',
-          boxShadow: '0 4px 14px rgba(91, 95, 239, 0.12)',
-          textAlign: 'left'
+          boxShadow: isMe ? '0 4px 16px rgba(0, 0, 0, 0.1)' : '0 4px 16px rgba(192, 132, 252, 0.2)',
+          textAlign: 'left',
+          fontFamily: "'Plus Jakarta Sans', sans-serif"
         }}
       >
         <div style={{
-          width: 30, height: 30, borderRadius: '50%',
-          background: isMe ? 'rgba(255, 255, 255, 0.25)' : 'rgba(91, 95, 239, 0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          background: isMe ? 'rgba(255, 255, 255, 0.3)' : 'linear-gradient(135deg, #A855F7 0%, #7E22CE 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#FFFFFF',
+          fontWeight: 900,
+          fontSize: '0.85rem',
+          boxShadow: '0 2px 8px rgba(168, 85, 247, 0.4)'
         }}>
-          <Lock size={15} color={isMe ? '#FFFFFF' : '#5B5FEF'} />
+          ①
         </div>
         <div>
-          <div style={{ fontSize: '0.84rem', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Zero-Knowledge View-Once
+          <div style={{ fontSize: '0.86rem', fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+            {viewOnceText.startsWith('data:image') || viewOnceText.startsWith('[img]') ? 'Photo' : 'View-Once'}
           </div>
-          <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>Click to reveal (Purges in 5s)</div>
+          <div style={{ fontSize: '0.66rem', fontWeight: 700, opacity: 0.82, marginTop: '2px' }}>
+            Tap to view
+          </div>
         </div>
-      </button>
+      </motion.button>
     );
   }
 
@@ -596,8 +609,71 @@ const DecompressedContent = ({ content, isMe, msgId, expiredOnce, revealedOnce, 
     return <AuraVoiceNotePlayer audioSrc={audioData} isMe={isMe} initialDuration={duration} />;
   }
 
-  if (text.startsWith('data:image')) {
-    return <img src={text} alt="Attachment" style={{ maxWidth: '280px', maxHeight: '280px', borderRadius: '16px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.08)' }} />;
+  if (text.startsWith('data:image') || text.startsWith('[img] ')) {
+    const imgSrc = text.startsWith('[img] ') ? text.replace('[img] ', '') : text;
+    return (
+      <motion.div
+        whileHover={{ scale: 1.015 }}
+        style={{
+          position: 'relative',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          maxWidth: '320px',
+          maxHeight: '380px',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+          border: '1.5px solid rgba(255, 255, 255, 0.6)',
+          cursor: 'pointer'
+        }}
+        onClick={() => {
+          // Open high-res lightbox
+          const w = window.open('');
+          if (w) {
+            w.document.write(`
+              <html>
+                <head>
+                  <title>Aura High-Res Photo</title>
+                  <style>
+                    body { margin: 0; background: #0B0C10; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+                    img { max-width: 95vw; max-height: 95vh; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); object-fit: contain; }
+                  </style>
+                </head>
+                <body>
+                  <img src="${imgSrc}" />
+                </body>
+              </html>
+            `);
+          }
+        }}
+      >
+        <img
+          src={imgSrc}
+          alt="Shared Photo"
+          style={{
+            width: '100%',
+            height: '100%',
+            maxHeight: '380px',
+            objectFit: 'cover',
+            display: 'block',
+            borderRadius: '18px'
+          }}
+          loading="lazy"
+        />
+        <div style={{
+          position: 'absolute',
+          bottom: '8px',
+          right: '8px',
+          background: 'rgba(0, 0, 0, 0.45)',
+          backdropFilter: 'blur(8px)',
+          padding: '2px 8px',
+          borderRadius: '99px',
+          fontSize: '0.66rem',
+          color: '#FFFFFF',
+          fontWeight: 700
+        }}>
+          🔍 Tap to Expand
+        </div>
+      </motion.div>
+    );
   }
   if (text.startsWith('data:video') || text.includes('video/mp4') || text.includes('.mp4')) {
     return <video src={text} controls style={{ maxWidth: '280px', borderRadius: '16px', marginTop: '4px' }} />;
