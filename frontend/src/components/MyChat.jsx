@@ -1098,32 +1098,190 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             </div>
           </Box>
         ) : navMode === 'memory' ? (
-          <Box p={3.5} overflowY="auto" h="100%">
-            <Box bg="#FFFFFF" p={4} borderRadius="20px" border="1px solid rgba(23, 24, 39, 0.06)" mb={3} boxShadow="0 4px 16px rgba(23, 24, 39, 0.02)">
-              <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={1}>
-                CONVERSATION MEMORY
+          <Box p={3.5} overflowY="auto" h="100%" flex="1">
+            {/* ── LIVE CONVERSATION MEMORY VAULT CARD ── */}
+            <Box
+              bg="#FFFFFF"
+              p={4}
+              borderRadius="24px"
+              border="1.5px solid rgba(23, 24, 39, 0.06)"
+              mb={3}
+              boxShadow="0 6px 24px rgba(23, 24, 39, 0.03)"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                  ● LIVE CONVERSATION MEMORY
+                </Text>
+                <span style={{
+                  fontSize: '0.66rem',
+                  fontWeight: 800,
+                  color: livePing < 50 ? '#10B981' : '#F59E0B',
+                  background: livePing < 50 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                  padding: '2px 8px',
+                  borderRadius: '99px'
+                }}>
+                  {livePing < 50 ? '⚡ Ultra Low Latency' : '● Connected'}
+                </span>
+              </div>
+
+              <Text fontSize="0.8rem" color="#64748B" fontWeight="600" mb={3.5} lineHeight={1.4} fontFamily="'Plus Jakarta Sans', sans-serif">
+                Live real-time metrics, shared vault files & media across {selectedChat ? (selectedChat.chatName || 'this conversation') : 'your active circle'}.
               </Text>
-              <Text fontSize="0.82rem" color="#727486" mb={3}>
-                Context, shared media & important moments surfaced across your circle.
-              </Text>
+
+              {/* ── 4 LIVE REAL-TIME METRIC TILES ── */}
               <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2.5}>
-                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
-                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">14</Text>
-                  <Text fontSize="0.72rem" fontWeight="700" color="#727486">Shared Images</Text>
-                </Box>
-                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
-                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">6</Text>
-                  <Text fontSize="0.72rem" fontWeight="700" color="#727486">Vault Files</Text>
-                </Box>
-                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
-                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">8</Text>
-                  <Text fontSize="0.72rem" fontWeight="700" color="#727486">Audio Notes</Text>
-                </Box>
-                <Box bg="#F4F3EF" p={3} borderRadius="16px" textAlign="center">
-                  <Text fontSize="1.3rem" fontWeight="900" color="#171827">12ms</Text>
-                  <Text fontSize="0.72rem" fontWeight="700" color="#36C98F">P2P Ping</Text>
-                </Box>
+                {/* 1. Live Shared Images */}
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  style={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                    padding: '16px 12px',
+                    borderRadius: '18px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <Text fontSize="1.45rem" fontWeight="900" color="#0F172A" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    {vaultLoading ? '...' : vaultStats.images}
+                  </Text>
+                  <Text fontSize="0.72rem" fontWeight="800" color="#64748B" margin={0} mt={0.5} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    🖼️ Shared Images
+                  </Text>
+                </motion.div>
+
+                {/* 2. Live Vault Files */}
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  style={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                    padding: '16px 12px',
+                    borderRadius: '18px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <Text fontSize="1.45rem" fontWeight="900" color="#0F172A" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    {vaultLoading ? '...' : vaultStats.files}
+                  </Text>
+                  <Text fontSize="0.72rem" fontWeight="800" color="#64748B" margin={0} mt={0.5} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    📁 Vault Files
+                  </Text>
+                </motion.div>
+
+                {/* 3. Live Audio & Video Notes */}
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  style={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                    padding: '16px 12px',
+                    borderRadius: '18px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <Text fontSize="1.45rem" fontWeight="900" color="#0F172A" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    {vaultLoading ? '...' : vaultStats.audio}
+                  </Text>
+                  <Text fontSize="0.72rem" fontWeight="800" color="#64748B" margin={0} mt={0.5} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    🎙️ Audio & Video Notes
+                  </Text>
+                </motion.div>
+
+                {/* 4. Live Real-Time P2P Ping Latency */}
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  style={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                    padding: '16px 12px',
+                    borderRadius: '18px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <Text fontSize="1.45rem" fontWeight="900" color={livePing < 50 ? "#10B981" : "#F59E0B"} margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    {livePing}ms
+                  </Text>
+                  <Text fontSize="0.72rem" fontWeight="800" color={livePing < 50 ? "#10B981" : "#F59E0B"} margin={0} mt={0.5} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    ⚡ Live Network Ping
+                  </Text>
+                </motion.div>
               </Box>
+            </Box>
+
+            {/* ── RECENT LIVE VAULT STREAM FEED ── */}
+            <Box
+              bg="#FFFFFF"
+              p={4}
+              borderRadius="24px"
+              border="1.5px solid rgba(23, 24, 39, 0.06)"
+              boxShadow="0 6px 24px rgba(23, 24, 39, 0.03)"
+            >
+              <Text fontSize="0.75rem" fontWeight="800" color="#171827" textTransform="uppercase" letterSpacing="0.06em" mb={2.5} fontFamily="'Plus Jakarta Sans', sans-serif">
+                ✦ Recent Vault Activity
+              </Text>
+
+              {vaultStats.items && vaultStats.items.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {vaultStats.items.slice(0, 5).map((item, idx) => (
+                    <div
+                      key={item.id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: '#F8FAFC',
+                        padding: '10px 14px',
+                        borderRadius: '14px',
+                        border: '1px solid rgba(226, 232, 240, 0.8)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                        <span style={{ fontSize: '18px' }}>
+                          {item.type === 'image' ? '🖼️' : item.type === 'file' ? '📄' : '🎙️'}
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                          <span style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 800,
+                            color: '#0F172A',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '160px',
+                            fontFamily: "'Plus Jakarta Sans', sans-serif"
+                          }}>
+                            {item.name || (item.type === 'image' ? 'Shared Photo' : item.type === 'audio' ? 'Voice Note' : 'Vault File')}
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600 }}>
+                            {item.time ? new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live Stream'}
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        color: '#5B5FEF',
+                        background: 'rgba(91, 95, 239, 0.1)',
+                        padding: '3px 8px',
+                        borderRadius: '99px'
+                      }}>
+                        VAULT
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '18px 8px' }}>
+                  <span style={{ fontSize: '28px', display: 'block', marginBottom: '8px' }}>✨</span>
+                  <Text fontSize="0.82rem" fontWeight="700" color="#64748B" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                    No vault media yet. Share images, files, or voice notes to populate!
+                  </Text>
+                </div>
+              )}
             </Box>
           </Box>
         ) : (
