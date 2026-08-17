@@ -101,6 +101,7 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
   const [navMode, setNavMode] = useState('chats'); // 'chats' | 'orbit' | 'memory'
   const [chatFilter, setChatFilter] = useState('all'); // 'all', 'friends', 'groups', 'unread'
   const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [pinnedChatIds, setPinnedChatIds] = useState([]);
   const [mutedChatIds, setMutedChatIds] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
