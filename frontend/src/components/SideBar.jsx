@@ -1181,45 +1181,61 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         </MenuButton>
                         <MenuList
                             bg="#FFFFFF"
-                            borderRadius="20px"
-                            p={2}
-                            minW="320px"
-                            maxW="380px"
+                            borderRadius="24px"
+                            p={3}
+                            minW="340px"
+                            maxW="400px"
                             style={{
-                                boxShadow: "0 18px 45px rgba(23, 24, 39, 0.08)",
-                                border: "1px solid rgba(23, 24, 39, 0.06)",
-                                zIndex: 9999
+                                boxShadow: "0 25px 60px rgba(15, 23, 42, 0.14), 0 0 1px rgba(15, 23, 42, 0.08)",
+                                border: "1.5px solid rgba(23, 24, 39, 0.07)",
+                                zIndex: 9999,
+                                overflow: "hidden"
                             }}
                         >
-                            <Box px={3} py={2} borderBottom="1px solid #F1F5F9" display="flex" alignItems="center" justifyContent="space-between">
-                                <Text fontWeight="800" fontSize="0.88rem" color="#171827" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
-                                    Notifications ({(notification?.length || 0) + (pendingReceivedRequests?.length || 0)})
-                                </Text>
-                                {notification && notification.length > 0 && (
-                                    <Text
-                                        fontSize="0.75rem"
-                                        color="#5B5FEF"
-                                        fontWeight="700"
-                                        cursor="pointer"
-                                        onClick={() => dispatch(setNotification([]))}
-                                    >
-                                        Clear All
+                            {/* Popover Header with Mark All Read Action */}
+                            <Box px={2} py={1.5} mb={2} borderBottom="1px solid #F1F5F9" display="flex" alignItems="center" justifyContent="space-between">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '1rem' }}>🔔</span>
+                                    <Text fontWeight="900" fontSize="0.92rem" color="#0F172A" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                                        Notifications ({(notification?.length || 0) + (pendingReceivedRequests?.length || 0)})
                                     </Text>
+                                </div>
+                                {((notification && notification.length > 0) || (pendingReceivedRequests && pendingReceivedRequests.length > 0)) && (
+                                    <button
+                                        type="button"
+                                        style={{
+                                            background: 'rgba(91, 95, 239, 0.1)',
+                                            border: 'none',
+                                            color: '#5B5FEF',
+                                            fontSize: '0.72rem',
+                                            fontWeight: 800,
+                                            padding: '4px 10px',
+                                            borderRadius: '99px',
+                                            cursor: 'pointer',
+                                            fontFamily: "'Plus Jakarta Sans', sans-serif"
+                                        }}
+                                        onClick={() => {
+                                            dispatch(setNotification([]));
+                                            toast.success('All notifications marked as read', { autoClose: 1500, hideProgressBar: true });
+                                        }}
+                                    >
+                                        ✓ Mark Read
+                                    </button>
                                 )}
                             </Box>
 
-                            {/* ── Pending Friend Requests Section ── */}
+                            {/* ── Pending Orbit Requests Section ── */}
                             {pendingReceivedRequests && pendingReceivedRequests.length > 0 && (
-                                <Box p={2} borderBottom="1px solid #F1F5F9">
+                                <Box p={1} mb={2} borderBottom="1px solid #F1F5F9">
                                     <Box display="flex" alignItems="center" justifyContent="space-between" px={1} mb={2}>
-                                        <Text fontSize="0.74rem" fontWeight="900" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" m={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                                        <Text fontSize="0.72rem" fontWeight="900" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" m={0} fontFamily="'Plus Jakarta Sans', sans-serif">
                                             ✦ Orbit Requests ({pendingReceivedRequests.length})
                                         </Text>
-                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#5B5FEF', background: 'rgba(91, 95, 239, 0.1)', padding: '2px 8px', borderRadius: '99px' }}>
+                                        <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#5B5FEF', background: 'rgba(91, 95, 239, 0.1)', padding: '2px 8px', borderRadius: '99px' }}>
                                             Pending
                                         </span>
                                     </Box>
-                                    <Box display="flex" flexDirection="column" gap={2.5}>
+                                    <Box display="flex" flexDirection="column" gap={2}>
                                         {pendingReceivedRequests.map((req) => {
                                             const senderUser = req.sender;
                                             const sId = String(senderUser?._id || senderUser?.id);
@@ -1233,60 +1249,28 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                     whileHover={{ scale: 1.01 }}
                                                 >
                                                     <Box
-                                                        p={3}
-                                                        bg="#FFFFFF"
+                                                        p={2.5}
+                                                        bg="#F8FAFC"
                                                         borderRadius="18px"
-                                                        border="1px solid rgba(23, 24, 39, 0.08)"
-                                                        boxShadow="0 4px 16px rgba(23, 24, 39, 0.04)"
+                                                        border="1px solid rgba(23, 24, 39, 0.06)"
                                                         display="flex"
                                                         flexDirection="column"
-                                                        gap={2.5}
+                                                        gap={2}
                                                     >
-                                                        <Box display="flex" alignItems="center" gap={2.5} style={{ minWidth: 0, overflow: 'hidden' }}>
-                                                            <Box style={{
-                                                                position: 'relative',
-                                                                width: '40px',
-                                                                height: '40px',
-                                                                minWidth: '40px',
-                                                                borderRadius: '50%',
-                                                                padding: '2px',
-                                                                background: sOnline
-                                                                    ? 'linear-gradient(135deg, #10B981 0%, #5B5FEF 100%)'
-                                                                    : 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
-                                                                boxShadow: '0 3px 10px rgba(91, 95, 239, 0.2)',
-                                                                flexShrink: 0
-                                                            }}>
-                                                                <Avatar size="full" name={senderUser?.name} src={senderUser?.pic} />
-                                                                {sOnline && (
-                                                                    <span style={{
-                                                                        position: 'absolute',
-                                                                        right: 0,
-                                                                        bottom: 0,
-                                                                        width: '11px',
-                                                                        height: '11px',
-                                                                        borderRadius: '50%',
-                                                                        background: '#10B981',
-                                                                        border: '2px solid #FFFFFF'
-                                                                    }} />
-                                                                )}
-                                                            </Box>
-                                                            <Box textAlign="left" style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                                                                <Box display="flex" alignItems="center" gap={1}>
-                                                                    <Text fontWeight="900" fontSize="0.9rem" color="#171827" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
-                                                                        {senderUser?.name || 'User'}
-                                                                    </Text>
-                                                                    {sOnline && (
-                                                                        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#10B981' }}>●</span>
-                                                                    )}
-                                                                </Box>
-                                                                <Text fontSize="0.75rem" color="#5B5FEF" fontWeight="700" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
+                                                        <Box display="flex" alignItems="center" gap={2.5}>
+                                                            <Avatar size="sm" name={senderUser?.name} src={senderUser?.pic} style={{ border: '2px solid #FFFFFF', boxShadow: '0 2px 8px rgba(91, 95, 239, 0.2)' }} />
+                                                            <Box textAlign="left" style={{ flex: 1, overflow: 'hidden' }}>
+                                                                <Text fontWeight="900" fontSize="0.88rem" color="#0F172A" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
+                                                                    {senderUser?.name || 'User'}
+                                                                </Text>
+                                                                <Text fontSize="0.72rem" color="#5B5FEF" fontWeight="700" m={0} fontFamily="'Plus Jakarta Sans', sans-serif" isTruncated>
                                                                     @{senderUser?.username || (senderUser?.email ? senderUser.email.split('@')[0] : 'user')}
                                                                 </Text>
                                                             </Box>
                                                         </Box>
                                                         <Box display="flex" gap={2} alignItems="center">
                                                             <Button
-                                                                size="sm"
+                                                                size="xs"
                                                                 onClick={() => handleRespondFriendRequest(req.id || req._id, 'ACCEPT', senderUser)}
                                                                 style={{
                                                                     flex: 1,
@@ -1294,33 +1278,28 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                                                     color: '#FFFFFF',
                                                                     borderRadius: '99px',
                                                                     fontWeight: 800,
-                                                                    fontSize: '0.78rem',
-                                                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                                                    fontSize: '0.75rem',
                                                                     border: 'none',
-                                                                    height: '32px',
-                                                                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                                                                    height: '30px',
                                                                     cursor: 'pointer'
                                                                 }}
-                                                                _hover={{ opacity: 0.95 }}
                                                             >
-                                                                ✓ Accept & Chat
+                                                                ✓ Accept
                                                             </Button>
                                                             <Button
-                                                                size="sm"
+                                                                size="xs"
                                                                 onClick={() => handleRespondFriendRequest(req.id || req._id, 'REJECT', senderUser)}
                                                                 style={{
-                                                                    background: '#F4F3EF',
-                                                                    color: '#727486',
+                                                                    background: '#FFFFFF',
+                                                                    color: '#64748B',
                                                                     borderRadius: '99px',
                                                                     fontWeight: 700,
-                                                                    fontSize: '0.78rem',
-                                                                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                                                                    border: '1px solid rgba(23, 24, 39, 0.08)',
-                                                                    height: '32px',
-                                                                    padding: '0 14px',
+                                                                    fontSize: '0.75rem',
+                                                                    border: '1px solid #E2E8F0',
+                                                                    height: '30px',
+                                                                    padding: '0 12px',
                                                                     cursor: 'pointer'
                                                                 }}
-                                                                _hover={{ background: '#E2E8F0', color: '#0F172A' }}
                                                             >
                                                                 Decline
                                                             </Button>
@@ -1333,91 +1312,84 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                                 </Box>
                             )}
 
+                            {/* ── Empty Notifications State ── */}
                             {(!notification || notification.length === 0) && (!pendingReceivedRequests || pendingReceivedRequests.length === 0) && (
-                                <Box p={4} textAlign="center">
-                                    <Text fontSize="0.82rem" color="#94A3B8" margin={0} fontFamily="'Inter', sans-serif">
-                                        No new notifications
+                                <Box py={6} px={3} textAlign="center">
+                                    <motion.div
+                                        animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                                        style={{ fontSize: "32px", display: "block", marginBottom: "8px" }}
+                                    >
+                                        ✨
+                                    </motion.div>
+                                    <Text fontSize="0.88rem" fontWeight="800" color="#0F172A" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                                        All caught up!
+                                    </Text>
+                                    <Text fontSize="0.74rem" color="#94A3B8" fontWeight="600" mt={1} margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
+                                        No unread notifications right now.
                                     </Text>
                                 </Box>
                             )}
-                            {notification && notification.map((notif, idx) => (
-                                <MenuItem
-                                    key={idx}
-                                    bg="#FFFFFF"
-                                    _hover={{ bg: "#F8FAFC" }}
-                                    borderRadius="12px"
-                                    my={1}
-                                    onClick={() => {
-                                        if (notif.chat) {
-                                            dispatch(setSelectedChat(notif.chat));
-                                            dispatch(setNotification(notification.filter((n) => n !== notif)));
-                                        }
-                                    }}
-                                >
-                                    {notif.isRequest || notif.isChatRequest || notif.type === 'chat-request' ? (
-                                        <Box w="100%">
-                                            <Text fontSize="0.82rem" fontWeight="700" color="#171827" margin={0}>
-                                                📩 Chat Request from @{notif.senderUsername || notif.senderName}
-                                            </Text>
-                                            <Box display="flex" alignItems="center" gap="10px" mt={2}>
-                                                <Button
-                                                    size="xs"
-                                                    h="30px"
-                                                    px={3}
-                                                    style={{
-                                                        background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
-                                                        color: "#FFFFFF",
-                                                        borderRadius: "99px",
-                                                        fontWeight: 800,
-                                                        fontSize: "0.75rem",
-                                                        boxShadow: "0 2px 8px rgba(91, 95, 239, 0.25)"
-                                                    }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        acceptChatRequest(notif);
-                                                    }}
-                                                >
-                                                    Accept & Chat
-                                                </Button>
-                                                <Button
-                                                    size="xs"
-                                                    h="30px"
-                                                    px={3}
-                                                    style={{
-                                                        background: "#F1F5F9",
-                                                        color: "#64748B",
-                                                        borderRadius: "99px",
-                                                        fontWeight: 700,
-                                                        fontSize: "0.75rem",
-                                                        border: "1px solid #E2E8F0"
-                                                    }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const filtered = notification.filter((n) => n !== notif);
-                                                        dispatch(setNotification(filtered));
-                                                        try {
-                                                            const myId = user?._id || user?.id;
-                                                            const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
-                                                            const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-                                                            const rem = stored.filter(n => n.senderId !== notif.senderId);
-                                                            localStorage.setItem(storageKey, JSON.stringify(rem));
-                                                        } catch (err) {}
-                                                        toast.info("Chat request declined");
-                                                    }}
-                                                >
-                                                    Decline
-                                                </Button>
-                                            </Box>
-                                        </Box>
-                                    ) : (
-                                        <Text fontSize="0.82rem" fontWeight="600" color="#0F172A" margin={0}>
-                                            {notif.chat?.isGroupChat
-                                                ? `💬 New message in ${notif.chat.chatName}`
-                                                : `💬 New message from ${notif.senderName || 'user'}`}
-                                        </Text>
-                                    )}
-                                </MenuItem>
-                            ))}
+
+                            {/* ── Live Message Notifications List ── */}
+                            <Box maxH="280px" overflowY="auto" display="flex" flexDirection="column" gap={1}>
+                                {notification && notification.map((notif, idx) => {
+                                    const senderName = notif.sender?.name || notif.senderName || (!notif.chat?.isGroupChat ? getSender(user, notif.chat?.users) : notif.chat?.chatName) || 'Someone';
+                                    const senderPic = notif.sender?.pic || notif.senderPic || (!notif.chat?.isGroupChat ? getPicture(user, notif.chat?.users) : '');
+                                    const isGroup = notif.chat?.isGroupChat;
+                                    const content = notif.content || '';
+
+                                    let preview = content;
+                                    if (content.startsWith('data:image') || content.startsWith('[img]')) {
+                                        preview = '🖼️ Shared a photo';
+                                    } else if (content.startsWith('[voice]')) {
+                                        preview = '🎙️ Sent a voice note';
+                                    } else if (content.startsWith('[video_note]')) {
+                                        preview = '📹 Sent a video note';
+                                    } else if (content.startsWith('[doc]')) {
+                                        preview = '📄 Sent a document';
+                                    } else if (content.startsWith('[call]')) {
+                                        preview = '📞 Call notification';
+                                    }
+
+                                    return (
+                                        <motion.div
+                                            key={notif._id || notif.id || idx}
+                                            whileHover={{ scale: 1.015, x: 2 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <MenuItem
+                                                bg="#FFFFFF"
+                                                _hover={{ bg: "#F8FAFC" }}
+                                                borderRadius="16px"
+                                                p={2.5}
+                                                border="1px solid rgba(226, 232, 240, 0.7)"
+                                                onClick={() => {
+                                                    if (notif.chat) {
+                                                        dispatch(setSelectedChat(notif.chat));
+                                                        dispatch(setNotification(notification.filter((n) => n !== notif)));
+                                                    }
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', overflow: 'hidden' }}>
+                                                    <Avatar size="sm" name={senderName} src={senderPic} style={{ border: '1.5px solid #5B5FEF', flexShrink: 0 }} />
+                                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', textAlign: 'left' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A', fontFamily: "'Plus Jakarta Sans', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
+                                                                {isGroup ? notif.chat.chatName : senderName}
+                                                            </span>
+                                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#5B5FEF', boxShadow: '0 0 6px #5B5FEF' }} />
+                                                        </div>
+                                                        <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '2px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                                                            {preview}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </MenuItem>
+                                        </motion.div>
+                                    );
+                                })}
+                            </Box>
                         </MenuList>
                     </Menu>
 
