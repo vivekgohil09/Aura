@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -12,20 +12,19 @@ import {
   Box,
   Text,
   Avatar,
-  Badge,
   Spinner
 } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Check, X, Sparkles, ShieldCheck } from 'lucide-react';
+import { Users, Search, Plus, Check, X, ShieldCheck, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { setChats, setSelectedChat } from '../redux/actions';
-import { getSender, getSenderUser, getPicture } from '../config/ChatsLogic';
+import { getSenderUser } from '../config/ChatsLogic';
 import { getJwtToken } from '../config/getJwt';
 import { stompService } from '../config/stompService';
 
-const GROUP_ICON_PRESETS = ['🪐', '⚡', '🚀', '💎', '🔥', '✨', '☕', '🎮', '🌴', '👑'];
+const GROUP_ICON_PRESETS = ['🪐', '⚡', '🚀', '💎', '🔥', '✨', '☕', '🎮', '🌴', '👑', '🌌', '🦄'];
 
 export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFetchAgain }) {
   const dispatch = useDispatch();
@@ -36,9 +35,11 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
   const [selectedIcon, setSelectedIcon] = useState('🪐');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Extract only verified 1-on-1 friends from active chat list
+  // Extract all active 1-on-1 friends from active chat list
   const friendsList = useMemo(() => {
     const friendsMap = new Map();
 
@@ -65,17 +66,44 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
     return Array.from(friendsMap.values());
   }, [chats, user]);
 
-  // Filter friends by search query
-  const filteredFriends = useMemo(() => {
-    if (!searchQuery.trim()) return friendsList;
-    const q = searchQuery.toLowerCase().trim();
-    return friendsList.filter(
-      (f) =>
-        f.name.toLowerCase().includes(q) ||
-        f.username.toLowerCase().includes(q) ||
-        f.email.toLowerCase().includes(q)
-    );
-  }, [friendsList, searchQuery]);
+  // Live search across backend database if user searches
+  useEffect(() => {
+    if (!searchQuery || !searchQuery.trim()) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const config = {
+          headers: { Authorization: 'Bearer ' + getJwtToken() }
+        };
+        const { data } = await axios.get(`/api/user?search=${encodeURIComponent(searchQuery.trim())}`, config);
+        const myId = String(user._id || user.id);
+        const filtered = (data || []).filter((u) => String(u._id || u.id) !== myId);
+        setSearchResults(filtered);
+      } catch (err) {
+        // fallback to local filtering
+        const q = searchQuery.toLowerCase().trim();
+        const localMatches = friendsList.filter(
+          (f) =>
+            f.name.toLowerCase().includes(q) ||
+            f.username.toLowerCase().includes(q) ||
+            f.email.toLowerCase().includes(q)
+        );
+        setSearchResults(localMatches);
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, friendsList, user]);
+
+  // Display list: search results when typing, else active friends list
+  const displayUsers = searchQuery.trim() ? searchResults : friendsList;
 
   const handleToggleUser = (u) => {
     const uId = String(u._id || u.id);
@@ -88,7 +116,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      toast.warning('Please enter a Group Name');
+      toast.warning('Please enter a Group Title');
       return;
     }
 
@@ -123,14 +151,14 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
         if (stompService && stompService.connected) {
           stompService.sendMessage(
             data.id || data._id,
-            `[call] Group "${finalName}" created by ${user.name || 'Admin'}`,
+            `[call] Group "${finalName}" launched with ${selectedUsers.length + 1} members`,
             `grp_create_${Date.now()}`
           );
         } else if (window.__auraSocket) {
           window.__auraSocket.emit('new message', {
             chat: data,
             sender: user,
-            content: `Group "${finalName}" created`
+            content: `Group "${finalName}" launched`
           });
         }
       } catch (e) {}
@@ -146,6 +174,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
 
       setGroupName('');
       setSelectedUsers([]);
+      setSearchQuery('');
       onClose();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create group');
@@ -156,13 +185,13 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
-      <ModalOverlay bg="rgba(10, 11, 20, 0.75)" backdropFilter="blur(16px)" />
+      <ModalOverlay bg="rgba(10, 11, 20, 0.78)" backdropFilter="blur(20px)" />
       <ModalContent
         bg="#FFFFFF"
-        borderRadius="28px"
+        borderRadius="30px"
         overflow="hidden"
         border="1.5px solid rgba(23, 24, 39, 0.08)"
-        boxShadow="0 25px 80px rgba(0, 0, 0, 0.25)"
+        boxShadow="0 30px 90px rgba(0, 0, 0, 0.28)"
         fontFamily="'Plus Jakarta Sans', sans-serif"
       >
         <ModalHeader
@@ -173,28 +202,28 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
           alignItems="center"
           justifyContent="space-between"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: '12px',
+                width: 42,
+                height: 42,
+                borderRadius: '14px',
                 background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#FFFFFF',
-                boxShadow: '0 4px 14px rgba(91, 95, 239, 0.35)'
+                boxShadow: '0 6px 18px rgba(91, 95, 239, 0.35)'
               }}
             >
-              <Users size={20} />
+              <Users size={22} />
             </div>
             <div>
-              <Text fontWeight="900" fontSize="1.05rem" color="#0F172A" m={0}>
-                Create Aura Group
+              <Text fontWeight="900" fontSize="1.1rem" color="#0F172A" m={0} letterSpacing="-0.02em">
+                Create Group Space
               </Text>
               <Text fontSize="0.72rem" color="#64748B" fontWeight="600" m={0}>
-                Add friends from your verified circle
+                Direct add friends with instant live sync
               </Text>
             </div>
           </div>
@@ -203,9 +232,9 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
 
         <ModalBody p={5}>
           {/* Preset Icon Selector */}
-          <Box mb={4}>
-            <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={2}>
-              ✦ Group Icon / Emblem
+          <Box mb={3.5}>
+            <Text fontSize="0.74rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={2}>
+              ✦ Group Emblem
             </Text>
             <Box display="flex" gap={1.5} overflowX="auto" pb={1} sx={{ '::-webkit-scrollbar': { display: 'none' } }}>
               {GROUP_ICON_PRESETS.map((icon) => (
@@ -236,13 +265,13 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
             </Box>
           </Box>
 
-          {/* Group Name Input */}
-          <Box mb={4}>
-            <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={2}>
+          {/* Group Title Input */}
+          <Box mb={3.5}>
+            <Text fontSize="0.74rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" mb={1.5}>
               ✦ Group Title
             </Text>
             <Input
-              placeholder="e.g. Design Vanguard, Aura Core Circle"
+              placeholder="e.g. Design Vanguard, Engineering Core"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               h="44px"
@@ -256,9 +285,9 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
             />
           </Box>
 
-          {/* Selected Member Chips */}
+          {/* Selected Member Chips with Count */}
           {selectedUsers.length > 0 && (
-            <Box mb={4}>
+            <Box mb={3.5}>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Text fontSize="0.74rem" fontWeight="800" color="#0F172A" m={0}>
                   Selected Members ({selectedUsers.length})
@@ -267,7 +296,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                   {selectedUsers.length >= 2 ? '✓ Ready to create' : 'Add at least 2 friends'}
                 </span>
               </Box>
-              <Box display="flex" flexWrap="wrap" gap={2} maxH="90px" overflowY="auto">
+              <Box display="flex" flexWrap="wrap" gap={1.5} maxH="85px" overflowY="auto">
                 <AnimatePresence>
                   {selectedUsers.map((u) => (
                     <motion.div
@@ -278,7 +307,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                     >
                       <Box
                         bg="linear-gradient(135deg, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.08) 100%)"
-                        border="1px solid rgba(91, 95, 239, 0.25)"
+                        border="1px solid rgba(91, 95, 239, 0.3)"
                         borderRadius="99px"
                         pl={1.5}
                         pr={2.5}
@@ -314,22 +343,22 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
             </Box>
           )}
 
-          {/* Friends List with Live Search */}
+          {/* Search Input for Direct Add */}
           <Box>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-              <Text fontSize="0.75rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" m={0}>
-                ✦ Select Friends ({filteredFriends.length})
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
+              <Text fontSize="0.74rem" fontWeight="800" color="#5B5FEF" textTransform="uppercase" letterSpacing="0.08em" m={0}>
+                ✦ Direct Add Members ({displayUsers.length})
               </Text>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <ShieldCheck size={13} color="#10B981" />
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10B981' }}>Verified Circle Only</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981' }}>Direct 1-Tap Add</span>
               </div>
             </Box>
 
-            <Box position="relative" mb={3}>
+            <Box position="relative" mb={2.5}>
               <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               <Input
-                placeholder="Search friend by name or @username..."
+                placeholder="Search by name or @username to direct add..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 pl="36px"
@@ -340,24 +369,28 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                 fontSize="0.82rem"
                 fontWeight="600"
               />
+              {searching && (
+                <Spinner size="xs" color="#5B5FEF" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              )}
             </Box>
 
-            <Box maxH="180px" overflowY="auto" display="flex" flexDirection="column" gap={1.5} pr={1}>
-              {filteredFriends.length > 0 ? (
-                filteredFriends.map((f) => {
-                  const isSelected = selectedUsers.some((u) => String(u._id || u.id) === String(f._id || f.id));
+            {/* Direct Member Selection Cards (NO 'Requested' Button!) */}
+            <Box maxH="190px" overflowY="auto" display="flex" flexDirection="column" gap={1.5} pr={1}>
+              {displayUsers.length > 0 ? (
+                displayUsers.map((itemUser) => {
+                  const isSelected = selectedUsers.some((u) => String(u._id || u.id) === String(itemUser._id || itemUser.id));
                   return (
                     <motion.div
-                      key={f._id || f.id}
+                      key={itemUser._id || itemUser.id}
                       whileHover={{ scale: 1.01, x: 2 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => handleToggleUser(f)}
+                      onClick={() => handleToggleUser(itemUser)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '14px',
+                        padding: '8px 14px',
+                        borderRadius: '16px',
                         background: isSelected ? 'rgba(91, 95, 239, 0.08)' : '#F8FAFC',
                         border: isSelected ? '1.5px solid #5B5FEF' : '1px solid rgba(226, 232, 240, 0.8)',
                         cursor: 'pointer',
@@ -365,31 +398,44 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Avatar size="sm" name={f.name} src={f.pic} style={{ border: '1.5px solid #FFFFFF' }} />
+                        <Avatar size="sm" name={itemUser.name} src={itemUser.pic} style={{ border: '1.5px solid #FFFFFF' }} />
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>
-                            {f.name}
+                          <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A' }}>
+                            {itemUser.name}
                           </span>
                           <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>
-                            @{f.username}
+                            @{itemUser.username || (itemUser.email ? itemUser.email.split('@')[0] : 'user')}
                           </span>
                         </div>
                       </div>
+
+                      {/* Direct Add Toggle Badge */}
                       <div
                         style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          background: isSelected ? 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)' : '#FFFFFF',
+                          padding: isSelected ? '4px 10px' : '4px 10px',
+                          borderRadius: '99px',
+                          background: isSelected ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : '#FFFFFF',
                           border: isSelected ? 'none' : '1.5px solid #CBD5E1',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#FFFFFF',
-                          boxShadow: isSelected ? '0 2px 8px rgba(91, 95, 239, 0.35)' : 'none'
+                          gap: '4px',
+                          color: isSelected ? '#FFFFFF' : '#64748B',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.35)' : 'none'
                         }}
                       >
-                        {isSelected ? <Check size={14} strokeWidth={3} /> : <Plus size={14} color="#94A3B8" />}
+                        {isSelected ? (
+                          <>
+                            <Check size={12} strokeWidth={3} />
+                            <span>Added</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={12} strokeWidth={2.5} color="#5B5FEF" />
+                            <span style={{ color: '#5B5FEF' }}>Direct Add</span>
+                          </>
+                        )}
                       </div>
                     </motion.div>
                   );
@@ -397,9 +443,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
               ) : (
                 <Box py={4} textAlign="center">
                   <Text fontSize="0.82rem" color="#94A3B8" fontWeight="600" m={0}>
-                    {friendsList.length === 0
-                      ? 'No 1-on-1 friends in your circle yet. Start chats to add friends!'
-                      : 'No friend matching search'}
+                    {searchQuery.trim() ? 'No users matching search' : 'No friends found. Type to search any user!'}
                   </Text>
                 </Box>
               )}

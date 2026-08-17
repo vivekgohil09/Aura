@@ -410,83 +410,7 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
   return (
     <>
       {/* Create Group Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        {loadingTwo && <Progress size='xs' isIndeterminate colorScheme="purple" bg="rgba(91, 95, 239, 0.15)" style={{ height: "3px" }} />}
-        <ModalOverlay style={{ backdropFilter: "blur(12px)", background: "rgba(23, 24, 39, 0.35)" }} />
-        <ModalContent style={{
-          background: "#FFFFFF",
-          color: "#171827",
-          borderRadius: "28px",
-          border: "1px solid rgba(23, 24, 39, 0.08)",
-          boxShadow: "0 25px 60px rgba(23, 24, 39, 0.12)"
-        }}>
-          <ModalHeader style={{ borderBottom: "1px solid rgba(23, 24, 39, 0.06)", padding: "20px 24px" }}>
-            <Text fontWeight="900" fontSize="1.35rem" color="#171827" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">Create Group Chat</Text>
-          </ModalHeader>
-          <ModalCloseButton style={{ borderRadius: "50%", border: "1px solid rgba(23, 24, 39, 0.08)", top: "18px", right: "20px" }} />
-          <ModalBody d="flex" flexDir="column" py={4} px={5}>
-            <FormControl>
-              <Input
-                placeholder="Group Name (e.g. Design Team)"
-                mb={3}
-                value={groupChatName}
-                onChange={(e) => setGroupChatName(e.target.value)}
-                borderRadius="16px"
-                bg="#FFFFFF"
-                border="1.5px solid rgba(23, 24, 39, 0.08)"
-                color="#171827"
-                fontWeight="600"
-                fontFamily="'Plus Jakarta Sans', sans-serif"
-                _focus={{ borderColor: "#5B5FEF", boxShadow: "0 4px 14px rgba(91, 95, 239, 0.15)" }}
-              />
-            </FormControl>
-            <FormControl>
-              <Input
-                placeholder="Add Users (e.g. Vicky, Ram)"
-                mb={3}
-                onChange={(e) => handleSearch(e.target.value)}
-                borderRadius="16px"
-                bg="#FFFFFF"
-                border="1.5px solid rgba(23, 24, 39, 0.08)"
-                color="#171827"
-                fontWeight="600"
-                fontFamily="'Plus Jakarta Sans', sans-serif"
-                _focus={{ borderColor: "#5B5FEF", boxShadow: "0 4px 14px rgba(91, 95, 239, 0.15)" }}
-              />
-            </FormControl>
-            <Box w="100%" d="flex" flexWrap="wrap" gap={1.5} mb={3}>
-              {selectedUsers.map((u) => (
-                <UserBadgeItem key={u.id || u._id} user={u} handleFunction={() => handleDelete(u)} />
-              ))}
-            </Box>
-            {loadingGroupUsers ? <Spinner size="sm" color="#5B5FEF" /> : (
-              searchResult?.slice(0, 4).map((u) => (
-                <UserListItem key={u.id || u._id} user={u} handleFunction={() => handleGroup(u)} />
-              ))
-            )}
-          </ModalBody>
-          <ModalFooter style={{ borderTop: "1px solid rgba(23, 24, 39, 0.06)", padding: "16px 24px" }}>
-            <Button
-              style={{
-                background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: "16px",
-                padding: "12px 24px",
-                fontWeight: 800,
-                fontSize: "0.95rem",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                boxShadow: "0 8px 20px rgba(91, 95, 239, 0.25)",
-                cursor: "pointer"
-              }}
-              onClick={handleSubmit}
-              _hover={{ opacity: 0.92, transform: "translateY(-1px)" }}
-            >
-              Create Group
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      
 
       {/* ── LEFT SIDEBAR PANEL ── */}
       <Box
@@ -588,7 +512,7 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
             <Box d="flex" alignItems="center" gap={1.5}>
               <motion.div whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}>
                 <Button
-                  onClick={onOpen}
+                  onClick={() => setIsGroupModalOpen(true)}
                   size="sm"
                   leftIcon={<AddIcon style={{ fontSize: "13px", color: "#5B5FEF" }} />}
                   style={{
