@@ -29,95 +29,44 @@ export default function Header() {
           boxShadow: '0 8px 30px rgba(23, 24, 39, 0.02)'
         }}
       >
-        <Container maxWidth="xl">
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              py: 1.8,
-              px: { xs: 1.5, sm: 4 }
-            }}
-          >
-            {/* Brand Logo - Living Conversations Theme */}
-            <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-              <motion.div
-                whileHover={{ rotate: 12, scale: 1.08 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-              >
-                <Box
-                  sx={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: '14px',
-                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 24px rgba(91, 95, 239, 0.32)'
-                  }}
-                >
-                  <Feather size={22} color="#FFFFFF" strokeWidth={2} />
-                </Box>
-              </motion.div>
-              <Box>
-                <Typography
-                  variant="h6"
-                  component="span"
-                  sx={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontWeight: 900,
-                    fontSize: '1.5rem',
-                    letterSpacing: '-0.03em',
-                    color: '#171827',
-                    lineHeight: 1,
-                    display: 'block'
-                  }}
-                >
-                  AURA
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    color: '#5B5FEF',
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif"
-                  }}
-                >
-                  LIVING SPACES
-                </Typography>
-              </Box>
-            </Link>
+        <div className="aura-header-container">
+          {/* Brand Logo */}
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <motion.div
+              whileHover={{ rotate: 12, scale: 1.08 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <div className="aura-logo-icon">
+                <Feather size={22} color="#FFFFFF" strokeWidth={2} />
+              </div>
+            </motion.div>
+            <div>
+              <span className="aura-logo-text">
+                AURA
+              </span>
+              <span className="aura-logo-sub">
+                LIVING SPACES
+              </span>
+            </div>
+          </Link>
 
-            {/* Navigation Actions */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  component={Link}
-                  to="/"
+          {/* Navigation Actions */}
+          <div className="aura-nav-actions">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/" style={{ textDecoration: 'none' }}>
+                <button
+                  className="aura-btn-signin"
                   style={{
-                    background: 'transparent',
                     color: isHome ? '#171827' : '#727486',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontWeight: isHome ? 800 : 700,
-                    fontSize: '0.9rem',
-                    textTransform: 'none',
-                    whiteSpace: 'nowrap',
-                    padding: '8px 14px',
-                    borderRadius: '99px',
-                    minWidth: 0,
-                    position: 'relative',
+                    position: 'relative'
                   }}
                 >
                   Home
                   {isHome && (
                     <span style={{
                       position: 'absolute',
-                      bottom: 4,
+                      bottom: 2,
                       left: '50%',
                       transform: 'translateX(-50%)',
                       width: 5,
@@ -127,35 +76,20 @@ export default function Header() {
                       boxShadow: '0 0 8px rgba(91, 95, 239, 0.6)',
                     }} />
                   )}
-                </Button>
-              </motion.div>
+                </button>
+              </Link>
+            </motion.div>
 
-              <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
-                <Button
-                  component={Link}
-                  to={isLogin ? '/signup' : '/login'}
-                  endIcon={<ArrowRight size={16} color="#FFFFFF" />}
-                  style={{
-                    background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    textTransform: 'none',
-                    whiteSpace: 'nowrap',
-                    padding: '10px 24px',
-                    borderRadius: '99px',
-                    boxShadow: '0 8px 24px rgba(91, 95, 239, 0.28)',
-                    minWidth: 0
-                  }}
-                >
-                  {isLogin ? 'Sign Up' : 'Sign In'}
-                </Button>
-              </motion.div>
-            </Box>
-          </Box>
-        </Container>
+            <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
+              <Link to={isLogin ? '/signup' : '/login'} style={{ textDecoration: 'none' }}>
+                <button className="aura-btn-launch">
+                  <span>{isLogin ? 'Sign Up' : 'Sign In'}</span>
+                  <ArrowRight size={15} color="#FFFFFF" />
+                </button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
       </motion.header>
     </ThemeProvider>
   );

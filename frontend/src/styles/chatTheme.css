@@ -472,3 +472,153 @@ body.theme-midnight, .theme-midnight {
   cursor: pointer;
   transform-origin: center center;
 }
+
+
+/* ── ULTRA-RESPONSIVE ADAPTIVE LAYOUT SYSTEM ── */
+.aura-header-container {
+  max-width: 1536px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  box-sizing: border-box;
+  padding: 14px 28px;
+  gap: 12px;
+  width: 100%;
+}
+
+.aura-logo-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(91, 95, 239, 0.32);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.aura-logo-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 900;
+  font-size: 1.45rem;
+  letter-spacing: -0.03em;
+  color: #171827;
+  line-height: 1;
+  display: block;
+  white-space: nowrap;
+}
+
+.aura-logo-sub {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #5B5FEF;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+}
+
+.aura-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.aura-btn-signin {
+  background: transparent;
+  border: none;
+  color: #171827;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 99px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.aura-btn-launch {
+  background: linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%);
+  color: #FFFFFF;
+  border: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 10px 24px;
+  border-radius: 99px;
+  box-shadow: 0 8px 24px rgba(91, 95, 239, 0.28);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* ── MOBILE / NARROW SCREEN ADAPTATIONS (<= 640px) ── */
+@media (max-width: 640px) {
+  .aura-header-container {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .aura-logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+  .aura-logo-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .aura-logo-text {
+    font-size: 1.15rem;
+  }
+  .aura-logo-sub {
+    font-size: 0.52rem;
+    letter-spacing: 0.1em;
+  }
+  .aura-nav-actions {
+    gap: 6px;
+  }
+  .aura-btn-signin {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  .aura-btn-launch {
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+}
+
+/* ── ULTRA COMPACT SCREENS (<= 380px) ── */
+@media (max-width: 380px) {
+  .aura-header-container {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+  .aura-logo-text {
+    font-size: 1.05rem;
+  }
+  .aura-logo-sub {
+    display: none; /* Hide tiny subtitle on ultra-narrow phones */
+  }
+  .aura-btn-signin {
+    padding: 5px 6px;
+    font-size: 0.76rem;
+  }
+  .aura-btn-launch {
+    padding: 6px 10px;
+    font-size: 0.76rem;
+  }
+}
