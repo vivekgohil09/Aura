@@ -27,7 +27,8 @@ import {
   Rocket,
   Layers,
   CheckCircle2,
-  Lock
+  Lock,
+  Star
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -62,71 +63,76 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
   const [selectedEmblem, setSelectedEmblem] = useState(EMBLEM_PRESETS[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
+  const [allUsersList, setAllUsersList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Extract all active 1-on-1 friends
-  const friendsList = useMemo(() => {
-    const friendsMap = new Map();
-
+  // Extract friend IDs for priority sorting & badge
+  const friendIdSet = useMemo(() => {
+    const set = new Set();
     (chats || []).forEach((c) => {
       if (!c.isGroupChat && c.users && c.users.length > 0) {
         const friend = getSenderUser(user, c.users);
         if (friend) {
           const fId = String(friend._id || friend.id);
-          const myId = String(user._id || user.id);
-          if (fId && fId !== myId && !friendsMap.has(fId)) {
-            friendsMap.set(fId, {
-              _id: fId,
-              id: fId,
-              name: friend.name || friend.username || 'Friend',
-              username: friend.username || (friend.email ? friend.email.split('@')[0] : 'friend'),
-              pic: friend.pic || '',
-              email: friend.email || ''
-            });
-          }
+          if (fId) set.add(fId);
         }
       }
     });
-
-    return Array.from(friendsMap.values());
+    return set;
   }, [chats, user]);
 
-  // Live query
+  // Fetch ALL workspace users automatically when modal opens
   useEffect(() => {
-    if (!searchQuery || !searchQuery.trim()) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
+    if (!isOpen) return;
 
-    const timer = setTimeout(async () => {
-      setSearching(true);
+    let isMounted = true;
+    const fetchAllDirectoryUsers = async () => {
+      setLoadingUsers(true);
       try {
         const config = { headers: { Authorization: 'Bearer ' + getJwtToken() } };
-        const { data } = await axios.get(`/api/user?search=${encodeURIComponent(searchQuery.trim())}`, config);
-        const myId = String(user._id || user.id);
-        const filtered = (data || []).filter((u) => String(u._id || u.id) !== myId);
-        setSearchResults(filtered);
+        const { data } = await axios.get('/api/user', config);
+        if (isMounted && Array.isArray(data)) {
+          const myId = String(user._id || user.id);
+          const filtered = data.filter((u) => String(u._id || u.id) !== myId);
+          
+          // Sort: Friends first, then alphabetically
+          filtered.sort((a, b) => {
+            const aIsFriend = friendIdSet.has(String(a._id || a.id)) ? 1 : 0;
+            const bIsFriend = friendIdSet.has(String(b._id || b.id)) ? 1 : 0;
+            if (aIsFriend !== bIsFriend) return bIsFriend - aIsFriend;
+            return (a.name || '').localeCompare(b.name || '');
+          });
+
+          setAllUsersList(filtered);
+        }
       } catch (err) {
-        const q = searchQuery.toLowerCase().trim();
-        const localMatches = friendsList.filter(
-          (f) =>
-            f.name.toLowerCase().includes(q) ||
-            f.username.toLowerCase().includes(q) ||
-            f.email.toLowerCase().includes(q)
-        );
-        setSearchResults(localMatches);
+        console.error('Failed to fetch all users:', err);
       } finally {
-        setSearching(false);
+        if (isMounted) setLoadingUsers(false);
       }
-    }, 200);
+    };
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, friendsList, user]);
+    fetchAllDirectoryUsers();
 
-  const displayUsers = searchQuery.trim() ? searchResults : friendsList;
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, friendIdSet, user]);
+
+  // Live filter users by search query
+  const displayUsers = useMemo(() => {
+    if (!searchQuery || !searchQuery.trim()) {
+      return allUsersList;
+    }
+    const q = searchQuery.toLowerCase().trim();
+    return allUsersList.filter(
+      (u) =>
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.username && u.username.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q))
+    );
+  }, [allUsersList, searchQuery]);
 
   const handleToggleUser = (u) => {
     const uId = String(u._id || u.id);
@@ -210,7 +216,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
-      <ModalOverlay bg="rgba(11, 15, 25, 0.72)" backdropFilter="blur(24px)" />
+      <ModalOverlay bg="rgba(11, 15, 25, 0.75)" backdropFilter="blur(24px)" />
       <ModalContent
         bg="linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)"
         borderRadius="36px"
@@ -536,21 +542,21 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                 textAlign="center"
               >
                 <Text fontSize="0.74rem" color="#94A3B8" fontWeight="600" m={0}>
-                  ✨ Tap friends below to direct add them to this orbit space
+                  ✨ Tap users below to direct add them to this orbit space
                 </Text>
               </Box>
             )}
           </Box>
 
-          {/* 🌟 4. Direct 1-Tap Add User Discovery List */}
+          {/* 🌟 4. Direct 1-Tap Add User Discovery List (Complete Workspace Directory) */}
           <Box>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Direct Add Orbiters ({displayUsers.length})
+                All Users Directory ({displayUsers.length} available)
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <ShieldCheck size={13} color="#10B981" />
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981' }}>Instant 1-Tap Sync</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10B981' }}>Instant 1-Tap Add</span>
               </div>
             </div>
 
@@ -562,7 +568,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                 style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <Input
-                placeholder="Search friends or type @username..."
+                placeholder="Search all users by name or @username..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 pl="38px"
@@ -574,21 +580,29 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                 fontWeight="600"
                 _focus={{
                   borderColor: '#5B5FEF',
-                  boxShadow: '0 0 0 3px rgba(91, 95, 239, 0.15)'
+                  boxShadow: '0 0 0 3.5px rgba(91, 95, 239, 0.15)'
                 }}
               />
-              {searching && (
+              {loadingUsers && (
                 <Spinner size="xs" color="#5B5FEF" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }} />
               )}
             </Box>
 
-            {/* User Cards */}
-            <Box maxH="175px" overflowY="auto" display="flex" flexDirection="column" gap={2} pr={1}>
-              {displayUsers.length > 0 ? (
+            {/* User Cards (Complete List of Users with Friends highlighted) */}
+            <Box maxH="190px" overflowY="auto" display="flex" flexDirection="column" gap={2} pr={1}>
+              {loadingUsers && allUsersList.length === 0 ? (
+                <Box py={5} textAlign="center">
+                  <Spinner size="sm" color="#5B5FEF" />
+                  <Text fontSize="0.75rem" color="#94A3B8" mt={2} fontWeight="600">
+                    Loading users directory...
+                  </Text>
+                </Box>
+              ) : displayUsers.length > 0 ? (
                 displayUsers.map((itemUser) => {
                   const uId = String(itemUser._id || itemUser.id);
                   const isSelected = selectedUsers.some((u) => String(u._id || u.id) === uId);
                   const isOnline = userStatuses[uId]?.isOnline || itemUser?.isOnline;
+                  const isFriend = friendIdSet.has(uId);
 
                   return (
                     <motion.div
@@ -635,9 +649,23 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
                           )}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>
-                            {itemUser.name}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>
+                              {itemUser.name}
+                            </span>
+                            {isFriend && (
+                              <span style={{
+                                fontSize: '0.62rem',
+                                fontWeight: 800,
+                                color: '#5B5FEF',
+                                background: 'rgba(91, 95, 239, 0.1)',
+                                padding: '1px 6px',
+                                borderRadius: '99px'
+                              }}>
+                                ⭐ Friend
+                              </span>
+                            )}
+                          </div>
                           <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
                             @{itemUser.username || (itemUser.email ? itemUser.email.split('@')[0] : 'user')}
                           </span>
@@ -681,7 +709,7 @@ export default function AuraGroupChatModal({ isOpen, onClose, fetchAgain, setFet
               ) : (
                 <Box py={4} textAlign="center">
                   <Text fontSize="0.82rem" color="#94A3B8" fontWeight="600" m={0}>
-                    {searchQuery.trim() ? 'No users found matching search' : 'No friends found. Type to search any user!'}
+                    No users found matching search
                   </Text>
                 </Box>
               )}
