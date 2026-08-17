@@ -2614,24 +2614,62 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}
                                             />
 
-                                            {/* Avatar with White Specular Ring */}
-                                            <Avatar
-                                                size="2xl"
-                                                name={selectedChat.isGroupChat ? selectedChat.chatName : getSender(user, selectedChat.users)}
-                                                src={!selectedChat.isGroupChat ? getPicture(user, selectedChat.users) : ''}
-                                                bg="linear-gradient(135deg, #5B5FEF 0%, #8B5CF6 50%, #EC4899 100%) !important"
-                                                color="#FFFFFF !important"
-                                                fontWeight="900"
-                                                fontSize="3.2rem"
-                                                style={{
-                                                    width: "155px",
-                                                    height: "155px",
-                                                    border: "5px solid #FFFFFF",
-                                                    boxShadow: "0 20px 60px rgba(91, 95, 239, 0.28), 0 0 0 3px rgba(91, 95, 239, 0.35)",
-                                                    position: "relative",
-                                                    zIndex: 2
-                                                }}
-                                            />
+                                            {/* 3D Luminous Pure-White Avatar with Specular Rim */}
+                                            {(() => {
+                                                const avatarSrc = !selectedChat.isGroupChat ? getPicture(user, selectedChat.users) : '';
+                                                const displayName = selectedChat.isGroupChat ? selectedChat.chatName : getSender(user, selectedChat.users);
+                                                const initial = (displayName || 'A').trim().charAt(0).toUpperCase();
+
+                                                return (
+                                                    <div
+                                                        style={{
+                                                            width: "155px",
+                                                            height: "155px",
+                                                            borderRadius: "50%",
+                                                            background: "linear-gradient(135deg, #5B5FEF 0%, #8B5CF6 50%, #EC4899 100%)",
+                                                            border: "5px solid #FFFFFF",
+                                                            boxShadow: "0 25px 60px rgba(91, 95, 239, 0.32), 0 0 0 3px rgba(91, 95, 239, 0.38)",
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            position: "relative",
+                                                            zIndex: 2,
+                                                            overflow: "hidden"
+                                                        }}
+                                                    >
+                                                        {avatarSrc ? (
+                                                            <img
+                                                                src={avatarSrc}
+                                                                alt={displayName}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    height: "100%",
+                                                                    objectFit: "cover"
+                                                                }}
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <span
+                                                            style={{
+                                                                color: "#FFFFFF",
+                                                                fontSize: "3.8rem",
+                                                                fontWeight: 900,
+                                                                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                                                lineHeight: 1,
+                                                                textShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
+                                                                letterSpacing: "-0.02em",
+                                                                userSelect: "none",
+                                                                position: avatarSrc ? "absolute" : "static",
+                                                                zIndex: 1
+                                                            }}
+                                                        >
+                                                            {initial}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {/* Multi-Frequency Spatial Audio Soundwave Equalizer */}
                                             <Box display="flex" alignItems="center" gap="5px" mt={8} mb={2}>
