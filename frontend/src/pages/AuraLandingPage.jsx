@@ -1187,43 +1187,48 @@ export default function AuraLandingPage() {
           right: 0,
           width: '100%',
           zIndex: 1100,
-          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.85)',
+          backgroundColor: isScrolled ? 'rgba(252, 251, 247, 0.94)' : 'rgba(252, 251, 247, 0.88)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderBottom: isScrolled ? '1px solid rgba(23, 24, 39, 0.08)' : '1px solid rgba(23, 24, 39, 0.04)',
-          boxShadow: isScrolled ? '0 10px 30px rgba(23, 24, 39, 0.04)' : 'none',
+          borderBottom: '1px solid rgba(23, 24, 39, 0.06)',
+          boxShadow: isScrolled ? '0 8px 30px rgba(23, 24, 39, 0.03)' : '0 8px 30px rgba(23, 24, 39, 0.02)',
           transition: 'all 0.3s ease'
         }}
       >
         <div style={{
-          maxWidth: '1240px',
+          maxWidth: '1536px',
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '10px 16px',
-          gap: '8px'
+          padding: '14px 24px',
+          boxSizing: 'border-box'
         }}>
-          {/* Brand Logo */}
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 6px 18px rgba(91, 95, 239, 0.32)',
-              flexShrink: 0
-            }}>
-              <Feather size={18} color="#FFFFFF" strokeWidth={2} />
-            </div>
+          {/* Brand Logo - EXACT Same Size as Login Header */}
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <motion.div
+              whileHover={{ rotate: 12, scale: 1.08 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <div style={{
+                width: 42,
+                height: 42,
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(91, 95, 239, 0.32)',
+                flexShrink: 0
+              }}>
+                <Feather size={22} color="#FFFFFF" strokeWidth={2} />
+              </div>
+            </motion.div>
             <div>
               <span style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 fontWeight: 900,
-                fontSize: '1.18rem',
+                fontSize: '1.5rem',
                 letterSpacing: '-0.03em',
                 color: '#171827',
                 lineHeight: 1,
@@ -1232,32 +1237,47 @@ export default function AuraLandingPage() {
               }}>
                 AURA
               </span>
-              <span style={{ fontSize: '0.55rem', fontWeight: 800, color: '#5B5FEF', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'block', whiteSpace: 'nowrap' }}>
+              <span style={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                color: '#5B5FEF',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                display: 'block',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                whiteSpace: 'nowrap'
+              }}>
                 LIVING SPACES
               </span>
             </div>
           </Link>
 
-          {/* Action CTAs (Clean, No Vertical Word Wrapping) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {/* Action CTAs - EXACT Same Sizing as Login Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <Link to="/login" style={{ textDecoration: 'none', flexShrink: 0 }}>
-              <button style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#171827',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                cursor: 'pointer',
-                padding: '7px 12px',
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                flexShrink: 0
-              }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#171827',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  padding: '8px 18px',
+                  borderRadius: '99px',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0
+                }}
+              >
                 Sign In
-              </button>
+              </motion.button>
             </Link>
+
             <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }} style={{ flexShrink: 0 }}>
               <Link to="/signup" style={{ textDecoration: 'none' }}>
                 <button style={{
@@ -1265,20 +1285,20 @@ export default function AuraLandingPage() {
                   color: '#FFFFFF',
                   border: 'none',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 800,
-                  fontSize: '0.82rem',
-                  padding: '7px 14px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  padding: '10px 24px',
                   borderRadius: '99px',
-                  boxShadow: '0 6px 18px rgba(91, 95, 239, 0.28)',
+                  boxShadow: '0 8px 24px rgba(91, 95, 239, 0.28)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px',
+                  gap: '6px',
                   whiteSpace: 'nowrap',
                   flexShrink: 0
                 }}>
                   <span>Launch Aura</span>
-                  <ArrowRight size={13} color="#FFFFFF" />
+                  <ArrowRight size={16} color="#FFFFFF" />
                 </button>
               </Link>
             </motion.div>
