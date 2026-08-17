@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Box, Text, Stack } from "@chakra-ui/layout";
 import { Button } from "@chakra-ui/button";
 import ChatLoading from "./ChatLoading";
+import AuraGroupChatModal from "./AuraGroupChatModal";
 import { getSender, getPicture, getSenderUser } from '../config/ChatsLogic';
 import { Avatar, Tooltip, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, FormControl, Input, Progress, Spinner, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Badge, Portal } from '@chakra-ui/react';
 import AddIcon from '@mui/icons-material/Add';
