@@ -721,135 +721,54 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
 
         {/* 2. Mode Views: ORBIT, MEMORY, or CHATS */}
         {navMode === 'orbit' ? (
-          <Box className="aura-orbit-viewport" p={3} position="relative" flex="1" minH={{ base: "440px", md: "500px" }}>
-            {/* Top Orbit Telemetry Pill */}
-            <Box
-              position="absolute"
-              top="14px"
-              left="16px"
-              zIndex={15}
-              display="flex"
-              alignItems="center"
-              gap="6px"
-              bg="rgba(255, 255, 255, 0.88)"
-              backdropFilter="blur(12px)"
-              px={3}
-              py={1}
-              borderRadius="99px"
-              border="1px solid rgba(91, 95, 239, 0.2)"
-              boxShadow="0 2px 10px rgba(91, 95, 239, 0.08)"
-            >
-              <motion.span
-                animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981", display: "inline-block" }}
-              />
-              <Text fontSize="0.7rem" fontWeight="800" color="#5B5FEF" letterSpacing="0.04em" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
-                LIVE ORBIT MESH • {(chats || []).length} NODES
-              </Text>
-            </Box>
+          <Box className="aura-orbit-card-container">
+            <Box className="aura-orbit-card">
+              {/* Inner Solid Orbital Ring */}
+              <div className="aura-orbit-ring-inner" />
 
-            {/* Rotating Radar Sweep Scanner Beam */}
-            <div className="aura-radar-beam" />
+              {/* Outer Dashed Orbital Ring */}
+              <div className="aura-orbit-ring-outer" />
 
-            {/* Concentric Orbital Rings */}
-            <div className="aura-orbit-ring-solid" style={{ width: 140, height: 140 }} />
-            <div className="aura-orbit-ring-cosmic" style={{ width: 230, height: 230 }} />
-            <div className="aura-orbit-ring-solid" style={{ width: 330, height: 330 }} />
-            <div className="aura-orbit-ring-cosmic" style={{ width: 420, height: 420 }} />
-
-            {/* Cardinal Radar Markers */}
-            <span style={{ position: 'absolute', top: '16px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>N • 0°</span>
-            <span style={{ position: 'absolute', bottom: '38px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>S • 180°</span>
-            <span style={{ position: 'absolute', right: '16px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>E • 90°</span>
-            <span style={{ position: 'absolute', left: '16px', color: 'rgba(91, 95, 239, 0.4)', fontSize: '9px', fontWeight: 800 }}>W • 270°</span>
-
-            {/* ── CENTER CORE NODE: YOU (The Sun of the Orbit) ── */}
-            <div className="aura-orbit-center-core">
-              {/* Outer pulsing energy halo */}
+              {/* Center Node: YOU with soft breathing glow */}
               <motion.div
-                animate={{ scale: [1, 1.45, 1], opacity: [0.4, 0.08, 0.4] }}
-                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  position: 'absolute',
-                  width: '90px',
-                  height: '90px',
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(91, 95, 239, 0.35) 0%, transparent 70%)',
-                  pointerEvents: 'none'
-                }}
-              />
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                style={{
-                  position: 'relative',
-                  zIndex: 10,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+                className="aura-orbit-you-node"
               >
-                <Avatar
-                  size="md"
-                  name={user?.name || "You"}
-                  src={user?.pic || user?.picture || ""}
-                  style={{
-                    width: "56px",
-                    height: "56px",
-                    border: "3px solid #FFFFFF",
-                    boxShadow: "0 8px 25px rgba(91, 95, 239, 0.4), 0 0 0 2px #5B5FEF"
-                  }}
-                />
-                <span style={{
-                  marginTop: "6px",
-                  fontSize: "0.68rem",
-                  fontWeight: 900,
-                  color: "#FFFFFF",
-                  background: "linear-gradient(135deg, #5B5FEF 0%, #8067E8 100%)",
-                  padding: "1px 8px",
-                  borderRadius: "99px",
-                  boxShadow: "0 2px 8px rgba(91, 95, 239, 0.3)",
-                  letterSpacing: "0.04em"
-                }}>
-                  YOU
-                </span>
+                YOU
               </motion.div>
-            </div>
 
-            {/* ── ORBITING CONTACT SATELLITES (Planets in Motion) ── */}
-            {(!chats || chats.length === 0) ? (
-              <Box position="absolute" bottom="18px" zIndex={15} textAlign="center">
-                <Text fontSize="0.78rem" fontWeight="700" color="#64748B" margin={0}>
-                  🌌 Your orbit is quiet. Start conversations to populate nodes!
-                </Text>
-              </Box>
-            ) : (
-              chats.slice(0, 10).map((c, i) => {
-                const total = Math.min(chats.length, 10);
-                const angle = (i / total) * Math.PI * 2;
-                const radius = i % 3 === 0 ? 115 : (i % 3 === 1 ? 165 : 205);
+              {/* Orbiting Satellites Placed Exactly on the Rings */}
+              {chats && chats.slice(0, 8).map((c, i) => {
+                const total = Math.min(chats.length, 8);
+                // Distribute angles evenly with an initial offset
+                const angle = ((i / total) * Math.PI * 2) - (Math.PI / 3);
+                // Alternate between Inner Ring (radius = 85px) and Outer Ring (radius = 135px)
+                const isInner = i % 2 === 0;
+                const radius = isInner ? 85 : 135;
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
+
                 const cName = !c.isGroupChat ? getSender(user, c.users) : c.chatName;
                 const cPic = !c.isGroupChat ? getPicture(user, c.users) : "";
-                const isSelected = selectedChat && (selectedChat.id === c.id || selectedChat._id === c._id);
+                
+                // Color palette matching Image 1
+                const nodeColors = [
+                  '#0284C7', // Blue (SC)
+                  '#10B981', // Teal / Green (AR)
+                  '#EF4444', // Coral / Red
+                  '#8B5CF6', // Purple
+                  '#F59E0B', // Amber
+                  '#EC4899', // Pink
+                ];
+                const nodeBg = nodeColors[i % nodeColors.length];
 
                 return (
                   <motion.div
                     key={c.id || c._id}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.08, type: "spring", stiffness: 260, damping: 20 }}
+                    className="aura-orbit-satellite-node"
                     style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                      zIndex: 12,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      cursor: 'pointer'
+                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
                     }}
                     whileHover={{ scale: 1.25, zIndex: 30 }}
                     whileTap={{ scale: 0.92 }}
@@ -857,81 +776,29 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                       dispatch(setSelectedChat(c));
                     }}
                   >
-                    <Tooltip label={`Chat with ${cName}`} hasArrow placement="top">
+                    <Tooltip label={cName} hasArrow placement="top">
                       <Box position="relative">
                         <Avatar
-                          size="md"
+                          size="sm"
                           name={cName}
                           src={cPic}
                           style={{
-                            width: i % 3 === 0 ? "46px" : (i % 3 === 1 ? "42px" : "38px"),
-                            height: i % 3 === 0 ? "46px" : (i % 3 === 1 ? "42px" : "38px"),
-                            border: isSelected ? "3px solid #10B981" : "2.5px solid #FFFFFF",
-                            boxShadow: isSelected
-                              ? "0 0 20px rgba(16, 185, 129, 0.6), 0 4px 15px rgba(0, 0, 0, 0.15)"
-                              : "0 6px 18px rgba(0, 0, 0, 0.1), 0 0 0 1.5px rgba(91, 95, 239, 0.3)"
+                            width: "36px",
+                            height: "36px",
+                            background: nodeBg,
+                            color: "#FFFFFF",
+                            fontWeight: 800,
+                            fontSize: "0.82rem",
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            border: "2.5px solid #FFFFFF",
+                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)"
                           }}
                         />
-                        {/* Live Presence Beacon */}
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '0px',
-                          right: '0px',
-                          width: '11px',
-                          height: '11px',
-                          borderRadius: '50%',
-                          background: '#10B981',
-                          border: '2px solid #FFFFFF',
-                          boxShadow: '0 0 6px #10B981'
-                        }} />
                       </Box>
                     </Tooltip>
-
-                    {/* Luxury Frosted Name Tag */}
-                    <Box
-                      mt={1}
-                      px={2}
-                      py={0.5}
-                      bg="rgba(255, 255, 255, 0.92)"
-                      backdropFilter="blur(8px)"
-                      borderRadius="8px"
-                      border="1px solid rgba(226, 232, 240, 0.8)"
-                      boxShadow="0 2px 6px rgba(0, 0, 0, 0.04)"
-                      maxW="85px"
-                      textAlign="center"
-                    >
-                      <Text
-                        fontSize="0.66rem"
-                        fontWeight="800"
-                        color="#0F172A"
-                        isTruncated
-                        margin={0}
-                        fontFamily="'Plus Jakarta Sans', sans-serif"
-                      >
-                        {cName}
-                      </Text>
-                    </Box>
                   </motion.div>
                 );
-              })
-            )}
-
-            {/* Bottom Interaction Guide Pill */}
-            <Box
-              position="absolute"
-              bottom="12px"
-              zIndex={15}
-              bg="rgba(255, 255, 255, 0.88)"
-              backdropFilter="blur(12px)"
-              px={3.5}
-              py={1}
-              borderRadius="99px"
-              border="1px solid rgba(226, 232, 240, 0.9)"
-              boxShadow="0 4px 15px rgba(0, 0, 0, 0.04)"
-            >
-              <Text fontSize="0.72rem" fontWeight="700" color="#64748B" margin={0} fontFamily="'Plus Jakarta Sans', sans-serif">
-                ✦ Tap any planet node to engage in direct stream
-              </Text>
+              })}
             </Box>
           </Box>
         ) : navMode === 'memory' ? (
