@@ -189,38 +189,40 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     };
     const [isSendingAttachment, setIsSendingAttachment] = useState(false);
 
-    const handleFileUpload = (e) => {
+        const handleFileUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 10 * 1024 * 1024) {
-            toast.error("File size must be less than 10MB");
+        // Expanded upload capacity (up to 100MB input)
+        if (file.size > 100 * 1024 * 1024) {
+            toast.error("File size exceeds 100MB limit");
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            let fileDataUrl = event.target.result;
-            if (file.type.startsWith('image/')) {
-                fileDataUrl = await compressImage(fileDataUrl);
-            }
-            
-            // Format nice file size string
-            const sizeInKb = (file.size / 1024).toFixed(1);
-            const sizeString = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` : `${sizeInKb} KB`;
+        const toastId = toast.loading("⚡ Compressing media with Aura High-Ratio Engine...");
+        try {
+            const compressedResult = await processAndCompressAttachment(file);
+            toast.dismiss(toastId);
 
-            // Open confirmation drawer for user confirmation
+            if (compressedResult.savedPercent > 0) {
+                toast.success(`⚡ Compressed ${compressedResult.originalSize} ➔ ${compressedResult.compressedSize} (${compressedResult.savedPercent}% saved!)`, { autoClose: 2500, hideProgressBar: true });
+            }
+
             setPendingAttachment({
-                name: file.name,
-                size: sizeString,
-                type: file.type || 'application/octet-stream',
-                dataUrl: fileDataUrl,
-                isPdf: file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'),
-                isImage: file.type.startsWith('image/'),
-                isVideo: file.type.startsWith('video/')
+                name: compressedResult.name,
+                size: compressedResult.compressedSize,
+                originalSize: compressedResult.originalSize,
+                savedPercent: compressedResult.savedPercent,
+                type: compressedResult.type,
+                dataUrl: compressedResult.dataUrl,
+                isPdf: compressedResult.isPdf,
+                isImage: compressedResult.isImage,
+                isVideo: compressedResult.isVideo
             });
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+            toast.dismiss(toastId);
+            toast.error("Failed to process file for compression");
+        }
         e.target.value = "";
     };
 
@@ -4031,9 +4033,27 @@ const SingleChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
                                                 }}>
                                                     {pendingAttachment.name}
                                                 </h4>
-                                                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
-                                                    File size: <strong style={{ color: '#0F172A' }}>{pendingAttachment.size}</strong>
-                                                </span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                    <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
+                                                        File size: <strong style={{ color: '#0F172A' }}>{pendingAttachment.size}</strong>
+                                                    </span>
+                                                    {pendingAttachment.savedPercent > 0 && (
+                                                        <div style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)',
+                                                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                                                            padding: '3px 10px',
+                                                            borderRadius: '99px',
+                                                            marginTop: '2px'
+                                                        }}>
+                                                            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#059669', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                                                                ⚡ {pendingAttachment.originalSize} ➔ {pendingAttachment.size} ({pendingAttachment.savedPercent}% Saved)
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Security Notice / View Once Toggle */}
