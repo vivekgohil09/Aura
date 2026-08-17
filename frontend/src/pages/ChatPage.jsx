@@ -674,6 +674,7 @@ const ChatPage = () => {
             </div>
           </Portal>
         )}
+      </AnimatePresence>
     </div>
   );
 };
