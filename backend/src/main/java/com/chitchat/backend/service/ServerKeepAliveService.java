@@ -24,7 +24,7 @@ public class ServerKeepAliveService {
     @Value("${app.render.backend-url:https://aura-vdcq.onrender.com/api/health}")
     private String healthUrl;
 
-    @Value("${app.render.frontend-url:}")
+    @Value("${app.render.frontend-url:https://aura-2-nuqm.onrender.com}")
     private String frontendUrl;
 
     /**

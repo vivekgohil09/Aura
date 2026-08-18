@@ -74,13 +74,18 @@ export default function App() {
 
     // Keep Render backend & frontend active (prevents free tier sleep)
     const pingServices = async () => {
-      // 1. Ping Backend
+      // 1. Ping Backend (both relative and direct)
       try {
         await axios.get('/api/health');
-      } catch (e) {}
+      } catch (e) {
+        try {
+          fetch('https://aura-vdcq.onrender.com/api/health', { method: 'GET', mode: 'no-cors' }).catch(() => {});
+        } catch (err) {}
+      }
 
-      // 2. Self-ping Frontend Origin
+      // 2. Self-ping Frontend Origin & Production URL
       try {
+        fetch('https://aura-2-nuqm.onrender.com', { method: 'HEAD', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
         if (typeof window !== 'undefined' && window.location && window.location.origin) {
           fetch(window.location.origin, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
         }
@@ -88,7 +93,7 @@ export default function App() {
     };
 
     pingServices();
-    // Fast 45s heartbeat + 4 min guaranteed cycle (240,000 ms)
+    // Fast guaranteed 4 min cycle (240,000 ms)
     const keepAliveInterval = setInterval(pingServices, 240000);
 
     const handleFocus = () => {

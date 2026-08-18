@@ -24,10 +24,11 @@
     <script>
       (function() {
         try {
-          // Instant asynchronous pre-warm to wake Render backend before bundle finishes parsing
+          // Instant asynchronous pre-warm to wake Render backend & frontend before bundle finishes parsing
           fetch('/api/health', { method: 'GET', cache: 'no-store' }).catch(function() {
             try { fetch('https://aura-vdcq.onrender.com/api/health', { method: 'GET', mode: 'no-cors' }).catch(function(){}); } catch(e){}
           });
+          try { fetch('https://aura-2-nuqm.onrender.com', { method: 'HEAD', mode: 'no-cors', cache: 'no-store' }).catch(function(){}); } catch(e){}
         } catch (e) {}
       })();
     </script>
