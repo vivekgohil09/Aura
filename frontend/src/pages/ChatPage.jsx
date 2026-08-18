@@ -5,14 +5,14 @@ import SideBar from "../components/SideBar";
 import { getJwtToken } from "../config/getJwt";
 import MyChat from "../components/MyChat";
 import ChatBox from "../components/ChatBox";
-import { Box, Modal, ModalOverlay, ModalContent, ModalBody, Avatar, Text, Flex, Button } from "@chakra-ui/react";
+import { Box, Avatar, Text, Flex, Portal } from "@chakra-ui/react";
 import { useSelector, useDispatch } from "react-redux";
 import { setUserDetails, setNotification, updateUserStatus, setSelectedChat, setChats } from "../redux/actions";
 import axios from 'axios';
 import { useDisclosure } from '@chakra-ui/hooks';
 import { stompService } from "../config/stompService2";
 import { motion, AnimatePresence } from "framer-motion";
-import { Portal } from "@chakra-ui/react";
+import { toast } from "react-toastify";
 
 // STOMP will be used instead of socket.io. Keep a shim for legacy checks.
 let globalSocket = null;
@@ -80,61 +80,65 @@ const ChatPage = () => {
   const [fetchAgain, setFetchAgain] = useState(false);
   const user = useSelector(state => state.user);
   const selectedChat = useSelector(state => state.selectedChats);
+  const notification = useSelector(state => state.notification) || [];
+  const chats = useSelector(state => state.chats) || [];
   const history = useHistory();
   const { isOpen: isDrawerOpen, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
   const dispatch = useDispatch();
   const [incomingCall, setIncomingCall] = useState(null);
-  const localVideoRef = useRef(null);
+
+  // ── Dynamic Aura Document Title ──────────────────────────────────────────
+  useEffect(() => {
+    const unreadCount = notification?.length || 0;
+    document.title = unreadCount > 0 ? `(${unreadCount}) Aura — Messages` : "Aura — Messages & Spaces";
+  }, [notification]);
+
+  // ── Initialize user details and authentication check ─────────────────────
+  useEffect(() => {
+    const usersData = JSON.parse(localStorage.getItem("userInfo"));
+    if (!usersData) {
+      history.push("/login");
+    } else if (!user) {
+      dispatch(setUserDetails(usersData));
+    }
+  }, [user, history, dispatch]);
 
   // ── Initialize global socket and call listeners on page mount ─────────────
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    const jwtToken = localStorage.getItem("jwt") || getJwtToken();
     if (!userInfo) return;
 
     if (!globalSocket) {
-      // Connect STOMP service and provide a lightweight shim at window.__auraSocket for legacy emits/listeners.
       stompService.connect(() => console.log('STOMP connected'), (err) => console.error('STOMP connect error', err));
-      // Shim: provide minimal API used elsewhere. Emits will be no-ops for events handled via REST or STOMP subscriptions.
-      // Minimal shim to satisfy existing socket.io usage patterns in the UI.
       const shim = {};
       shim.emit = (event, payload) => {
         try {
           if (event === 'leave-app') {
             stompService.disconnect();
           }
-          // No-op for other legacy emits; REST or STOMP topics should handle actual actions.
         } catch (e) { }
         return shim;
       };
 
-      // on/off are chainable in socket.io; preserve that by returning shim.
       shim._stompSubs = new Map();
       shim.on = (event, cb) => {
         try {
           if (event === 'connected') {
-            // Hook into STOMP connect status
             stompService.addConnectionListener((connected) => {
               if (connected) cb();
             });
-            // If already connected, call immediately
             if (stompService.isConnected()) cb();
             return shim;
           }
 
-          // Legacy global call events: subscribe to a global STOMP announcement topic
           if (event === 'call-user' || event === 'end-call' || event === 'accept-call' || event === 'call-accepted') {
-            // Avoid duplicate subscription
             if (shim._stompSubs.has(event)) return shim;
             const unsub = stompService.subscribeToTopic('/topic/call-global', (msg) => {
               try {
-                // STOMP message may be the CallSignalDto or a wrapped object
                 const data = msg && msg.body ? msg.body : msg;
-                // If the message type matches the event or is a general call offer, invoke callback
                 if (data && (data.type === event || (event === 'call-user' && data.type === 'call-user') || event === 'end-call' && data.type === 'end-call')) {
                   cb(data);
                 } else if (data && !data.type && event === 'call-user') {
-                  // fallback: many callers expect raw payload
                   cb(data);
                 }
               } catch (e) {
@@ -144,8 +148,6 @@ const ChatPage = () => {
             shim._stompSubs.set(event, unsub);
             return shim;
           }
-
-          // Other events (chat-request-*) are left as no-ops — add as needed
         } catch (e) { console.error(e); }
         return shim;
       };
@@ -161,12 +163,9 @@ const ChatPage = () => {
         return shim;
       };
 
-      // Mark this object so components can prefer STOMP subscriptions
       shim.__isStompShim = true;
-
       globalSocket = shim;
       window.__auraSocket = globalSocket;
-      // Expose stompService for components that prefer direct STOMP helpers
       window.stompService = stompService;
     } else {
       window.__auraSocket = globalSocket;
@@ -183,25 +182,23 @@ const ChatPage = () => {
       }
     } catch (e) {}
 
-    // Incoming call & chat requests — always listen globally
+    // Incoming call & chat requests
     globalSocket.off("call-user").on("call-user", async (data) => {
       const myId = userInfo._id || userInfo.id;
       if (data) {
         if (data.fromUserId && String(data.fromUserId) === String(myId)) {
-          return; // Ignore calls initiated by self
+          return;
         }
         if (data.targetUserId && String(data.targetUserId) !== String(myId)) {
-          return; // Ignore calls targeted for someone else
+          return;
         }
 
-        // Auto-open the chat so callee sees full calling screen immediately
         try {
           const chatId = data.chatId || data.chat?.id || data.chat?._id;
           if (chatId) {
             const chatsList = window.__auraChats || [];
             let chatToOpen = chatsList.find(c => String(c._id || c.id) === String(chatId));
             if (!chatToOpen) {
-              // fetch chat from backend
               try {
                 const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
                 const { data: fetched } = await axios.get(`/api/chat/${chatId}`, config);
@@ -211,9 +208,7 @@ const ChatPage = () => {
                   window.__auraChats = [fetched, ...existing.filter(c => String(c._id || c.id) !== String(fetched._id || fetched.id))];
                   dispatch(setChats(window.__auraChats));
                 }
-              } catch (e) {
-                // ignore fetch errors — still show incoming call modal
-              }
+              } catch (e) {}
             }
 
             if (chatToOpen) {
@@ -235,7 +230,7 @@ const ChatPage = () => {
         const targetUserId = data.targetUserId;
         const myId = userInfo._id || userInfo.id;
         if (targetUserId && myId && String(targetUserId) !== String(myId)) {
-          return; // Ignore requests meant for other users
+          return;
         }
 
         const senderId = data.sender._id || data.sender.id;
@@ -247,15 +242,6 @@ const ChatPage = () => {
           senderUsername: data.sender.username || data.sender.name,
           senderPic: data.sender.pic || ""
         };
-
-        // Load stored requests from local storage
-        try {
-          const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
-          const storedNotifs = JSON.parse(localStorage.getItem(storageKey) || "[]");
-          if (storedNotifs && storedNotifs.length > 0) {
-            dispatch(setNotification(storedNotifs));
-          }
-        } catch (e) {}
 
         try {
           const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
@@ -280,7 +266,7 @@ const ChatPage = () => {
         const senderId = data.senderId;
         const myId = userInfo._id || userInfo.id;
         if (senderId && myId && String(senderId) !== String(myId)) {
-          return; // Ignore acceptances meant for other senders
+          return;
         }
 
         const fullChat = data.chat;
@@ -292,7 +278,6 @@ const ChatPage = () => {
       }
     });
 
-    // Subscribe to presence topic (STOMP)
     let unsubPresence = null;
     try {
       unsubPresence = stompService.subscribeToTopic('/topic/presence', (data) => {
@@ -313,7 +298,7 @@ const ChatPage = () => {
     };
   }, [dispatch]);
 
-  // Play audio ringtone when an incoming call is active
+  // ── Incoming Call Audio Ringtone ──────────────────────────────────────────
   useEffect(() => {
     let stopRinging = null;
     if (incomingCall) {
@@ -357,13 +342,14 @@ const ChatPage = () => {
     };
   }, [incomingCall]);
 
-  const notification = useSelector(state => state.notification) || [];
-  const chatsList = useSelector(state => state.chats) || [];
-
+  // ── Sync Globals for external child access ────────────────────────────────
   useEffect(() => {
+    window.__auraSocket = globalSocket;
     window.__auraNotifs = notification;
-  }, [notification]);
+    window.__auraChats = chats;
+  }, [globalSocket, notification, chats]);
 
+  // ── Fetch Pending Requests from Database ──────────────────────────────────
   useEffect(() => {
     const fetchPendingNotifications = async () => {
       try {
@@ -372,7 +358,6 @@ const ChatPage = () => {
         const storageKey = myId ? `aura_received_requests_${myId}` : "aura_received_requests";
         const storedLocal = JSON.parse(localStorage.getItem(storageKey) || "[]");
 
-        // Option A: Fetch from Backend Database
         let dbNotifs = [];
         try {
           const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
@@ -390,7 +375,6 @@ const ChatPage = () => {
           }
         } catch (dbErr) {}
 
-        // Combine DB pending requests with Option B LocalSync fallback
         const combined = [...dbNotifs];
         storedLocal.forEach(localNotif => {
           if (!combined.some(c => String(c.senderId) === String(localNotif.senderId))) {
@@ -409,27 +393,16 @@ const ChatPage = () => {
     fetchPendingNotifications();
   }, [dispatch]);
 
-  const chats = useSelector(state => state.chats) || [];
-
-  // ── Expose globalSocket & notifications & chats so components can reuse ───────
-  useEffect(() => {
-    window.__auraSocket = globalSocket;
-    window.__auraNotifs = notification;
-    window.__auraChats = chats;
-  }, [globalSocket, notification, chats]);
-
   const acceptCall = async () => {
     if (incomingCall?.chatId) {
       const chatToOpen = chats.find(c => String(c._id || c.id) === String(incomingCall.chatId));
       if (chatToOpen) {
         dispatch(setSelectedChat(chatToOpen));
       } else {
-        // If the chat isn't in the local list yet, fetch it immediately so conversation opens without delay
         try {
           const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
           const { data } = await axios.get(`/api/chat/${incomingCall.chatId}`, config);
           if (data) {
-            // add to global list and open it
             const existing = window.__auraChats || [];
             window.__auraChats = [data, ...existing.filter(c => String(c._id || c.id) !== String(data._id || data.id))];
             dispatch(setChats(window.__auraChats));
@@ -439,7 +412,6 @@ const ChatPage = () => {
           console.error('Failed to fetch chat on accept:', e?.message || e);
         }
       }
-      // Mark call to accept in the chat component
       window.__auraCallToAccept = incomingCall;
       setIncomingCall(null);
     }
@@ -451,16 +423,6 @@ const ChatPage = () => {
     }
     setIncomingCall(null);
   };
-
-  useEffect(() => {
-    document.title = "Aura | Home";
-    const usersData = JSON.parse(localStorage.getItem("userInfo"));
-    if (!usersData) {
-      history.push("/login");
-    } else if (!user) {
-      dispatch(setUserDetails(usersData));
-    }
-  }, [user, history, dispatch]);
 
   return (
     <div className="chat-layout" style={{

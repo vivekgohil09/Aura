@@ -164,8 +164,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
     const handleSendFriendRequest = async (targetUser) => {
         if (!targetUser) return;
-        const targetId = String(targetUser._id || targetUser.id || targetUser.publicId || '');
-        const targetName = targetUser.name || targetUser.username || targetUser.email || 'User';
+        const targetId = String(targetUser._id || targetUser.id || targetUser.publicId || targetUser.userId || targetUser.username || targetUser.email || '');
+        const targetName = targetUser.name || targetUser.displayName || targetUser.username || targetUser.email || 'User';
         const targetPayload = targetId || targetUser.email || targetUser.username;
         if (!targetPayload) return;
 
@@ -180,7 +180,10 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             await axios.post('/api/chat/request/send', { 
                 targetUserId: targetPayload,
                 userId: targetPayload,
-                _id: targetPayload
+                _id: targetPayload,
+                publicId: targetUser.publicId ? String(targetUser.publicId) : undefined,
+                username: targetUser.username,
+                email: targetUser.email
             }, config);
 
             setSentRequestUserIds(prev => {
@@ -188,6 +191,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                 if (targetId) next.add(targetId);
                 if (targetUser.id) next.add(String(targetUser.id));
                 if (targetUser._id) next.add(String(targetUser._id));
+                if (targetUser.publicId) next.add(String(targetUser.publicId));
+                if (targetUser.username) next.add(String(targetUser.username));
                 return next;
             });
 
@@ -264,7 +269,6 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
     const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
     const [qrScanInput, setQrScanInput] = useState('');
     const [qrTab, setQrTab] = useState('scan');
-    const [scannedUsername, setScannedUsername] = useState('');
     const [scannedUser, setScannedUser] = useState(null);
     const [isScanning, setIsScanning] = useState(false);
     const [cameraActive, setCameraActive] = useState(false);
@@ -746,8 +750,8 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
 
     const sendChatRequest = async (targetUser) => {
         if (!targetUser) return;
-        const targetId = targetUser._id || targetUser.id;
-        const myId = user?._id || user?.id;
+        const targetId = targetUser._id || targetUser.id || targetUser.publicId || targetUser.userId || targetUser.username || targetUser.email;
+        const myId = user?._id || user?.id || user?.userId;
 
         if (myId && String(targetId) === String(myId)) {
             toast.info("This is your own profile!");
@@ -769,13 +773,20 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
             // Call Option A Backend Persistence API
             try {
                 const config = { headers: { "Content-Type": "application/json", Authorization: "Bearer " + getJwtToken() } };
-                await axios.post("/api/chat/request/send", { targetUserId: String(targetId) }, config);
+                await axios.post("/api/chat/request/send", { 
+                    targetUserId: String(targetId),
+                    userId: String(targetId),
+                    _id: String(targetId),
+                    publicId: targetUser.publicId ? String(targetUser.publicId) : undefined,
+                    username: targetUser.username,
+                    email: targetUser.email
+                }, config);
             } catch (e) {}
 
             setIsQrScannerOpen(false);
             setScannedUser(null);
             setScannedUsername('');
-            toast.success(`Request Sent to @${targetUser.username || targetUser.name}! Waiting for them to accept.`, {
+            toast.success(`Request Sent to @${targetUser.username || targetUser.name || 'user'}! Waiting for them to accept.`, {
                 position: 'top-right',
                 autoClose: 3000,
                 hideProgressBar: true
@@ -1724,14 +1735,17 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             </Box>
                             <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#94A3B8', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>
                                 {(() => {
-                                    const list = (searchResult || []).filter(u => u && (u.id || u._id));
+                                    const list = (searchResult || []).filter(u => u && (u.id || u._id || u.publicId || u.userId || u.username || u.email));
                                     const filtered = drawerFilter === 'online'
                                         ? list.filter(u => {
-                                            const tId = String(u.id || u._id || '');
+                                            const tId = String(u.id || u._id || u.publicId || '');
                                             return Boolean(userStatuses[tId]?.isOnline || u.isOnline || u.online);
                                         })
                                         : drawerFilter === 'friends'
-                                        ? list.filter(u => friendIds.has(String(u._id || u.id)))
+                                        ? list.filter(u => {
+                                            const tId = String(u._id || u.id || u.publicId || '');
+                                            return friendIds.has(tId) || (u.id && friendIds.has(String(u.id))) || (u._id && friendIds.has(String(u._id))) || (u.publicId && friendIds.has(String(u.publicId)));
+                                        })
                                         : list;
                                     return `${filtered.length} found`;
                                 })()}
@@ -1758,14 +1772,17 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                         {loading ? (
                             <Box py={4}><ChatLoading /></Box>
                         ) : (() => {
-                            const validUsers = (searchResult || []).filter(u => u && (u.id || u._id));
+                            const validUsers = (searchResult || []).filter(u => u && (u.id || u._id || u.publicId || u.userId || u.username || u.email));
                             const displayedUsers = drawerFilter === 'online'
                                 ? validUsers.filter(u => {
-                                    const tId = String(u.id || u._id || '');
+                                    const tId = String(u.id || u._id || u.publicId || '');
                                     return Boolean(userStatuses[tId]?.isOnline || u.isOnline || u.online);
                                 })
                                 : drawerFilter === 'friends'
-                                ? validUsers.filter(u => friendIds.has(String(u._id || u.id)))
+                                ? validUsers.filter(u => {
+                                    const tId = String(u._id || u.id || u.publicId || '');
+                                    return friendIds.has(tId) || (u.id && friendIds.has(String(u.id))) || (u._id && friendIds.has(String(u._id))) || (u.publicId && friendIds.has(String(u.publicId)));
+                                })
                                 : validUsers;
 
                             if (displayedUsers.length === 0) {
@@ -1814,21 +1831,23 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
                             return (
                                 <Box display="flex" flexDirection="column" gap="10px" overflowY="auto" flex="1" pr={1} pb={2}>
                                     {displayedUsers.map((u, idx) => {
-                                        const targetId = String(u._id || u.id || u.publicId || '');
+                                        const targetId = String(u._id || u.id || u.publicId || u.userId || u.username || u.email || '');
                                         const targetEmail = (u.email || '').toLowerCase();
+                                        const targetUsername = (u.username || '').toLowerCase();
                                         const isMe = Boolean(
                                             (user?._id && String(user._id || user.id) === targetId) ||
-                                            (user?.email && targetEmail && user.email.toLowerCase() === targetEmail)
+                                            (user?.email && targetEmail && user.email.toLowerCase() === targetEmail) ||
+                                            (user?.username && targetUsername && user.username.toLowerCase() === targetUsername)
                                         );
-                                        const isFriend = friendIds.has(targetId) || (u.id && friendIds.has(String(u.id))) || (u._id && friendIds.has(String(u._id)));
-                                        const isSentRequest = sentRequestUserIds.has(targetId) || (u.id && sentRequestUserIds.has(String(u.id))) || (u._id && sentRequestUserIds.has(String(u._id)));
+                                        const isFriend = friendIds.has(targetId) || (u.id && friendIds.has(String(u.id))) || (u._id && friendIds.has(String(u._id))) || (u.publicId && friendIds.has(String(u.publicId)));
+                                        const isSentRequest = sentRequestUserIds.has(targetId) || (u.id && sentRequestUserIds.has(String(u.id))) || (u._id && sentRequestUserIds.has(String(u._id))) || (u.publicId && sentRequestUserIds.has(String(u.publicId))) || (u.username && sentRequestUserIds.has(String(u.username)));
                                         const incomingReq = (pendingReceivedRequests || []).find(r => {
                                             const sId = String(r.sender?.id || r.sender?._id || '');
-                                            return sId === targetId || (u.id && sId === String(u.id)) || (u._id && sId === String(u._id));
+                                            return sId === targetId || (u.id && sId === String(u.id)) || (u._id && sId === String(u._id)) || (u.publicId && sId === String(u.publicId));
                                         });
-                                        const statusObj = userStatuses[targetId] || (u.id ? userStatuses[String(u.id)] : null);
+                                        const statusObj = userStatuses[targetId] || (u.id ? userStatuses[String(u.id)] : null) || (u._id ? userStatuses[String(u._id)] : null);
                                         const isOnlineNow = statusObj != null ? statusObj.isOnline : Boolean(u.isOnline || u.online);
-                                        const isRequestLoading = requestLoadingId === targetId || (u.id && requestLoadingId === String(u.id));
+                                        const isRequestLoading = requestLoadingId === targetId || (u.id && requestLoadingId === String(u.id)) || (u._id && requestLoadingId === String(u._id));
 
                                         return (
                                             <motion.div

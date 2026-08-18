@@ -50,11 +50,34 @@ public class ChatDto {
         private String targetUserId;
         private String userId;
         private String _id;
+        private String publicId;
+        private String username;
+        private String email;
+
+        private boolean isValidId(String s) {
+            return s != null && !s.trim().isEmpty() && !"undefined".equalsIgnoreCase(s.trim()) && !"null".equalsIgnoreCase(s.trim());
+        }
 
         public String getTargetUserId() {
-            if (targetUserId != null && !targetUserId.trim().isEmpty()) return targetUserId.trim();
-            if (userId != null && !userId.trim().isEmpty()) return userId.trim();
-            if (_id != null && !_id.trim().isEmpty()) return _id.trim();
+            if (isValidId(targetUserId)) return targetUserId.trim();
+            if (isValidId(userId)) return userId.trim();
+            if (isValidId(_id)) return _id.trim();
+            if (isValidId(publicId)) return publicId.trim();
+            if (isValidId(username)) return username.trim();
+            if (isValidId(email)) return email.trim();
+            return null;
+        }
+
+        public String getCleanUsername() {
+            if (isValidId(username)) {
+                String u = username.trim();
+                return u.startsWith("@") ? u.substring(1) : u;
+            }
+            return null;
+        }
+
+        public String getCleanEmail() {
+            if (isValidId(email)) return email.trim().toLowerCase();
             return null;
         }
     }

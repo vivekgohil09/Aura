@@ -105,13 +105,170 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
   const [pinnedChatIds, setPinnedChatIds] = useState([]);
   const [mutedChatIds, setMutedChatIds] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [livePing, setLivePing] = useState(24);
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultStats, setVaultStats] = useState({
+    images: 0,
+    files: 0,
+    audio: 0,
+    items: []
+  });
   const [deletedChatIds, setDeletedChatIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aura_deleted_chats") || "[]"); } catch { return []; }
   });
 
-  const getFilteredChats = (chatList) => {
-    return Array.isArray(chatList) ? chatList : [];
-  };
+  useEffect(() => {
+    // Dynamic ping telemetry simulation (realistic network jitter)
+    const pingInterval = setInterval(() => {
+      setLivePing(Math.floor(Math.random() * 14) + 16);
+    }, 4000);
+
+    const loadRealVaultStats = async () => {
+      setVaultLoading(true);
+      try {
+        const chatId = selectedChat?.id || selectedChat?._id;
+        if (chatId) {
+          // Fetch real messages for the selected conversation
+          const config = { headers: { Authorization: "Bearer " + getJwtToken() } };
+          const { data: messages } = await axios.get(`/api/message/${chatId}`, config);
+          
+          if (Array.isArray(messages)) {
+            let imgCount = 0;
+            let fileCount = 0;
+            let audioCount = 0;
+            const items = [];
+
+            messages.forEach((m) => {
+              if (!m || !m.content) return;
+              const content = m.content;
+              const createdAt = m.createdAt || m.timestamp || Date.now();
+
+              if (content.startsWith('[doc] ')) {
+                fileCount++;
+                try {
+                  const docInfo = JSON.parse(content.replace('[doc] ', ''));
+                  items.unshift({
+                    id: m.id || m._id || items.length + 1,
+                    type: 'file',
+                    name: docInfo.name || 'Document',
+                    time: createdAt,
+                    url: docInfo.url || docInfo.data
+                  });
+                } catch {
+                  items.unshift({
+                    id: m.id || m._id || items.length + 1,
+                    type: 'file',
+                    name: 'Vault File',
+                    time: createdAt
+                  });
+                }
+              } else if (content.startsWith('[voice] ') || content.startsWith('[video_note]') || content.startsWith('data:audio') || /\.(mp3|webm|wav|ogg|m4a)/i.test(content)) {
+                audioCount++;
+                const isVideo = content.startsWith('[video_note]');
+                items.unshift({
+                  id: m.id || m._id || items.length + 1,
+                  type: 'audio',
+                  name: isVideo ? 'Video Note' : 'Voice Note',
+                  time: createdAt
+                });
+              } else if (content.startsWith('[image] ') || content.startsWith('data:image') || /\.(jpeg|jpg|gif|png|webp)/i.test(content)) {
+                imgCount++;
+                items.unshift({
+                  id: m.id || m._id || items.length + 1,
+                  type: 'image',
+                  name: 'Shared Image',
+                  time: createdAt
+                });
+              }
+            });
+
+            const computedStats = {
+              images: imgCount,
+              files: fileCount,
+              audio: audioCount,
+              items: items.slice(0, 10)
+            };
+
+            setVaultStats(computedStats);
+            localStorage.setItem(`aura_vault_${chatId}`, JSON.stringify(computedStats));
+            setVaultLoading(false);
+            return;
+          }
+        }
+
+        // If no selected chat or circle-wide view, scan latestMessage across all user's chats
+        let circleImages = 0;
+        let circleFiles = 0;
+        let circleAudio = 0;
+        const circleItems = [];
+
+        if (Array.isArray(chats)) {
+          chats.forEach((c) => {
+            const lm = c.latestMessage;
+            if (!lm || !lm.content) return;
+            const content = lm.content;
+            const time = lm.createdAt || c.updatedAt || Date.now();
+
+            if (content.startsWith('[doc] ')) {
+              circleFiles++;
+              try {
+                const docInfo = JSON.parse(content.replace('[doc] ', ''));
+                circleItems.unshift({
+                  id: c.id || c._id,
+                  type: 'file',
+                  name: docInfo.name || 'Document',
+                  time: time
+                });
+              } catch {
+                circleItems.unshift({
+                  id: c.id || c._id,
+                  type: 'file',
+                  name: 'Vault File',
+                  time: time
+                });
+              }
+            } else if (content.startsWith('[voice] ') || content.startsWith('[video_note]') || content.startsWith('data:audio')) {
+              circleAudio++;
+              circleItems.unshift({
+                id: c.id || c._id,
+                type: 'audio',
+                name: content.startsWith('[video_note]') ? 'Video Note' : 'Voice Note',
+                time: time
+              });
+            } else if (content.startsWith('[image] ') || content.startsWith('data:image') || /\.(jpeg|jpg|gif|png|webp)/i.test(content)) {
+              circleImages++;
+              circleItems.unshift({
+                id: c.id || c._id,
+                type: 'image',
+                name: 'Shared Image',
+                time: time
+              });
+            }
+          });
+        }
+
+        setVaultStats({
+          images: circleImages,
+          files: circleFiles,
+          audio: circleAudio,
+          items: circleItems.slice(0, 10)
+        });
+      } catch (err) {
+        setVaultStats({
+          images: 0,
+          files: 0,
+          audio: 0,
+          items: []
+        });
+      } finally {
+        setVaultLoading(false);
+      }
+    };
+
+    loadRealVaultStats();
+
+    return () => clearInterval(pingInterval);
+  }, [selectedChat, chats]);
 
   const handleDeleteChat = async (e, targetChat) => {
     e.stopPropagation();
@@ -135,9 +292,6 @@ const MyChat = ({ fetchAgain, setFetchAgain, onOpenDrawer }) => {
     } catch (e) {
       localStorage.setItem("aura_cleared_chats", JSON.stringify({ [targetId]: Date.now() }));
     }
-
-    // Do not remove from Redux so it stays in the 'Friends' tab
-    // dispatch(setChats(updatedChats));
 
     const activeChatId = String(selectedChat?.id || selectedChat?._id);
     if (activeChatId === targetId) {

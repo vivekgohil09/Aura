@@ -176,14 +176,20 @@ public class UserService {
             throw new IllegalArgumentException("SELF_USER: You cannot add yourself.");
         }
 
-        User foundUser = userRepository.findByUsername(normalized)
+        User foundUser = userRepository.findByUsernameIgnoreCase(normalized)
+                .or(() -> userRepository.findByUsername(normalized))
+                .or(() -> userRepository.findById(normalized))
                 .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND: No user found with this username."));
 
         return com.chitchat.backend.dto.UserSearchDto.UserSearchResponse.builder()
                 .publicId(foundUser.getId())
+                .id(foundUser.getId())
+                ._id(foundUser.getId())
                 .username(foundUser.getUsername())
                 .displayName(foundUser.getName())
+                .name(foundUser.getName())
                 .profilePictureUrl(foundUser.getPic())
+                .pic(foundUser.getPic())
                 .build();
     }
 

@@ -67,6 +67,7 @@ export default function Footer() {
                   { to: '/login', label: 'Sign In' },
                   { to: '/signup', label: 'Sign Up' },
                   { to: '/change-password', label: 'Reset Password' },
+                  { to: '/review-page', label: 'Experience & Feedback' },
                 ].map((link) => (
                   <Link
                     key={link.to}

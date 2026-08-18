@@ -1153,6 +1153,7 @@ export default function AuraLandingPage() {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
+    document.title = "Aura — Living Spaces";
     const onScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);

@@ -90,7 +90,7 @@ export default function SignUpPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = "Aura | Sign Up";
+    document.title = "Aura — Create Account";
   }, []);
 
   const handleSubmit = async (event) => {

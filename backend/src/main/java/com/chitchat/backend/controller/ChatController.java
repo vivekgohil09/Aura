@@ -74,7 +74,7 @@ public class ChatController {
     public ResponseEntity<com.chitchat.backend.model.ChatRequest> sendRequest(
             @RequestBody ChatDto.SendRequestDto request,
             @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(chatService.sendChatRequest(request.getTargetUserId(), currentUser));
+        return ResponseEntity.ok(chatService.sendChatRequest(request, currentUser));
     }
 
     @GetMapping("/requests/pending")

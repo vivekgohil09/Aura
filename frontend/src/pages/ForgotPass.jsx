@@ -81,7 +81,7 @@ export default function ForgotPass() {
   const history = useHistory();
 
   useEffect(() => {
-    document.title = "Aura | Forgot Password";
+    document.title = "Aura — Reset Password";
   }, []);
 
   const changePassword = async (e) => {

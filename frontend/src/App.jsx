@@ -3,16 +3,16 @@ import React, { useEffect } from 'react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Route, Switch, BrowserRouter as Router, useLocation } from "react-router-dom"
-import LoginPage from "./pages/LoginPage.jsx"
-import ChatPage from "./pages/ChatPage"
-import ForgotPass from "./pages/ForgotPass"
+import { Route, Switch, BrowserRouter as Router, useLocation } from "react-router-dom";
+import LoginPage from "./pages/LoginPage.jsx";
+import ChatPage from "./pages/ChatPage";
+import ForgotPass from "./pages/ForgotPass";
 import SignUpPage from "./pages/SignUpPage";
-import LogOutPage from "./pages/LogOutPage"
+import LogOutPage from "./pages/LogOutPage";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { setUserDetails } from "./redux/actions/index"
-import { useDispatch } from 'react-redux'
+import { setUserDetails } from "./redux/actions/index";
+import { useDispatch } from 'react-redux';
 import Review from './pages/Review';
 
 import SunsetLandingPage from "./pages/SunsetLandingPage";
@@ -41,8 +41,11 @@ function LayoutWrapper() {
         <Route path="/login" component={LoginPage} />
         <Route path="/signup" component={SignUpPage} />
         <Route path="/change-password" component={ForgotPass} />
-        <Route path="/loged-out" component={LoginPage} />
+        <Route path="/logout" component={LogOutPage} />
+        <Route path="/loged-out" component={LogOutPage} />
         <Route path="/review-page" component={Review} />
+        <Route path="/review" component={Review} />
+        <Route path="/feedback" component={Review} />
       </Switch>
       {!hideFooter && <Footer />}
     </>

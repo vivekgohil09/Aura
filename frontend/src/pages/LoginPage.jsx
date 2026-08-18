@@ -168,7 +168,7 @@ export default function LoginPage() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   useEffect(() => {
-    document.title = "Aura | Login";
+    document.title = "Aura — Sign In";
 
     const initGoogle = () => {
       if (window.google && window.google.accounts && window.google.accounts.id) {

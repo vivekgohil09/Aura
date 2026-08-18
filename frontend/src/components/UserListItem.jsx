@@ -7,7 +7,7 @@ import { getJwtToken } from "../config/getJwt";
 const UserListItem = ({ user, handleFunction }) => {
     const loggedInUser = useSelector((state) => state.user) || JSON.parse(localStorage.getItem("userInfo") || "{}");
     const loggedUserId = loggedInUser?._id || loggedInUser?.id || loggedInUser?.userId;
-    const targetUserId = user?._id || user?.id;
+    const targetUserId = user?._id || user?.id || user?.publicId || user?.userId || user?.username || user?.email;
 
     const storageKey = loggedUserId ? `aura_sent_requests_${loggedUserId}` : "aura_sent_requests";
 
@@ -22,7 +22,8 @@ const UserListItem = ({ user, handleFunction }) => {
 
     const isMe = Boolean(
         (loggedUserId && targetUserId && String(loggedUserId) === String(targetUserId)) ||
-        (loggedInUser?.email && user?.email && loggedInUser.email.toLowerCase() === user.email.toLowerCase())
+        (loggedInUser?.email && user?.email && loggedInUser.email.toLowerCase() === user.email.toLowerCase()) ||
+        (loggedInUser?.username && user?.username && loggedInUser.username.toLowerCase() === user.username.toLowerCase())
     );
 
     const handleAddClick = async (e) => {
@@ -38,7 +39,14 @@ const UserListItem = ({ user, handleFunction }) => {
                 const response = await fetch("/api/chat/request/send", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-                    body: JSON.stringify({ targetUserId: String(targetUserId) })
+                    body: JSON.stringify({
+                        targetUserId: String(targetUserId),
+                        userId: String(targetUserId),
+                        _id: String(targetUserId),
+                        publicId: user?.publicId ? String(user.publicId) : undefined,
+                        username: user?.username,
+                        email: user?.email
+                    })
                 });
                 const data = await response.json();
                 if (!response.ok) {
@@ -54,7 +62,7 @@ const UserListItem = ({ user, handleFunction }) => {
                     localStorage.setItem(storageKey, JSON.stringify([...sentList, String(targetUserId)]));
                 }
                 import('react-toastify').then(({ toast }) => {
-                    toast.success(`✨ Friend request sent to ${user?.name || 'user'}! 📨`, { position: "bottom-center", autoClose: 2500 });
+                    toast.success(`✨ Friend request sent to ${user?.name || user?.username || 'user'}! 📨`, { position: "bottom-center", autoClose: 2500 });
                 });
             } catch (err) {
                 import('react-toastify').then(({ toast }) => {

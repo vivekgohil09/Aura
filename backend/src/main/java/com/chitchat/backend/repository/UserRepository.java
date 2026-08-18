@@ -16,9 +16,17 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByUsername(String username);
 
+    Optional<User> findByEmailIgnoreCase(String email);
+
+    Optional<User> findByUsernameIgnoreCase(String username);
+
     Boolean existsByEmail(String email);
 
     Boolean existsByUsername(String username);
+
+    Boolean existsByEmailIgnoreCase(String email);
+
+    Boolean existsByUsernameIgnoreCase(String username);
 
     @Query("SELECT u FROM User u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))")
     List<User> searchUsers(@Param("search") String search);

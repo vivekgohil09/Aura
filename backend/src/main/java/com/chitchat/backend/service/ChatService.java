@@ -23,24 +23,35 @@ public class ChatService {
     private com.chitchat.backend.repository.ChatRequestRepository chatRequestRepository;
 
     @org.springframework.transaction.annotation.Transactional
-    public com.chitchat.backend.model.ChatRequest sendChatRequest(String targetUserId, User sender) {
-        if (targetUserId == null || targetUserId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Target user ID is required");
+    public com.chitchat.backend.model.ChatRequest sendChatRequest(ChatDto.SendRequestDto dto, User sender) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Friend request payload is required");
         }
+        return sendChatRequestInternal(dto.getTargetUserId(), dto.getCleanUsername(), dto.getCleanEmail(), sender);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public com.chitchat.backend.model.ChatRequest sendChatRequest(String targetUserId, User sender) {
+        return sendChatRequestInternal(targetUserId, null, null, sender);
+    }
+
+    private com.chitchat.backend.model.ChatRequest sendChatRequestInternal(String targetId, String username, String email, User sender) {
         if (sender == null) {
             throw new IllegalArgumentException("Authentication required to send friend request");
         }
-        String cleanTarget = targetUserId.trim();
-        if (cleanTarget.equals(sender.getId()) || cleanTarget.equalsIgnoreCase(sender.getEmail()) || cleanTarget.equalsIgnoreCase(sender.getUsername())) {
-            throw new IllegalArgumentException("You cannot send a friend request to yourself");
-        }
-
-        User receiver = userRepository.findById(cleanTarget)
-                .or(() -> userRepository.findByEmail(cleanTarget.toLowerCase()))
-                .or(() -> userRepository.findByUsername(cleanTarget.toLowerCase()))
-                .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
 
         User freshSender = userRepository.findById(sender.getId()).orElse(sender);
+
+        User receiver = resolveUser(targetId, username, email, freshSender);
+        if (receiver == null) {
+            throw new IllegalArgumentException("Target user not found");
+        }
+
+        if (receiver.getId().equals(freshSender.getId()) || 
+            (freshSender.getEmail() != null && freshSender.getEmail().equalsIgnoreCase(receiver.getEmail())) ||
+            (freshSender.getUsername() != null && freshSender.getUsername().equalsIgnoreCase(receiver.getUsername()))) {
+            throw new IllegalArgumentException("You cannot send a friend request to yourself");
+        }
 
         // 1. Check if already friends
         if (freshSender.getFriends() != null && freshSender.getFriends().stream().anyMatch(f -> f.getId().equals(receiver.getId()))) {
@@ -58,7 +69,7 @@ public class ChatService {
         Optional<com.chitchat.backend.model.ChatRequest> pendingIncoming = chatRequestRepository
                 .findBySenderAndReceiverAndStatus(receiver, freshSender, "PENDING");
         if (pendingIncoming.isPresent()) {
-            throw new IllegalArgumentException(receiver.getName() + " has already sent you a friend request. Please check your notifications to accept!");
+            throw new IllegalArgumentException((receiver.getName() != null ? receiver.getName() : "This user") + " has already sent you a friend request. Please check your notifications to accept!");
         }
 
         // 4. Rate-limiting / Cooldown Check: 2 days (48 hours)
@@ -96,6 +107,66 @@ public class ChatService {
                 .updatedAt(java.time.LocalDateTime.now())
                 .build();
         return chatRequestRepository.save(request);
+    }
+
+    private User resolveUser(String targetId, String username, String email, User sender) {
+        String cleanId = targetId != null ? targetId.trim() : null;
+        if (cleanId != null && ("undefined".equalsIgnoreCase(cleanId) || "null".equalsIgnoreCase(cleanId))) {
+            cleanId = null;
+        }
+        if (cleanId != null && cleanId.startsWith("@")) {
+            cleanId = cleanId.substring(1);
+        }
+
+        String cleanUsername = username != null ? username.trim() : null;
+        if (cleanUsername != null && cleanUsername.startsWith("@")) {
+            cleanUsername = cleanUsername.substring(1);
+        }
+
+        String cleanEmail = email != null ? email.trim().toLowerCase() : null;
+
+        // Try cleanId directly
+        if (cleanId != null && !cleanId.isEmpty()) {
+            final String q = cleanId;
+            Optional<User> u = userRepository.findById(q)
+                    .or(() -> userRepository.findByUsernameIgnoreCase(q))
+                    .or(() -> userRepository.findByEmailIgnoreCase(q))
+                    .or(() -> userRepository.findByUsername(q))
+                    .or(() -> userRepository.findByEmail(q));
+            if (u.isPresent()) return u.get();
+        }
+
+        // Try cleanUsername
+        if (cleanUsername != null && !cleanUsername.isEmpty()) {
+            final String uName = cleanUsername;
+            Optional<User> u = userRepository.findByUsernameIgnoreCase(uName)
+                    .or(() -> userRepository.findByUsername(uName))
+                    .or(() -> userRepository.findById(uName));
+            if (u.isPresent()) return u.get();
+        }
+
+        // Try cleanEmail
+        if (cleanEmail != null && !cleanEmail.isEmpty()) {
+            final String em = cleanEmail;
+            Optional<User> u = userRepository.findByEmailIgnoreCase(em)
+                    .or(() -> userRepository.findByEmail(em));
+            if (u.isPresent()) return u.get();
+        }
+
+        // Try search fallback
+        String fallbackQuery = cleanId != null ? cleanId : (cleanUsername != null ? cleanUsername : cleanEmail);
+        if (fallbackQuery != null && !fallbackQuery.isEmpty()) {
+            List<User> matches = userRepository.searchUsers(fallbackQuery);
+            if (matches != null) {
+                for (User m : matches) {
+                    if (sender == null || !m.getId().equals(sender.getId())) {
+                        return m;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public List<com.chitchat.backend.model.ChatRequest> getPendingRequests(User receiver) {
@@ -151,7 +222,15 @@ public class ChatService {
             throw new RuntimeException("Authentication required to access chat");
         }
 
-        User targetUser = userRepository.findById(targetUserId)
+        String cleanTarget = targetUserId.trim();
+        if (cleanTarget.startsWith("@")) cleanTarget = cleanTarget.substring(1);
+        final String searchTarget = cleanTarget;
+
+        User targetUser = userRepository.findById(searchTarget)
+                .or(() -> userRepository.findByUsernameIgnoreCase(searchTarget))
+                .or(() -> userRepository.findByEmailIgnoreCase(searchTarget))
+                .or(() -> userRepository.findByUsername(searchTarget))
+                .or(() -> userRepository.findByEmail(searchTarget))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (currentUser.getId().equals(targetUser.getId())) {

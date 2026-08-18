@@ -1,1 +1,4 @@
-/*    /index.html   200
+/api/*  https://aura-vdcq.onrender.com/api/:splat  200!
+/ws/*   https://aura-vdcq.onrender.com/ws/:splat   200!
+/socket.io/*  https://aura-vdcq.onrender.com/socket.io/:splat  200!
+/*      /index.html                               200

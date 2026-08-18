@@ -13,9 +13,13 @@ public class UserSearchDto {
     @Builder
     public static class UserSearchResponse {
         private String publicId;
+        private String id;
+        private String _id;
         private String username;
         private String displayName;
+        private String name;
         private String profilePictureUrl;
+        private String pic;
     }
 
     @Data
