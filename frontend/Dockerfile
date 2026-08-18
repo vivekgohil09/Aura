@@ -3,11 +3,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency manifests
-COPY package*.json ./
+# Copy dependency manifests and npm configuration
+COPY package*.json .npmrc* ./
 
-# Install all dependencies cleanly
-RUN npm install
+# Install all dependencies with legacy peer deps
+RUN npm install --legacy-peer-deps
 
 # Copy entire frontend source code
 COPY . .
