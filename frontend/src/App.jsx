@@ -72,19 +72,28 @@ export default function App() {
     const user = JSON.parse(localStorage.getItem("userInfo"));
     dispatch(setUserDetails(user));
 
-    // Keep Render backend server active (prevents free tier sleep)
-    const pingBackend = async () => {
+    // Keep Render backend & frontend active (prevents free tier sleep)
+    const pingServices = async () => {
+      // 1. Ping Backend
       try {
         await axios.get('/api/health');
       } catch (e) {}
+
+      // 2. Self-ping Frontend Origin
+      try {
+        if (typeof window !== 'undefined' && window.location && window.location.origin) {
+          fetch(window.location.origin, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+        }
+      } catch (e) {}
     };
 
-    pingBackend();
-    const keepAliveInterval = setInterval(pingBackend, 45000); // Ping every 45 seconds to prevent Render backend from sleeping
+    pingServices();
+    // Fast 45s heartbeat + 4 min guaranteed cycle (240,000 ms)
+    const keepAliveInterval = setInterval(pingServices, 240000);
 
     const handleFocus = () => {
       if (document.visibilityState === 'visible') {
-        pingBackend();
+        pingServices();
       }
     };
 

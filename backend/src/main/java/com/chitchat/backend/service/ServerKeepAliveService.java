@@ -24,29 +24,42 @@ public class ServerKeepAliveService {
     @Value("${app.render.backend-url:https://aura-vdcq.onrender.com/api/health}")
     private String healthUrl;
 
+    @Value("${app.render.frontend-url:}")
+    private String frontendUrl;
+
     /**
-     * Self-ping every 10 minutes (600,000 ms) to keep the Render free tier container active.
-     * Making an outbound HTTP request to the public URL routes through Render's external load balancer,
+     * Self-ping every 4 minutes (240,000 ms) to keep both the Backend and Frontend active on Render.
+     * Making an outbound HTTP request to the public URLs routes through Render's external load balancer,
      * resetting the 15-minute inactivity spin-down timer.
      */
-    @Scheduled(fixedRate = 600000, initialDelay = 120000)
+    @Scheduled(fixedRate = 240000, initialDelay = 30000)
     public void pingSelf() {
+        // 1. Ping Backend Health
+        pingUrl(healthUrl, "Backend");
+
+        // 2. Ping Frontend URL if configured
+        if (frontendUrl != null && !frontendUrl.trim().isEmpty()) {
+            pingUrl(frontendUrl.trim(), "Frontend");
+        }
+    }
+
+    private void pingUrl(String targetUrl, String serviceName) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(healthUrl))
+                    .uri(URI.create(targetUrl))
                     .timeout(Duration.ofSeconds(15))
                     .header("User-Agent", "Aura-KeepAlive-Ping/1.0")
                     .GET()
                     .build();
 
             httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-                    .thenAccept(res -> log.debug("Server self-keepalive ping succeeded with status: {}", res.statusCode()))
+                    .thenAccept(res -> log.debug("{} keepalive ping succeeded with status: {}", serviceName, res.statusCode()))
                     .exceptionally(ex -> {
-                        log.debug("Server self-keepalive ping completed/handled: {}", ex.getMessage());
+                        log.debug("{} keepalive ping handled: {}", serviceName, ex.getMessage());
                         return null;
                     });
         } catch (Exception e) {
-            log.debug("KeepAlive ping scheduling note: {}", e.getMessage());
+            log.debug("{} keepalive ping error note: {}", serviceName, e.getMessage());
         }
     }
 }
