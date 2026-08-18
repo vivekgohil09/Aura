@@ -82,6 +82,15 @@ export default function App() {
     pingBackend();
     const keepAliveInterval = setInterval(pingBackend, 45000); // Ping every 45 seconds to prevent Render backend from sleeping
 
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        pingBackend();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+
     const handleUnload = () => {
       if (window.__auraSocket) {
         try {
@@ -95,6 +104,8 @@ export default function App() {
     window.addEventListener("pagehide", handleUnload);
     return () => {
       clearInterval(keepAliveInterval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
       window.removeEventListener("beforeunload", handleUnload);
       window.removeEventListener("pagehide", handleUnload);
     };
