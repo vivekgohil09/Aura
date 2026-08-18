@@ -269,6 +269,7 @@ const SideBar = ({ onOpenDrawer: externalOnOpenDrawer }) => {
     const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
     const [qrScanInput, setQrScanInput] = useState('');
     const [qrTab, setQrTab] = useState('scan');
+    const [scannedUsername, setScannedUsername] = useState('');
     const [scannedUser, setScannedUser] = useState(null);
     const [isScanning, setIsScanning] = useState(false);
     const [cameraActive, setCameraActive] = useState(false);
