@@ -55,17 +55,17 @@ function ThreeVFXBackground() {
     }
 
     // ── Generate Stardust Floating Particles in 3D ──
-    const particleCount = 80;
+    const particleCount = 42;
     const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: (Math.random() - 0.5) * width * 1.5,
         y: (Math.random() - 0.5) * height * 1.5,
-        z: (Math.random() - 0.5) * 600,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: (Math.random() - 0.5) * 0.35,
-        vz: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 2.2 + 0.8,
+        z: (Math.random() - 0.5) * 500,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        vz: (Math.random() - 0.5) * 0.2,
+        size: Math.random() * 1.8 + 0.8,
         color: Math.random() > 0.4 ? '#5B5FEF' : '#8067E8',
         pulse: Math.random() * Math.PI * 2,
       });
@@ -90,20 +90,25 @@ function ThreeVFXBackground() {
     };
 
     const render = () => {
-      time += 0.012;
-      mouse.x += (mouse.targetX - mouse.x) * 0.05;
-      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+      if (document.hidden) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
 
-      const tiltX = ((mouse.y - height / 2) / height) * 0.7;
-      const tiltY = ((mouse.x - width / 2) / width) * 0.7;
+      time += 0.01;
+      mouse.x += (mouse.targetX - mouse.x) * 0.04;
+      mouse.y += (mouse.targetY - mouse.y) * 0.04;
 
-      rotX = time * 0.3 + tiltX;
-      rotY = time * 0.4 + tiltY;
+      const tiltX = ((mouse.y - height / 2) / height) * 0.5;
+      const tiltY = ((mouse.x - width / 2) / width) * 0.5;
+
+      rotX = time * 0.25 + tiltX;
+      rotY = time * 0.35 + tiltY;
 
       ctx.clearRect(0, 0, width, height);
 
-      const centerX = width / 2 + (mouse.x - width / 2) * 0.03;
-      const centerY = height / 2 + (mouse.y - height / 2) * 0.03;
+      const centerX = width / 2 + (mouse.x - width / 2) * 0.02;
+      const centerY = height / 2 + (mouse.y - height / 2) * 0.02;
 
       // 1. Draw 3D Torus Knot Wireframe
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
@@ -129,81 +134,77 @@ function ThreeVFXBackground() {
           const p1 = projectedKnot[i];
           const nextIdx = (i + 1) % projectedKnot.length;
           const p2 = projectedKnot[nextIdx];
-
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
         }
-        ctx.strokeStyle = 'rgba(91, 95, 239, 0.14)';
-        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = 'rgba(91, 95, 239, 0.12)';
+        ctx.lineWidth = 1.2;
         ctx.stroke();
 
         // Glowing node sparkles
-        for (let i = 0; i < projectedKnot.length; i += 7) {
+        for (let i = 0; i < projectedKnot.length; i += 9) {
           const p1 = projectedKnot[i];
-          const alpha = Math.max(0.1, Math.min(0.5, (p1.scale - 0.7) * 1.4));
+          const alpha = Math.max(0.1, Math.min(0.45, (p1.scale - 0.7) * 1.2));
           ctx.fillStyle = `rgba(128, 103, 232, ${alpha})`;
           ctx.beginPath();
-          ctx.arc(p1.x, p1.y, Math.max(1, p1.scale * 2.5), 0, Math.PI * 2);
+          ctx.arc(p1.x, p1.y, Math.max(1, p1.scale * 2.2), 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
-      // 2. Draw 3D Floating Particles & Constellations
+      // 2. Draw 3D Floating Particles & Batched Constellation Lines
+      const projectedParticles = [];
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.z += p.vz;
-        p.pulse += 0.03;
+        p.pulse += 0.025;
 
         if (p.x > width * 0.7) p.x = -width * 0.7;
         if (p.x < -width * 0.7) p.x = width * 0.7;
         if (p.y > height * 0.7) p.y = -height * 0.7;
         if (p.y < -height * 0.7) p.y = height * 0.7;
-        if (p.z > 300) p.z = -300;
-        if (p.z < -300) p.z = 300;
+        if (p.z > 250) p.z = -250;
+        if (p.z < -250) p.z = 250;
 
-        let px = p.x * Math.cos(time * 0.08) - p.z * Math.sin(time * 0.08);
-        let pz = p.x * Math.sin(time * 0.08) + p.z * Math.cos(time * 0.08);
+        let px = p.x * Math.cos(time * 0.06) - p.z * Math.sin(time * 0.06);
+        let pz = p.x * Math.sin(time * 0.06) + p.z * Math.cos(time * 0.06);
         let py = p.y;
 
         const proj = project(px, py, pz, centerX, centerY);
-        if (!proj) continue;
+        if (proj) {
+          projectedParticles.push({ p, proj });
+          const currentSize = p.size * proj.scale * (1 + 0.2 * Math.sin(p.pulse));
+          const alpha = Math.max(0.12, Math.min(0.65, (proj.scale - 0.5) * 0.75));
 
-        const currentSize = p.size * proj.scale * (1 + 0.25 * Math.sin(p.pulse));
-        const alpha = Math.max(0.1, Math.min(0.7, (proj.scale - 0.5) * 0.8));
+          ctx.beginPath();
+          ctx.arc(proj.x, proj.y, Math.max(0.6, currentSize), 0, Math.PI * 2);
+          ctx.fillStyle = p.color === '#5B5FEF' 
+            ? `rgba(91, 95, 239, ${alpha})`
+            : `rgba(128, 103, 232, ${alpha})`;
+          ctx.fill();
+        }
+      }
 
+      // Single batched stroke for constellation threads
+      if (projectedParticles.length > 1) {
         ctx.beginPath();
-        ctx.arc(proj.x, proj.y, Math.max(0.6, currentSize), 0, Math.PI * 2);
-        ctx.fillStyle = p.color === '#5B5FEF' 
-          ? `rgba(91, 95, 239, ${alpha})`
-          : `rgba(128, 103, 232, ${alpha})`;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = p.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Connect nearby particles with subtle threads
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx = p.x - p2.x;
-          const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 110) {
-            const p2x = p2.x * Math.cos(time * 0.08) - p2.z * Math.sin(time * 0.08);
-            const p2z = p2.x * Math.sin(time * 0.08) + p2.z * Math.cos(time * 0.08);
-            const proj2 = project(p2x, p2.y, p2z, centerX, centerY);
-            if (proj2) {
-              const lineAlpha = (1 - dist / 110) * 0.12 * alpha;
-              ctx.beginPath();
-              ctx.moveTo(proj.x, proj.y);
+        for (let i = 0; i < projectedParticles.length; i++) {
+          const { p: p1, proj: proj1 } = projectedParticles[i];
+          for (let j = i + 1; j < projectedParticles.length; j++) {
+            const { p: p2, proj: proj2 } = projectedParticles[j];
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            if (dx * dx + dy * dy < 10000) { // dist < 100
+              ctx.moveTo(proj1.x, proj1.y);
               ctx.lineTo(proj2.x, proj2.y);
-              ctx.strokeStyle = `rgba(91, 95, 239, ${lineAlpha})`;
-              ctx.lineWidth = 0.8;
-              ctx.stroke();
             }
           }
         }
+        ctx.strokeStyle = 'rgba(91, 95, 239, 0.06)';
+        ctx.lineWidth = 0.75;
+        ctx.stroke();
       }
 
       animationFrameId = requestAnimationFrame(render);

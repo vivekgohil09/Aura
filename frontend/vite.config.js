@@ -31,6 +31,13 @@ export default defineConfig(({ mode }) => {
       },
     },
 
+    build: {
+      target: 'es2020',
+      minify: 'esbuild',
+      cssMinify: true,
+      chunkSizeWarningLimit: 2000,
+    },
+
     define: {
       global: 'window',
     },
