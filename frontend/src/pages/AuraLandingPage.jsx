@@ -9,19 +9,20 @@ import {
   Flame, Eye, Clock, CheckCircle2, ChevronRight, Share2, HelpCircle
 } from 'lucide-react';
 
-// ── 1. Ultra-Luxury 3D Projected Sacred Geometry & Particle VFX Canvas Background ──
+// ── 1. Ultra-Luxury 3D Projected Sacred Geometry & Particle VFX Canvas Background (60 FPS Optimized) ──
 function ThreeVFXBackground() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let animationFrameId;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
+    let isVisible = true;
 
     // Mouse coordinates with smooth damping
     let mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
@@ -36,37 +37,42 @@ function ThreeVFXBackground() {
       height = canvas.height = window.innerHeight;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('resize', handleResize);
+    const handleVisibility = () => {
+      isVisible = document.visibilityState === 'visible';
+    };
 
-    // ── Generate 3D Torus Knot Vertices ──
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // ── Generate 3D Torus Knot Vertices (Optimized 70 points) ──
     const torusKnotPoints = [];
     const p = 2, q = 3;
-    const samples = 140;
-    const R = 230; // major radius
-    const r = 75;  // minor radius
+    const samples = 70;
+    const R = 220; // major radius
+    const r = 70;  // minor radius
     for (let i = 0; i < samples; i++) {
       const phi = (i / samples) * Math.PI * 2;
       const r_tube = r * (0.8 + 0.2 * Math.cos(q * phi));
       const x = (R + r_tube * Math.cos(q * phi)) * Math.cos(p * phi);
       const y = (R + r_tube * Math.cos(q * phi)) * Math.sin(p * phi);
-      const z = -r_tube * Math.sin(q * phi) * 2.8;
+      const z = -r_tube * Math.sin(q * phi) * 2.5;
       torusKnotPoints.push({ x, y, z });
     }
 
-    // ── Generate Stardust Floating Particles in 3D ──
-    const particleCount = 42;
+    // ── Generate Stardust Floating Particles in 3D (Optimized 36 particles) ──
+    const particleCount = 36;
     const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
-        x: (Math.random() - 0.5) * width * 1.5,
-        y: (Math.random() - 0.5) * height * 1.5,
+        x: (Math.random() - 0.5) * width * 1.4,
+        y: (Math.random() - 0.5) * height * 1.4,
         z: (Math.random() - 0.5) * 500,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        vz: (Math.random() - 0.5) * 0.2,
-        size: Math.random() * 1.8 + 0.8,
-        color: Math.random() > 0.4 ? '#5B5FEF' : '#8067E8',
+        vx: (Math.random() - 0.5) * 0.28,
+        vy: (Math.random() - 0.5) * 0.28,
+        vz: (Math.random() - 0.5) * 0.25,
+        size: Math.random() * 2.0 + 0.9,
+        isPurple: Math.random() > 0.45,
         pulse: Math.random() * Math.PI * 2,
       });
     }
@@ -76,7 +82,7 @@ function ThreeVFXBackground() {
     let time = 0;
 
     // ── 3D Projection Math ──
-    const fov = 480;
+    const fov = 460;
     const project = (x, y, z, cx, cy) => {
       const depth = fov + z;
       if (depth <= 10) return null;
@@ -84,13 +90,12 @@ function ThreeVFXBackground() {
       return {
         x: cx + x * scale,
         y: cy + y * scale,
-        scale,
-        depth
+        scale
       };
     };
 
     const render = () => {
-      if (document.hidden) {
+      if (!isVisible) {
         animationFrameId = requestAnimationFrame(render);
         return;
       }
@@ -134,6 +139,7 @@ function ThreeVFXBackground() {
           const p1 = projectedKnot[i];
           const nextIdx = (i + 1) % projectedKnot.length;
           const p2 = projectedKnot[nextIdx];
+
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
         }
@@ -142,9 +148,9 @@ function ThreeVFXBackground() {
         ctx.stroke();
 
         // Glowing node sparkles
-        for (let i = 0; i < projectedKnot.length; i += 9) {
+        for (let i = 0; i < projectedKnot.length; i += 6) {
           const p1 = projectedKnot[i];
-          const alpha = Math.max(0.1, Math.min(0.45, (p1.scale - 0.7) * 1.2));
+          const alpha = Math.max(0.12, Math.min(0.45, (p1.scale - 0.7) * 1.2));
           ctx.fillStyle = `rgba(128, 103, 232, ${alpha})`;
           ctx.beginPath();
           ctx.arc(p1.x, p1.y, Math.max(1, p1.scale * 2.2), 0, Math.PI * 2);
@@ -152,8 +158,10 @@ function ThreeVFXBackground() {
         }
       }
 
-      // 2. Draw 3D Floating Particles & Batched Constellation Lines
-      const projectedParticles = [];
+      // 2. Draw 3D Floating Particles & Constellations (High Performance)
+      const cosT = Math.cos(time * 0.07);
+      const sinT = Math.sin(time * 0.07);
+
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
@@ -161,50 +169,54 @@ function ThreeVFXBackground() {
         p.z += p.vz;
         p.pulse += 0.025;
 
-        if (p.x > width * 0.7) p.x = -width * 0.7;
-        if (p.x < -width * 0.7) p.x = width * 0.7;
-        if (p.y > height * 0.7) p.y = -height * 0.7;
-        if (p.y < -height * 0.7) p.y = height * 0.7;
+        if (p.x > width * 0.65) p.x = -width * 0.65;
+        if (p.x < -width * 0.65) p.x = width * 0.65;
+        if (p.y > height * 0.65) p.y = -height * 0.65;
+        if (p.y < -height * 0.65) p.y = height * 0.65;
         if (p.z > 250) p.z = -250;
         if (p.z < -250) p.z = 250;
 
-        let px = p.x * Math.cos(time * 0.06) - p.z * Math.sin(time * 0.06);
-        let pz = p.x * Math.sin(time * 0.06) + p.z * Math.cos(time * 0.06);
+        let px = p.x * cosT - p.z * sinT;
+        let pz = p.x * sinT + p.z * cosT;
         let py = p.y;
 
         const proj = project(px, py, pz, centerX, centerY);
-        if (proj) {
-          projectedParticles.push({ p, proj });
-          const currentSize = p.size * proj.scale * (1 + 0.2 * Math.sin(p.pulse));
-          const alpha = Math.max(0.12, Math.min(0.65, (proj.scale - 0.5) * 0.75));
+        if (!proj) continue;
 
-          ctx.beginPath();
-          ctx.arc(proj.x, proj.y, Math.max(0.6, currentSize), 0, Math.PI * 2);
-          ctx.fillStyle = p.color === '#5B5FEF' 
-            ? `rgba(91, 95, 239, ${alpha})`
-            : `rgba(128, 103, 232, ${alpha})`;
-          ctx.fill();
-        }
-      }
+        const currentSize = p.size * proj.scale * (1 + 0.2 * Math.sin(p.pulse));
+        const alpha = Math.max(0.12, Math.min(0.65, (proj.scale - 0.5) * 0.75));
 
-      // Single batched stroke for constellation threads
-      if (projectedParticles.length > 1) {
         ctx.beginPath();
-        for (let i = 0; i < projectedParticles.length; i++) {
-          const { p: p1, proj: proj1 } = projectedParticles[i];
-          for (let j = i + 1; j < projectedParticles.length; j++) {
-            const { p: p2, proj: proj2 } = projectedParticles[j];
-            const dx = p1.x - p2.x;
-            const dy = p1.y - p2.y;
-            if (dx * dx + dy * dy < 10000) { // dist < 100
-              ctx.moveTo(proj1.x, proj1.y);
+        ctx.arc(proj.x, proj.y, Math.max(0.6, currentSize), 0, Math.PI * 2);
+        ctx.fillStyle = p.isPurple 
+          ? `rgba(91, 95, 239, ${alpha})`
+          : `rgba(128, 103, 232, ${alpha})`;
+        ctx.fill();
+
+        // Connect nearby particles with subtle threads (Fast threshold check)
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          if (Math.abs(dx) > 95) continue;
+          const dy = p.y - p2.y;
+          if (Math.abs(dy) > 95) continue;
+
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 95) {
+            const p2x = p2.x * cosT - p2.z * sinT;
+            const p2z = p2.x * sinT + p2.z * cosT;
+            const proj2 = project(p2x, p2.y, p2z, centerX, centerY);
+            if (proj2) {
+              const lineAlpha = (1 - dist / 95) * 0.1 * alpha;
+              ctx.beginPath();
+              ctx.moveTo(proj.x, proj.y);
               ctx.lineTo(proj2.x, proj2.y);
+              ctx.strokeStyle = `rgba(91, 95, 239, ${lineAlpha})`;
+              ctx.lineWidth = 0.75;
+              ctx.stroke();
             }
           }
         }
-        ctx.strokeStyle = 'rgba(91, 95, 239, 0.06)';
-        ctx.lineWidth = 0.75;
-        ctx.stroke();
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -215,6 +227,7 @@ function ThreeVFXBackground() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -229,49 +242,55 @@ function ThreeVFXBackground() {
         zIndex: 0,
         width: '100%',
         height: '100%',
+        transform: 'translate3d(0,0,0)',
+        willChange: 'transform'
       }}
     />
   );
 }
 
-// ── 2. Floating Ambient Glow Orbs ──
+// ── 2. Floating Ambient Glow Orbs (GPU Accelerated) ──
 function AuroraGlowOrbs() {
   return (
-    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden', transform: 'translate3d(0,0,0)', willChange: 'transform' }}>
       <motion.div
         animate={{
-          x: [0, 80, -40, 0],
-          y: [0, -100, 60, 0],
-          scale: [1, 1.25, 0.9, 1],
+          x: [0, 40, -20, 0],
+          y: [0, -50, 30, 0],
+          scale: [1, 1.15, 0.95, 1],
         }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           position: 'absolute',
-          top: '15%',
+          top: '12%',
           left: '10%',
-          width: '520px',
-          height: '520px',
+          width: '480px',
+          height: '480px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(91, 95, 239, 0.12) 0%, rgba(128, 103, 232, 0.04) 50%, transparent 70%)',
-          filter: 'blur(75px)',
+          background: 'radial-gradient(circle, rgba(91, 95, 239, 0.09) 0%, rgba(128, 103, 232, 0.02) 60%, transparent 80%)',
+          filter: 'blur(60px)',
+          transform: 'translate3d(0,0,0)',
+          willChange: 'transform'
         }}
       />
       <motion.div
         animate={{
-          x: [0, -90, 50, 0],
-          y: [0, 90, -80, 0],
-          scale: [1, 1.3, 0.85, 1],
+          x: [0, -40, 20, 0],
+          y: [0, 40, -30, 0],
+          scale: [1, 1.15, 0.95, 1],
         }}
         transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           position: 'absolute',
-          top: '40%',
+          top: '42%',
           right: '5%',
-          width: '600px',
-          height: '600px',
+          width: '520px',
+          height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(109, 140, 255, 0.1) 0%, rgba(91, 95, 239, 0.03) 50%, transparent 70%)',
-          filter: 'blur(90px)',
+          background: 'radial-gradient(circle, rgba(109, 140, 255, 0.08) 0%, rgba(91, 95, 239, 0.02) 60%, transparent 80%)',
+          filter: 'blur(70px)',
+          transform: 'translate3d(0,0,0)',
+          willChange: 'transform'
         }}
       />
     </div>

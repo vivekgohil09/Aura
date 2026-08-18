@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port $PORT",
-    "start": "npx -y serve -s dist -l $PORT"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@chakra-ui/icons": "^1.1.7",
